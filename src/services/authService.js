@@ -1,0 +1,109 @@
+import { BASE_URL } from '../constants/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import jwtDecode from 'jwt-decode';
+
+export const authService = {
+  async login(email, password) {
+    try {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || 'Login failed');
+        error.data = errorData;
+        throw error;
+      }
+      const data = await response.json();
+      let decodedToken = null;
+      if (data.token) {
+        decodedToken = jwtDecode(data.token);
+      }
+      // Lưu thông tin vào AsyncStorage
+      await AsyncStorage.setItem('token', data.token);
+      await AsyncStorage.setItem('role', data.role);
+      if (data.name) await AsyncStorage.setItem('name', data.name);
+      if (decodedToken && decodedToken.fullName) await AsyncStorage.setItem('fullName', decodedToken.fullName);
+      if (decodedToken && decodedToken.profileImage) await AsyncStorage.setItem('profileImage', decodedToken.profileImage);
+      if (decodedToken && decodedToken.sub) await AsyncStorage.setItem('UserId', decodedToken.sub);
+      if (data.companyId) await AsyncStorage.setItem('CompanyProfileId', String(data.companyId));
+      if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+      if (data.user && data.user.companyName) await AsyncStorage.setItem('fullNameCompany', data.user.companyName);
+      if (data.user && data.user.urlCompanyLogo) await AsyncStorage.setItem('profileImageCompany', data.user.urlCompanyLogo);
+      // Lưu userId chuẩn cho candidate
+      let userId = null;
+      if (data.user && (data.user.id || data.user.userId)) {
+        userId = data.user.id || data.user.userId;
+      } else if (decodedToken && (decodedToken.sub || decodedToken.userId || decodedToken.id)) {
+        userId = decodedToken.sub || decodedToken.userId || decodedToken.id;
+      }
+      if (userId) await AsyncStorage.setItem('userId', String(userId));
+      return data;
+    } catch (error) {
+      // Xử lý lỗi email chưa xác thực
+      const isUnverifiedEmail =
+        error.data?.requiresVerification ||
+        (error.message &&
+          (error.message.includes('requiresVerification') ||
+            error.message.toLowerCase().includes('not verified') ||
+            error.message.toLowerCase().includes('unverified') ||
+            error.message.toLowerCase().includes('email chưa được xác thực') ||
+            error.message.includes('Email has not been verified') ||
+            error.message.includes('check your inbox to verify') ||
+            error.message.includes('verify your account before logging in') ||
+            error.message.toLowerCase().includes('verify') ||
+            error.message.toLowerCase().includes('inbox')));
+      if (isUnverifiedEmail) {
+        const customError = new Error(error.message);
+        customError.isUnverifiedEmail = true;
+        customError.email = error.data?.email || email;
+        customError.originalError = error;
+        throw customError;
+      }
+      throw error;
+    }
+  },
+
+  async logout() {
+    await AsyncStorage.multiRemove([
+      'token',
+      'role',
+      'name',
+      'CompanyProfileId',
+      'fullName',
+      'profileImage',
+      'UserId',
+      'user',
+      'fullNameCompany',
+      'profileImageCompany',
+      'userId',
+    ]);
+  },
+
+  async getToken() {
+    return AsyncStorage.getItem('token');
+  },
+
+  async getRole() {
+    return AsyncStorage.getItem('role');
+  },
+
+  async getName() {
+    return AsyncStorage.getItem('name');
+  },
+
+  async getFullName() {
+    const userStr = await AsyncStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.fullName) return user.fullName;
+      } catch {}
+    }
+    return AsyncStorage.getItem('fullName');
+  },
+}; 
