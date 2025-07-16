@@ -5,7 +5,7 @@ import jwtDecode from 'jwt-decode';
 export const authService = {
   async login(email, password) {
     try {
-      const response = await fetch(`${BASE_URL}/auth/login`, {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,6 +68,28 @@ export const authService = {
     }
   },
 
+  async register(fullName, email, phone, password) {
+    try {
+      const response = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fullName, email, phone, password, image: 'string', firebaseUid: 'string', role: '1' }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || 'Registration failed');
+        error.data = errorData;
+        throw error;
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   async logout() {
     await AsyncStorage.multiRemove([
       'token',
@@ -105,5 +127,61 @@ export const authService = {
       } catch {}
     }
     return AsyncStorage.getItem('fullName');
+  },
+
+  async verifyEmail(email, verificationCode) {
+    try {
+      const response = await fetch(`${BASE_URL}/auth/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, verificationCode }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        const error = new Error(errorData.message || 'Verification failed');
+        error.data = errorData;
+        throw error;
+      }
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async resendVerification(email) {
+    try {
+      const response = await fetch(`${BASE_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || 'Resend verification failed');
+        error.data = errorData;
+        throw error;
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      throw error;
+    }
   },
 }; 

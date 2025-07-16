@@ -5,7 +5,7 @@ export const JobService = {
   async getJobs() {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`${BASE_URL}/Job`, {
+      const response = await fetch(`${BASE_URL}/api/Job`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

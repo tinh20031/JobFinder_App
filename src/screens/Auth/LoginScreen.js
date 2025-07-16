@@ -86,7 +86,7 @@ const LoginScreen = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.signupText}>
           Don’t have an account?{' '}
-          <Text style={styles.signupLink} onPress={() => navigation.navigate('Signup')}>Signup</Text>
+          <Text style={styles.signupLink} onPress={() => navigation.navigate('Register')}>Signup</Text>
         </Text>
         <TouchableOpacity style={styles.gmailBtn} onPress={handleGmailLogin}>
           <MaterialIcons name="mail" size={20} color="#e94235" style={{ marginRight: 8 }} />
