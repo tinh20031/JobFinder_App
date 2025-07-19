@@ -33,46 +33,43 @@ const CompanyListScreen = () => {
     return (
       <TouchableOpacity
         activeOpacity={0.85}
-        style={{ marginBottom: 18 }}
+        style={{ marginBottom: 24 }}
         onPress={() => { /* Xử lý khi nhấn vào company */ }}
       >
         <View style={styles.companyCard}>
-         
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+          {/* Hàng trên: logo + company name + location (location dưới company name) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
               source={logoUrl ? { uri: logoUrl } : require('../../images/jobfinder-logo.png')}
               style={styles.companyLogo}
             />
-            <View style={{ marginLeft: 10, flex: 1 }}>
+            <View style={{ marginLeft: 10, justifyContent: 'center' }}>
               <Text style={styles.companyTitle}>{item.companyName || item.name}</Text>
-              {/* Industry + Team size trên cùng một hàng */}
-              {(item.industryName || item.teamSize) && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                  {item.industryName && (
-                    <View style={styles.industryTag}>
-                      <MaterialIcons name="business-center" size={16} color="#1ca97c" style={{ marginRight: 4 }} />
-                      <Text style={styles.industryTagText}>{item.industryName}</Text>
-                    </View>
-                  )}
-                  {item.teamSize && (
-                    <View style={styles.sizeTag}>
-                      <MaterialIcons name="group" size={16} color="#888" style={{ marginRight: 4 }} />
-                      <Text style={styles.sizeTagText}>{item.teamSize}</Text>
-                    </View>
-                  )}
-                </View>
-              )}
-              {/* Location tag */}
               {item.location ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <View style={styles.locationTag}>
-                    <MaterialIcons name="place" size={16} color="#2563eb" style={{ marginRight: 4 }} />
-                    <Text style={styles.locationTagText}>{item.location}</Text>
-                  </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                  <MaterialIcons name="place" size={16} color="#222" style={{ marginRight: 2 }} />
+                  <Text style={styles.locationTagText}>{item.location}</Text>
                 </View>
               ) : null}
             </View>
           </View>
+          {/* Hàng dưới: industry + team size, thẳng hàng với logo */}
+          {(item.industryName || item.teamSize) && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, marginLeft: 0 }}>
+              {item.industryName && (
+                <View style={styles.industryTagLarge}>
+                  <MaterialIcons name="business-center" size={14} color="#1ca97c" style={{ marginRight: 6 }} />
+                  <Text style={styles.industryTagTextLarge}>{item.industryName}</Text>
+                </View>
+              )}
+              {item.teamSize && (
+                <View style={styles.sizeTagLarge}>
+                  <MaterialIcons name="group" size={14} color="#888" style={{ marginRight: 6 }} />
+                  <Text style={styles.sizeTagTextLarge}>{item.teamSize}</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -102,7 +99,7 @@ const CompanyListScreen = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8f9fb' }}>
+    <View style={{ flex: 1, backgroundColor: '#f3f7fd' }}>
       <HeaderCandidates />
       {/* Banner */}
       <View style={styles.banner}>
@@ -209,23 +206,26 @@ const styles = StyleSheet.create({
   },
   companyCard: {
     backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 18,
-    // marginBottom: 18, // Đã chuyển ra ngoài TouchableOpacity
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 16,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#e6edfa',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24, // tăng khoảng cách giữa các card
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    borderWidth: 2, // thêm viền
+    borderColor: '#e6edfa', // màu xanh nhạt
     position: 'relative',
   },
   companyLogo: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#f3f7fd',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#eee',
+    marginRight: 12,
   },
   companyTitle: {
     fontSize: 17,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 0,
     paddingHorizontal: 6,
-    marginRight: 8, // tăng khoảng cách giữa các tag
+    marginRight: 30, // tăng khoảng cách giữa các tag
     minHeight: 18,
     maxWidth: '70%',
   },
@@ -251,17 +251,17 @@ const styles = StyleSheet.create({
   locationTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e6edfa',
-    borderRadius: 12,
-    paddingVertical: 1,
-    paddingHorizontal: 6,
-    marginRight: 4,
-    minHeight: 20,
-    maxWidth: '70%',
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    marginRight: 0,
+    minHeight: undefined,
+    maxWidth: '100%',
   },
   locationTagText: {
-    color: '#2563eb',
-    fontSize: 12,
+    color: '#222',
+    fontSize: 13,
     fontWeight: '600',
   },
   sizeTag: {
@@ -300,6 +300,39 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
     letterSpacing: 0.5,
+  },
+  // Thêm style mới cho tag lớn
+  industryTagLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e6f7ec',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginRight: 18,
+    minHeight: undefined,
+    maxWidth: '80%',
+  },
+  industryTagTextLarge: {
+    color: '#1ca97c',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  sizeTagLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f7fd',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginRight: 0,
+    minHeight: undefined,
+    maxWidth: '80%',
+  },
+  sizeTagTextLarge: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
 

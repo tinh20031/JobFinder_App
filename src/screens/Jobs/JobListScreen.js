@@ -27,57 +27,54 @@ const JobListScreen = () => {
     fetchJobs();
   }, []);
 
-  const renderJobCard = ({ item, index }) => (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      style={{ marginBottom: 18 }}
-      onPress={() => { /* Xử lý khi nhấn vào job */ }}
-    >
-      {/* Có thể dùng LinearGradient ở đây nếu muốn nổi bật hơn */}
-      {/*
-      <LinearGradient
-        colors={['#f8f9fb', '#e6edfa']}
-        style={styles.jobCard}
-      >
-      */}
+  const renderJobCard = ({ item }) => {
+    let salaryText = '';
+    if (item.minSalary && item.maxSalary) {
+      salaryText = `$${item.minSalary} - $${item.maxSalary}`;
+    } else if (item.minSalary) {
+      salaryText = `$${item.minSalary}`;
+    } else if (item.maxSalary) {
+      salaryText = `$${item.maxSalary}`;
+    } else {
+      salaryText = 'Negotiable Salary';
+    }
+    return (
       <View style={styles.jobCard}>
-        {/* Badge 'Mới' cho job đầu tiên */}
-        {index === 0 && (
-          <View style={styles.badgeNew}>
-            <Text style={styles.badgeNewText}>New</Text>
-          </View>
-        )}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Image source={{ uri: item.logo }} style={styles.jobLogo} />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={styles.jobTitle}>{item.jobTitle}</Text>
-            {/* Company tag trên 1 dòng */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-              <View style={styles.companyTag}>
-                <MaterialIcons name="business" size={16} color="#1ca97c" style={{ marginRight: 4 }} />
-                <Text style={styles.companyTagText}>{item.company?.companyName || 'Không rõ công ty'}</Text>
-              </View>
-            </View>
-            {/* Province tag xuống dòng riêng */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-              <View style={styles.provinceTag}>
-                <MaterialIcons name="place" size={16} color="#2563eb" style={{ marginRight: 4 }} />
-                <Text style={styles.provinceTagText}>{item.provinceName || item.location}</Text>
-              </View>
-            </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* Logo */}
+          {item.logo && (
+            <Image source={{ uri: item.logo }} style={styles.logoCircle} />
+          )}
+          {/* Thông tin bên phải logo */}
+          <View style={{ flex: 1, marginLeft: 5 }}>
+            <Text style={styles.jobTitle}>{item.jobTitle || 'Job Title'}</Text>
+            <Text style={styles.jobCompany}>{item.company?.companyName || 'Unknown Company'}</Text>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 }}>
-          {item.tags?.map((tag, idx) => (
-            <View key={idx} style={[styles.tag, tag.color && { backgroundColor: tag.color }]}> 
-              <Text style={[styles.tagText, tag.color && { color: '#222' }]}>{tag.label}</Text>
+        {/* Salary dưới logo */}
+        <Text style={[styles.jobSalary, { marginTop: 12, marginLeft: item.logo ? 5 : 0 }]}> {/* 56 = logo width (44) + marginRight (12) */}
+          <Text style={{ color: '#2563eb', fontWeight: 'bold' }}>{salaryText}</Text>
+        </Text>
+        {/* Tags Row */}
+        <View style={styles.jobTagsRow}>
+          {item.jobType && (
+            <View style={styles.jobTag}>
+              <Text style={styles.jobTagText}>{typeof item.jobType === 'object' ? item.jobType.jobTypeName : item.jobType}</Text>
             </View>
-          ))}
+          )}
+          {item.industry && (
+            <View style={styles.jobTag}>
+              <Text style={styles.jobTagText}>{typeof item.industry === 'object' ? item.industry.industryName : item.industry}</Text>
+            </View>
+          )}
+          {/* Apply Button */}
+          <TouchableOpacity style={styles.jobApply}>
+            <Text style={styles.jobApplyText}>Apply</Text>
+          </TouchableOpacity>
         </View>
       </View>
-      {/*</LinearGradient>*/}
-    </TouchableOpacity>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -103,7 +100,7 @@ const JobListScreen = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8f9fb' }}>
+    <View style={{ flex: 1, backgroundColor: '#f3f7fd' }}>
       <HeaderCandidates />
       {/* Banner */}
       <View style={styles.banner}>
@@ -252,18 +249,16 @@ const styles = StyleSheet.create({
   },
   jobCard: {
     backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 18,
-    // marginBottom: 18, // Đã chuyển ra ngoài TouchableOpacity
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 16,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#e6edfa',
-    position: 'relative',
-    // Hiệu ứng nhấn sẽ đổi màu nền nhẹ (xử lý ở TouchableOpacity)
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24, // tăng khoảng cách giữa các card
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    borderWidth: 2, // thêm viền
+    borderColor: '#e6edfa', // màu xanh nhạt
   },
   badgeNew: {
     position: 'absolute',
@@ -299,7 +294,7 @@ const styles = StyleSheet.create({
   },
   jobCompany: {
     fontSize: 14,
-    color: '#2563eb',
+    color: '#222', // màu chữ bình thường
     marginLeft: 4,
     marginRight: 8,
   },
@@ -352,6 +347,186 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontSize: 11, // nhỏ hơn
     fontWeight: '600',
+  },
+  // Figma card styles
+  figmaCardWrap: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 18,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#e6edfa',
+  },
+  figmaCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  figmaLogoWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ede7fe',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  figmaLogoImg: {
+    width: 32,
+    height: 32,
+    resizeMode: 'contain',
+    borderRadius: 16,
+  },
+  figmaBookmarkBtn: {
+    padding: 4,
+  },
+  figmaJobTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 2,
+  },
+  figmaCompanyLocation: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 10,
+  },
+  figmaSalaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 14,
+  },
+  figmaSalary: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222',
+    marginRight: 2,
+  },
+  figmaSalaryUnit: {
+    fontSize: 15,
+    color: '#bbb',
+    marginBottom: 2,
+  },
+  figmaTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  figmaTag: {
+    backgroundColor: '#f3f7fd',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginRight: 8,
+  },
+  figmaTagText: {
+    color: '#222',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  figmaApplyBtn: {
+    backgroundColor: '#ffe6df',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 22,
+    marginLeft: 8,
+  },
+  figmaApplyText: {
+    color: '#ff855d',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  logoCompanyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  logoCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#eee',
+    marginRight: 12,
+  },
+  companyName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  salaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 12,
+  },
+  salaryText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#222',
+    marginRight: 2,
+  },
+  salaryUnit: {
+    fontSize: 14,
+    color: '#bbb',
+    marginBottom: 2,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  tag: {
+    backgroundColor: '#f3f7fd',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginRight: 8,
+  },
+  tagText: {
+    color: '#222',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  jobSalary: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2563eb', // màu xanh đậm
+    marginLeft: 8,
+  },
+  jobTagsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  jobTag: {
+    backgroundColor: '#F2F2F2', // màu xám nhạt
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 8,
+  },
+  jobTagText: {
+    color: '#222',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  jobApply: {
+    backgroundColor: '#FF9900', // màu cam
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginLeft: 70,
+  },
+  jobApplyText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 });
 
