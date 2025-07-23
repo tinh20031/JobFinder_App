@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Text, Modal, Pressable } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 import { BASE_URL } from '../constants/api';
 import useResumeData from '../services/useResumeData';
+import { authService } from '../services/authService';
 
 const getValidImageUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
@@ -11,11 +13,25 @@ const getValidImageUrl = (url) => {
   return null;
 };
 
-const HeaderCandidates = ({ onDashboard, onLogout }) => {
+const HeaderCandidates = ({ onDashboard }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const { profile } = useResumeData();
+  const navigation = useNavigation();
   const avatar = getValidImageUrl(profile?.image);
   const fullName = profile?.fullName || 'My Account';
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error('Logout failed', error);
+      // Có thể hiện thông báo lỗi cho người dùng
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -70,7 +86,7 @@ const HeaderCandidates = ({ onDashboard, onLogout }) => {
               <MaterialIcons name="dashboard" size={20} color="#222" style={{ marginRight: 8 }} />
               <Text style={styles.dropdownText}>Dashboard</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.dropdownItem} onPress={() => { setDropdownVisible(false); onLogout && onLogout(); }}>
+            <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
               <MaterialIcons name="logout" size={20} color="#222" style={{ marginRight: 8 }} />
               <Text style={styles.dropdownText}>Logout</Text>
             </TouchableOpacity>

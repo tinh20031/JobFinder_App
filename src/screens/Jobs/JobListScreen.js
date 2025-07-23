@@ -4,12 +4,15 @@ import { JobService } from '../../services/JobService';
 import HeaderCandidates from '../../components/HeaderCandidate';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient'; // Nếu muốn dùng gradient thực sự, cần cài expo-linear-gradient
+import * as Animatable from 'react-native-animatable';
+import { useNavigation } from '@react-navigation/native';
 
 const JobListScreen = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sort, setSort] = useState('default');
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -27,7 +30,7 @@ const JobListScreen = () => {
     fetchJobs();
   }, []);
 
-  const renderJobCard = ({ item }) => {
+  const renderJobCard = ({ item, index }) => {
     let salaryText = '';
     if (item.minSalary && item.maxSalary) {
       salaryText = `$${item.minSalary} - $${item.maxSalary}`;
@@ -39,40 +42,40 @@ const JobListScreen = () => {
       salaryText = 'Negotiable Salary';
     }
     return (
-      <View style={styles.jobCard}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* Logo */}
-          {item.logo && (
-            <Image source={{ uri: item.logo }} style={styles.logoCircle} />
-          )}
-          {/* Thông tin bên phải logo */}
-          <View style={{ flex: 1, marginLeft: 5 }}>
-            <Text style={styles.jobTitle}>{item.jobTitle || 'Job Title'}</Text>
-            <Text style={styles.jobCompany}>{item.company?.companyName || 'Unknown Company'}</Text>
+      <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('JobDetail', { jobId: item.id })}>
+        <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
+          <View style={styles.jobCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {/* Logo */}
+              {item.logo && (
+                <Image source={{ uri: item.logo }} style={styles.logoCircle} />
+              )}
+              {/* Thông tin bên phải logo */}
+              <View style={{ flex: 1, marginLeft: 5 }}>
+                <Text style={styles.jobTitle}>{item.jobTitle || 'Job Title'}</Text>
+                <Text style={styles.jobCompany}>{item.company?.companyName || 'Unknown Company'}</Text>
+              </View>
+            </View>
+            {/* Salary dưới logo */}
+            <Text style={[styles.jobSalary, { marginTop: 12, marginLeft: item.logo ? 5 : 0 }]}> {/* 56 = logo width (44) + marginRight (12) */}
+              <Text style={{ color: '#2563eb', fontWeight: 'bold' }}>{salaryText}</Text>
+            </Text>
+            {/* Tags Row */}
+            <View style={styles.jobTagsRow}>
+              {item.jobType && (
+                <View style={styles.jobTag}>
+                  <Text style={styles.jobTagText}>{typeof item.jobType === 'object' ? item.jobType.jobTypeName : item.jobType}</Text>
+                </View>
+              )}
+              {item.industry && (
+                <View style={styles.jobTag}>
+                  <Text style={styles.jobTagText}>{typeof item.industry === 'object' ? item.industry.industryName : item.industry}</Text>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
-        {/* Salary dưới logo */}
-        <Text style={[styles.jobSalary, { marginTop: 12, marginLeft: item.logo ? 5 : 0 }]}> {/* 56 = logo width (44) + marginRight (12) */}
-          <Text style={{ color: '#2563eb', fontWeight: 'bold' }}>{salaryText}</Text>
-        </Text>
-        {/* Tags Row */}
-        <View style={styles.jobTagsRow}>
-          {item.jobType && (
-            <View style={styles.jobTag}>
-              <Text style={styles.jobTagText}>{typeof item.jobType === 'object' ? item.jobType.jobTypeName : item.jobType}</Text>
-            </View>
-          )}
-          {item.industry && (
-            <View style={styles.jobTag}>
-              <Text style={styles.jobTagText}>{typeof item.industry === 'object' ? item.industry.industryName : item.industry}</Text>
-            </View>
-          )}
-          {/* Apply Button */}
-          <TouchableOpacity style={styles.jobApply}>
-            <Text style={styles.jobApplyText}>Apply</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        </Animatable.View>
+      </TouchableOpacity>
     );
   };
 

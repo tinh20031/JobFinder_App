@@ -10,6 +10,8 @@ import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CompanyListScreen from '../screens/Company/CompanyListScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
+import CompanyDetailScreen from '../screens/Company/CompanyDetailScreen';
+import JobDetailScreen from '../screens/Jobs/JobDetailScreen';
 
 // Placeholder ProfileScreen
 function ProfileScreen() {
@@ -128,6 +130,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
+        <Stack.Screen name="CompanyDetail" component={CompanyDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="JobDetail" component={JobDetailScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -69,6 +69,17 @@ const companyService = {
       throw error;
     }
   },
+
+  getCompanyDetail: async (companyId) => {
+    try {
+      const url = `${BASE_URL}/api/CompanyProfile/${companyId}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Network response was not ok');
+      return await res.json();
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default companyService; 
