@@ -1,25 +1,77 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Text, Modal, Pressable } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, Text, Modal, Pressable, FlatList } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../constants/api';
 import useResumeData from '../services/useResumeData';
 import { authService } from '../services/authService';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const getValidImageUrl = (url) => {
-  if (!url || typeof url !== 'string') return null;
-  if (url === 'string') return null;
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
-  return null;
-};
+import { startNotificationHub, stopNotificationHub } from '../services/notificationHub';
 
 const HeaderCandidates = ({ onDashboard }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const { profile } = useResumeData();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showAll, setShowAll] = useState(false);
   const navigation = useNavigation();
-  const avatar = getValidImageUrl(profile?.image);
-  const fullName = profile?.fullName || 'My Account';
+  const { profile } = useResumeData();
+
+  // Lấy notification ban đầu (giả lập, cần thay bằng API thật nếu có)
+  useEffect(() => {
+    async function fetchNotifications(all = false) {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+      try {
+        // Lấy 5 notification mới nhất hoặc toàn bộ
+        const url = all ? `${BASE_URL}/api/notification` : `${BASE_URL}/api/notification?page=1&pageSize=5`;
+        const res = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(Array.isArray(data) ? data : []);
+        }
+      } catch (e) {}
+    }
+    async function fetchUnreadCount() {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch(`${BASE_URL}/api/notification/unread-count`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data?.count || 0);
+        }
+      } catch (e) {}
+    }
+    fetchNotifications(showAll);
+    fetchUnreadCount();
+  }, [showAll]);
+
+  // Kết nối SignalR notification realtime
+  useEffect(() => {
+    let hubConnection;
+    async function connectHub() {
+      // Lấy userId đúng key 'UserId' (chữ U hoa)
+      hubConnection = await startNotificationHub((notification) => {
+        setNotifications((prev) => [notification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      });
+    }
+    connectHub();
+    return () => {
+      stopNotificationHub();
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -30,36 +82,33 @@ const HeaderCandidates = ({ onDashboard }) => {
       });
     } catch (error) {
       console.error('Logout failed', error);
-      // Có thể hiện thông báo lỗi cho người dùng
     }
   };
 
-  useEffect(() => {
-    const fetchProfile = async () => {
+  const handleBellPress = async () => {
+    setDropdownVisible((prev) => !prev);
+    if (unreadCount > 0) {
+      const token = await AsyncStorage.getItem('token');
       try {
-        // Giả sử API backend có endpoint /CandidateProfile/me
-        const res = await fetch(`${BASE_URL}/api/CandidateProfile/me`, {
+        await fetch(`${BASE_URL}/api/notification/read-all`, {
+          method: 'PUT',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
-            // Nếu cần token:
-            // 'Authorization': `Bearer ${token}`
           },
         });
-        if (res.ok) {
-          const profile = await res.json();
-          // setFullName(profile.fullName || 'My Account'); // This line was removed from original, so it's removed here.
-          // setAvatar(getValidImageUrl(profile.image) || null); // This line was removed from original, so it's removed here.
-        } else {
-          // setFullName('My Account'); // This line was removed from original, so it's removed here.
-          // setAvatar(null); // This line was removed from original, so it's removed here.
-        }
-      } catch {
-        // setFullName('My Account'); // This line was removed from original, so it's removed here.
-        // setAvatar(null); // This line was removed from original, so it's removed here.
-      }
-    };
-    fetchProfile();
-  }, []);
+        setUnreadCount(0);
+      } catch (e) {}
+    }
+  };
+
+  const renderNotification = ({ item }) => (
+    <View style={[styles.notificationItem, !item.isRead && styles.unreadNotification]}>
+      <Text style={styles.notificationTitle}>{item.title || 'New notification'}</Text>
+      <Text style={styles.notificationMessage}>{item.message || ''}</Text>
+      <Text style={styles.notificationTime}>{item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}</Text>
+    </View>
+  );
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -69,11 +118,12 @@ const HeaderCandidates = ({ onDashboard }) => {
           style={styles.logo}
           resizeMode="contain"
         />
-        <TouchableOpacity onPress={() => setDropdownVisible(true)} style={styles.avatarWrapper}>
-          {avatar ? (
-            <Image source={{ uri: avatar }} style={styles.avatar} />
-          ) : (
-            <MaterialIcons name="person" size={40} color="#2563eb" style={styles.avatar} />
+        <TouchableOpacity onPress={handleBellPress} style={styles.bellWrapper}>
+          <MaterialIcons name="notifications" size={36} color="#2563eb" />
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unreadCount}</Text>
+            </View>
           )}
         </TouchableOpacity>
         <Modal
@@ -84,14 +134,24 @@ const HeaderCandidates = ({ onDashboard }) => {
         >
           <Pressable style={styles.overlay} onPress={() => setDropdownVisible(false)}>
             <View style={styles.dropdown}>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setDropdownVisible(false); onDashboard && onDashboard(); }}>
-                <MaterialIcons name="dashboard" size={20} color="#222" style={{ marginRight: 8 }} />
-                <Text style={styles.dropdownText}>Dashboard</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
-                <MaterialIcons name="logout" size={20} color="#222" style={{ marginRight: 8 }} />
-                <Text style={styles.dropdownText}>Logout</Text>
-              </TouchableOpacity>
+              <Text style={styles.dropdownHeader}>Notifications</Text>
+              <FlatList
+                data={notifications}
+                keyExtractor={(item, index) => item.notificationId?.toString() || index.toString()}
+                renderItem={renderNotification}
+                ListEmptyComponent={<Text style={styles.emptyText}>No notifications</Text>}
+                style={{ maxHeight: 300 }}
+              />
+              {!showAll && notifications.length >= 5 && (
+                <TouchableOpacity style={styles.viewAllBtn} onPress={() => setShowAll(true)}>
+                  <Text style={styles.viewAllText}>View All Notifications</Text>
+                </TouchableOpacity>
+              )}
+              {showAll && notifications.length > 5 && (
+                <TouchableOpacity style={styles.viewAllBtn} onPress={() => setShowAll(false)}>
+                  <Text style={styles.viewAllText}>Show less</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Pressable>
         </Modal>
@@ -120,31 +180,38 @@ const styles = StyleSheet.create({
     height: 40,
     tintColor: '#2563eb',
   },
-  avatarWrapper: {
+  bellWrapper: {
     marginLeft: 'auto',
-    borderRadius: 45,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#fff',     // Màu viền avatar
-    width: 45,
-    height: 45,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#e74c3c',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+    zIndex: 10,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.1)',
-    // Bỏ justifyContent/alignItems để dropdown luôn ở vị trí tuyệt đối
   },
   dropdown: {
     position: 'absolute',
     top: 55,
-    right: 20,
+    right: 10,
     backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 8,
@@ -154,8 +221,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
-    minWidth: 180,
+    minWidth: 260,
+    maxWidth: 320,
+    width: '90%',
     zIndex: 100,
+  },
+  dropdownHeader: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginBottom: 4,
+  },
+  notificationItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f3f3',
+  },
+  unreadNotification: {
+    backgroundColor: '#f1f6fd',
+  },
+  notificationTitle: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#222',
+  },
+  notificationMessage: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
+  },
+  notificationTime: {
+    fontSize: 11,
+    color: '#aaa',
+    marginTop: 4,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#888',
+    padding: 16,
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -166,6 +272,17 @@ const styles = StyleSheet.create({
   dropdownText: {
     fontSize: 16,
     color: '#222',
+  },
+  viewAllBtn: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  viewAllText: {
+    color: '#2563eb',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 });
 

@@ -41,7 +41,7 @@ export const authService = {
       } else if (decodedToken && (decodedToken.sub || decodedToken.userId || decodedToken.id)) {
         userId = decodedToken.sub || decodedToken.userId || decodedToken.id;
       }
-      if (userId) await AsyncStorage.setItem('userId', String(userId));
+      if (userId) await AsyncStorage.setItem('UserId', String(userId));
       return data;
     } catch (error) {
       // Xử lý lỗi email chưa xác thực
