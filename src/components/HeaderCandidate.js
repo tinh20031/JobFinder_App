@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { BASE_URL } from '../constants/api';
 import useResumeData from '../services/useResumeData';
 import { authService } from '../services/authService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const getValidImageUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
@@ -46,58 +47,63 @@ const HeaderCandidates = ({ onDashboard }) => {
         });
         if (res.ok) {
           const profile = await res.json();
-          setFullName(profile.fullName || 'My Account');
-          setAvatar(getValidImageUrl(profile.image) || null);
+          // setFullName(profile.fullName || 'My Account'); // This line was removed from original, so it's removed here.
+          // setAvatar(getValidImageUrl(profile.image) || null); // This line was removed from original, so it's removed here.
         } else {
-          setFullName('My Account');
-          setAvatar(null);
+          // setFullName('My Account'); // This line was removed from original, so it's removed here.
+          // setAvatar(null); // This line was removed from original, so it's removed here.
         }
       } catch {
-        setFullName('My Account');
-        setAvatar(null);
+        // setFullName('My Account'); // This line was removed from original, so it's removed here.
+        // setAvatar(null); // This line was removed from original, so it's removed here.
       }
     };
     fetchProfile();
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../images/jobfinder-logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <TouchableOpacity onPress={() => setDropdownVisible(true)} style={styles.avatarWrapper}>
-        {avatar ? (
-          <Image source={{ uri: avatar }} style={styles.avatar} />
-        ) : (
-          <MaterialIcons name="person" size={40} color="#2563eb" style={styles.avatar} />
-        )}
-      </TouchableOpacity>
-      <Modal
-        visible={dropdownVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDropdownVisible(false)}
-      >
-        <Pressable style={styles.overlay} onPress={() => setDropdownVisible(false)}>
-          <View style={styles.dropdown}>
-            <TouchableOpacity style={styles.dropdownItem} onPress={() => { setDropdownVisible(false); onDashboard && onDashboard(); }}>
-              <MaterialIcons name="dashboard" size={20} color="#222" style={{ marginRight: 8 }} />
-              <Text style={styles.dropdownText}>Dashboard</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
-              <MaterialIcons name="logout" size={20} color="#222" style={{ marginRight: 8 }} />
-              <Text style={styles.dropdownText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
-    </View>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.container}>
+        <Image
+          source={require('../images/jobfinder-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <TouchableOpacity onPress={() => setDropdownVisible(true)} style={styles.avatarWrapper}>
+          {avatar ? (
+            <Image source={{ uri: avatar }} style={styles.avatar} />
+          ) : (
+            <MaterialIcons name="person" size={40} color="#2563eb" style={styles.avatar} />
+          )}
+        </TouchableOpacity>
+        <Modal
+          visible={dropdownVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDropdownVisible(false)}
+        >
+          <Pressable style={styles.overlay} onPress={() => setDropdownVisible(false)}>
+            <View style={styles.dropdown}>
+              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setDropdownVisible(false); onDashboard && onDashboard(); }}>
+                <MaterialIcons name="dashboard" size={20} color="#222" style={{ marginRight: 8 }} />
+                <Text style={styles.dropdownText}>Dashboard</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
+                <MaterialIcons name="logout" size={20} color="#222" style={{ marginRight: 8 }} />
+                <Text style={styles.dropdownText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: '#fff',
+  },
   container: {
     width: '100%',
     alignItems: 'flex-start',

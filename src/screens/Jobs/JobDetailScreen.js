@@ -6,6 +6,8 @@ import { JobService } from '../../services/JobService';
 import RenderHTML from 'react-native-render-html';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
+import JobApplyModal from '../../components/JobApplyModal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const JobDetailScreen = ({ route }) => {
   const { jobId } = route?.params || {};
@@ -15,6 +17,9 @@ const JobDetailScreen = ({ route }) => {
   const { width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState('about');
   const navigation = useNavigation();
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Thêm state này
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -243,15 +248,27 @@ const JobDetailScreen = ({ route }) => {
       </ScrollView>
       <Animatable.View animation="fadeInUp" duration={600} delay={450} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 100 }}>
         {/* Menu bar dưới cùng */}
-        <View style={styles.bottomMenuBar}>
+        <View style={[styles.bottomMenuBar, { paddingBottom: 10 + insets.bottom }]}>
           <TouchableOpacity style={styles.bookmarkBtn}>
             <MaterialIcons name="bookmark-border" size={22} color="#1967D2" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.applyBtn}>
+          <TouchableOpacity
+            style={[styles.applyBtn, isSubmitting && { backgroundColor: '#90caf9' }]}
+            onPress={() => setShowApplyModal(true)}
+            disabled={isSubmitting}
+          >
             <Text style={styles.applyBtnText}>Apply Now</Text>
           </TouchableOpacity>
         </View>
       </Animatable.View>
+      <JobApplyModal
+        visible={showApplyModal}
+        onClose={() => setShowApplyModal(false)}
+        jobId={job.id}
+        onApplied={() => setShowApplyModal(false)}
+        isSubmitting={isSubmitting}
+        onSubmittingChange={setIsSubmitting}
+      />
     </View>
   );
 };
