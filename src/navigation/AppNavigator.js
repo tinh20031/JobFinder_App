@@ -10,15 +10,7 @@ import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CompanyListScreen from '../screens/Company/CompanyListScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
-
-// Placeholder ProfileScreen
-function ProfileScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Profile Screen</Text>
-    </View>
-  );
-}
+import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 // Thêm màn hình AddScreen (dấu cộng)
 function AddScreen() {
