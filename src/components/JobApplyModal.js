@@ -27,8 +27,8 @@ export const GenericModalProvider = ({ children }) => {
   const [message, setMessage] = useState('');
   const [type, setType] = useState('success'); // 'success' | 'error'
   const show = ({
-    title = 'CV Submitted Successfully!',
-    message = 'Your CV has been submitted successfully. We will contact you as soon as possible.',
+    title = 'Applied Successfully!',
+    message = 'Your application has been submitted successfully. We will contact you as soon as possible.',
     type = 'success',
   }) => {
     setTitle(title);
@@ -191,7 +191,7 @@ const JobApplyModal = ({ visible, onClose, jobId, onApplied, cvList = [], isSubm
         setLoading(false);
         if (onSubmittingChange) onSubmittingChange(false); // Cho phép ấn lại khi có kết quả
         showGenericModal({
-          title: 'CV Submitted Successfully!',
+          title: 'Submitted Successfully!',
           message: 'Your CV has been submitted successfully. We will contact you as soon as possible.',
           type: 'success',
         });

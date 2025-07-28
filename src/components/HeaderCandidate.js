@@ -102,6 +102,10 @@ const HeaderCandidates = ({ onDashboard }) => {
     }
   };
 
+  const handleMessagePress = () => {
+    navigation.navigate('Listchat');
+  };
+
   const renderNotification = ({ item }) => (
     <View style={[styles.notificationItem, !item.isRead && styles.unreadNotification]}>
       <Text style={styles.notificationTitle}>{item.title || 'New notification'}</Text>
@@ -125,6 +129,9 @@ const HeaderCandidates = ({ onDashboard }) => {
               <Text style={styles.badgeText}>{unreadCount}</Text>
             </View>
           )}
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleMessagePress} style={styles.messageWrapper}>
+          <MaterialIcons name="message" size={32} color="#2563eb" />
         </TouchableOpacity>
         <Modal
           visible={dropdownVisible}
@@ -185,6 +192,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+  },
+  messageWrapper: {
+    marginLeft: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   badge: {
     position: 'absolute',

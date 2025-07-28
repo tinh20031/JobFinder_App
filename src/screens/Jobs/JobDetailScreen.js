@@ -7,6 +7,7 @@ import RenderHTML from 'react-native-render-html';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import JobApplyModal from '../../components/JobApplyModal';
+import CvMatchingModal from '../../components/CvMatchingModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const JobDetailScreen = ({ route }) => {
@@ -18,6 +19,7 @@ const JobDetailScreen = ({ route }) => {
   const [activeTab, setActiveTab] = useState('about');
   const navigation = useNavigation();
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showCvMatchModal, setShowCvMatchModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Thêm state này
   const insets = useSafeAreaInsets();
 
@@ -95,6 +97,19 @@ const JobDetailScreen = ({ route }) => {
           </View>
         </Animatable.View>
         <Animatable.View animation="fadeInUp" duration={600} delay={150}>
+          {/* Action Buttons */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.followBtn}>
+              <MaterialIcons name="add" size={20} color="#fff" />
+              <Text style={styles.followBtnText}>Follow</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cvMatchBtn} onPress={() => setShowCvMatchModal(true)}>
+              <MaterialIcons name="search" size={20} color="#fff" />
+              <Text style={styles.cvMatchBtnText}>Try CV Match</Text>
+            </TouchableOpacity>
+          </View>
+        </Animatable.View>
+        <Animatable.View animation="fadeInUp" duration={600} delay={300}>
           {/* Tabs (About us, Post, Jobs) - chỉ là UI, chưa cần xử lý tab động */}
           <View style={styles.tabRow}>
             <TouchableOpacity style={[styles.tabBtn, activeTab === 'about' && styles.tabBtnActive]} onPress={() => setActiveTab('about')}><Text style={activeTab === 'about' ? styles.tabTextActive : styles.tabText}>About Job</Text></TouchableOpacity>
@@ -102,7 +117,7 @@ const JobDetailScreen = ({ route }) => {
             <TouchableOpacity style={[styles.tabBtn, activeTab === 'recruiter' && styles.tabBtnActive]} onPress={() => setActiveTab('recruiter')}><Text style={activeTab === 'recruiter' ? styles.tabTextActive : styles.tabText}>Recruiter</Text></TouchableOpacity>
           </View>
         </Animatable.View>
-        <Animatable.View animation="fadeInUp" duration={600} delay={300}>
+        <Animatable.View animation="fadeInUp" duration={600} delay={450}>
           {activeTab === 'about' && (
             <View style={styles.sectionWrap}>
               <Text style={styles.sectionTitle}>Job Description</Text>
@@ -246,7 +261,7 @@ const JobDetailScreen = ({ route }) => {
           )}
         </Animatable.View>
       </ScrollView>
-      <Animatable.View animation="fadeInUp" duration={600} delay={450} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 100 }}>
+      <Animatable.View animation="fadeInUp" duration={600} delay={600} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 100 }}>
         {/* Menu bar dưới cùng */}
         <View style={[styles.bottomMenuBar, { paddingBottom: 10 + insets.bottom }]}>
           <TouchableOpacity style={styles.bookmarkBtn}>
@@ -268,6 +283,12 @@ const JobDetailScreen = ({ route }) => {
         onApplied={() => setShowApplyModal(false)}
         isSubmitting={isSubmitting}
         onSubmittingChange={setIsSubmitting}
+      />
+      <CvMatchingModal
+        visible={showCvMatchModal}
+        onClose={() => setShowCvMatchModal(false)}
+        jobId={job.id}
+        jobTitle={job.jobTitle}
       />
     </View>
   );
@@ -337,20 +358,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 8,
+    paddingHorizontal: 18,
   },
-  actionBtn: {
+  followBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF5F5',
+    backgroundColor: '#1967D2',
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 22,
-    marginHorizontal: 8,
+    marginRight: 8,
+    flex: 1,
+    justifyContent: 'center',
   },
-  actionText: {
-    color: '#FF4D4F',
+  followBtnText: {
+    color: '#fff',
     fontWeight: '600',
     fontSize: 16,
+    marginLeft: 6,
+  },
+  cvMatchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1967D2',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    marginLeft: 8,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  cvMatchBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 6,
   },
   tabRow: {
     flexDirection: 'row',

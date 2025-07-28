@@ -2,7 +2,7 @@ import { HubConnectionBuilder, LogLevel, HttpTransportType, HubConnectionState }
 import { BASE_URL } from '../constants/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = `${BASE_URL}/Message`;
+const API_URL = `${BASE_URL}/api/Message`;
 
 async function getToken() {
   return await AsyncStorage.getItem('token');
@@ -15,6 +15,7 @@ const chatService = {
   async startConnection() {
     if (this.connection && this.connection.state !== HubConnectionState.Disconnected) return;
     const token = await getToken();
+    console.log('[SignalR-Chat] Connecting to:', this.hubUrl);
     this.connection = new HubConnectionBuilder()
       .withUrl(this.hubUrl, {
         skipNegotiation: true,
@@ -24,13 +25,28 @@ const chatService = {
       .configureLogging(LogLevel.Information)
       .withAutomaticReconnect()
       .build();
-    await this.connection.start();
+    this.connection.onclose((error) => {
+      console.log('[SignalR-Chat] Disconnected', error ? error.message : '');
+    });
+    this.connection.onreconnecting((error) => {
+      console.log('[SignalR-Chat] Reconnecting...', error ? error.message : '');
+    });
+    this.connection.onreconnected((connectionId) => {
+      console.log('[SignalR-Chat] Reconnected. ConnectionId:', connectionId);
+    });
+    try {
+      await this.connection.start();
+      console.log('[SignalR-Chat] Connected!');
+    } catch (err) {
+      console.log('[SignalR-Chat] Connection error:', err.message);
+    }
   },
 
   stopConnection() {
     if (this.connection) {
       this.connection.stop();
       this.connection = null;
+      console.log('[SignalR-Chat] Connection stopped');
     }
   },
 
@@ -45,29 +61,33 @@ const chatService = {
   async joinUserGroup(userId) {
     if (this.connection) {
       await this.connection.invoke('JoinUserGroup', userId);
+      console.log('[SignalR-Chat] Joined user group:', userId);
     }
   },
 
   async leaveUserGroup(userId) {
     if (this.connection) {
       await this.connection.invoke('LeaveUserGroup', userId);
+      console.log('[SignalR-Chat] Left user group:', userId);
     }
   },
 
   async joinRoom(roomId) {
     if (this.connection) {
       await this.connection.invoke('JoinRoom', roomId);
+      console.log('[SignalR-Chat] Joined room:', roomId);
     }
   },
 
   // API: Lấy lịch sử chat giữa 2 user (toàn bộ)
-  async getMessageHistory(userId1, userId2) {
+  async getMessageHistory(userId1, userId2, returnRawResponse = false) {
     const token = await getToken();
     const res = await fetch(`${API_URL}/history/${userId1}/${userId2}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
     });
+    if (returnRawResponse) return res;
     return res.json();
   },
 

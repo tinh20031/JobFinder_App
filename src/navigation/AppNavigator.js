@@ -12,6 +12,8 @@ import CompanyListScreen from '../screens/Company/CompanyListScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
 import CompanyDetailScreen from '../screens/Company/CompanyDetailScreen';
 import JobDetailScreen from '../screens/Jobs/JobDetailScreen';
+import Listchat from '../screens/Listchat';
+import ChatDetail from '../screens/ChatDetail';
 
 // Placeholder ProfileScreen
 function ProfileScreen() {
@@ -132,6 +134,9 @@ export default function AppNavigator() {
         <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
         <Stack.Screen name="CompanyDetail" component={CompanyDetailScreen} options={{ headerShown: false }} />
         <Stack.Screen name="JobDetail" component={JobDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Listchat" component={Listchat} options={{ headerShown: false }} />
+        <Stack.Screen name="ChatDetail" component={ChatDetail} options={{ headerShown: false }} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
