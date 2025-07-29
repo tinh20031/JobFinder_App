@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { authService } from '../../services/authService';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Header from '../../components/Header';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +21,13 @@ const LoginScreen = ({ navigation }) => {
     setError('');
     try {
       const data = await authService.login(email, password);
+      const token = await AsyncStorage.getItem('token');
+      console.log('Token just saved after login:', token);
+      if (!token) {
+        Alert.alert('Error', 'Token not saved! Please try again.');
+        setLoading(false);
+        return;
+      }
       navigation.reset({
         index: 0,
         routes: [{ name: 'MainTab' }],

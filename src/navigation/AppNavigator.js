@@ -11,6 +11,15 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CompanyListScreen from '../screens/Company/CompanyListScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
+import AboutMeEditScreen from '../screens/Profile/AboutMeEditScreen';
+import EducationEditScreen from '../screens/Profile/EducationEditScreen';
+import WorkExperienceEditScreen from '../screens/Profile/WorkExperienceEditScreen';
+import AddSkillScreen from '../screens/Profile/AddSkillScreen';
+import ForeignLanguageSection from '../screens/Profile/ForeignLanguageSection';
+import AddLanguageScreen from '../screens/Profile/AddLanguageScreen';
+import SearchLanguageScreen from '../screens/Profile/SearchLanguageScreen';
+import ForeignLanguageListScreen from '../screens/Profile/ForeignLanguageListScreen';
+import EditSkillScreen from '../screens/Profile/EditSkillScreen';
 
 // Thêm màn hình AddScreen (dấu cộng)
 function AddScreen() {
@@ -120,6 +129,14 @@ export default function AppNavigator() {
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
+        <Stack.Screen name="AboutMeEdit" component={AboutMeEditScreen} options={{ headerShown: true }} />
+        <Stack.Screen name="EducationEdit" component={EducationEditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="WorkExperienceEdit" component={WorkExperienceEditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AddSkillScreen" component={AddSkillScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="EditSkillScreen" component={EditSkillScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SearchLanguageScreen" component={SearchLanguageScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AddLanguageScreen" component={AddLanguageScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ForeignLanguageListScreen" component={ForeignLanguageListScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

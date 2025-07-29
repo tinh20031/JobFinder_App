@@ -1,0 +1,203 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useFocusEffect } from '@react-navigation/native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Mock language suggestions with flags
+const LANGUAGE_SUGGESTIONS = [
+  { name: 'Arabic', flag: '🇸🇦' },
+  { name: 'Indonesian', flag: '🇮🇩' },
+  { name: 'Malaysian', flag: '🇲🇾' },
+  { name: 'English', flag: '🇬🇧' },
+  { name: 'French', flag: '🇫🇷' },
+  { name: 'German', flag: '🇩🇪' },
+  { name: 'Hindi', flag: '🇮🇳' },
+  { name: 'Italian', flag: '🇮🇹' },
+  { name: 'Japanese', flag: '🇯🇵' },
+  { name: 'Korean', flag: '🇰🇷' },
+  { name: 'Chinese', flag: '🇨🇳' },
+  { name: 'Spanish', flag: '🇪🇸' },
+  { name: 'Portuguese', flag: '🇵🇹' },
+  { name: 'Russian', flag: '🇷🇺' },
+  { name: 'Vietnamese', flag: '🇻🇳' },
+];
+
+export default function SearchLanguageScreen({ navigation, route }) {
+  const { selectedLanguage } = route.params || {};
+  const [searchText, setSearchText] = useState('');
+  const [filteredLanguages, setFilteredLanguages] = useState(LANGUAGE_SUGGESTIONS);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Reset search when screen is focused
+      setSearchText('');
+      setFilteredLanguages(LANGUAGE_SUGGESTIONS);
+    }, [])
+  );
+
+  const filterLanguages = useCallback(() => {
+    if (!searchText.trim()) {
+      setFilteredLanguages(LANGUAGE_SUGGESTIONS);
+      return;
+    }
+
+    const filtered = LANGUAGE_SUGGESTIONS.filter(lang => 
+      lang.name.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredLanguages(filtered);
+  }, [searchText]);
+
+  useEffect(() => {
+    filterLanguages();
+  }, [filterLanguages]);
+
+  const handleSelectLanguage = (language) => {
+    navigation.navigate('AddLanguageScreen', { 
+      selectedLanguage: language,
+      mode: 'add'
+    });
+  };
+
+  const renderLanguageItem = ({ item }) => (
+    <TouchableOpacity 
+      style={[
+        styles.languageItem,
+        selectedLanguage?.name === item.name && styles.selectedLanguageItem
+      ]} 
+      onPress={() => handleSelectLanguage(item)}
+    >
+      <View style={styles.languageInfo}>
+        <Text style={styles.flagText}>{item.flag}</Text>
+        <Text style={[
+          styles.languageText,
+          selectedLanguage?.name === item.name && styles.selectedLanguageText
+        ]}>
+          {item.name}
+        </Text>
+      </View>
+      {selectedLanguage?.name === item.name && (
+        <Icon name="check" size={20} color="#130160" />
+      )}
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* Back button */}
+      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <Icon name="arrow-back" size={24} color="#150b3d" />
+      </TouchableOpacity>
+      <Text style={styles.header}>Add Language</Text>
+      
+      <View style={styles.form}>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#514a6b" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholder="Search skills"
+            placeholderTextColor="#514a6b"
+          />
+        </View>
+
+        <FlatList
+          data={filteredLanguages}
+          renderItem={renderLanguageItem}
+          keyExtractor={(item) => item.name}
+          style={styles.languagesList}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f8f8f8', 
+    alignItems: 'center', 
+    paddingTop: 24 
+  },
+  backBtn: { 
+    position: 'absolute', 
+    top: 30, 
+    left: 20, 
+    zIndex: 10, 
+    width: 36, 
+    height: 36, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  header: { 
+    fontWeight: 'bold', 
+    fontSize: 20, 
+    color: '#150b3d', 
+    marginTop: 24, 
+    marginBottom: 16 
+  },
+  form: { 
+    width: SCREEN_WIDTH - 36, 
+    backgroundColor: '#fff', 
+    borderRadius: 16, 
+    padding: 20, 
+    elevation: 2 
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#150b3d',
+    paddingVertical: 12,
+  },
+  languagesList: {
+    flex: 1,
+  },
+  languageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  selectedLanguageItem: {
+    backgroundColor: '#d6cdfe',
+    borderColor: '#130160',
+  },
+  languageInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flagText: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  languageText: {
+    fontSize: 16,
+    color: '#150b3d',
+    fontWeight: '500',
+  },
+  selectedLanguageText: {
+    color: '#130160',
+    fontWeight: 'bold',
+  },
+}); 

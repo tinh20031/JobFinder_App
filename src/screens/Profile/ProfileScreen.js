@@ -2,11 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ImageBackground, Dimensions, TextInput, ActivityIndicator, Alert } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import profileService from '../../services/profileService';
+import profileService, { getToken } from '../../services/profileService';
 import {launchImageLibrary} from 'react-native-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AboutMeSection from './AboutMeSection';
+import EducationSection from './EducationSection';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import WorkExperienceSection from './WorkExperienceSection';
+import SkillsSection from './SkillsSection';
+import ForeignLanguageSection from './ForeignLanguageSection';
+import HighlightProjectSection from './HighlightProjectSection';
+import CertificateSection from './CertificateSection';
+import AwardsSection from './AwardsSection';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// SectionCard: card section dùng cho các phần Work Experience, Skills, ...
+function SectionCard({ iconName, title, emptyText }) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Icon name={iconName} size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Text style={styles.title}>{title}</Text>
+      </View>
+      <View style={styles.separator} />
+      <Text style={styles.emptyText}>{emptyText}</Text>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -23,8 +48,16 @@ export default function ProfileScreen() {
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [aboutMe, setAboutMe] = useState(null);
+  const [aboutMeLoading, setAboutMeLoading] = useState(true);
 
-  useEffect(() => {
+  const navigation = useNavigation();
+  const [educations, setEducations] = useState([]);
+  const [workExperiences, setWorkExperiences] = useState([]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Gọi lại fetchProfile để reload About Me khi màn hình được focus
     const fetchProfile = async () => {
       setLoading(true);
       setError('');
@@ -39,13 +72,99 @@ export default function ProfileScreen() {
         setImage(profile.image || '');
         setProvince(profile.province || '');
         setCity(profile.city || '');
+          // Lấy About Me
+          setAboutMeLoading(true);
+          try {
+            const token = await getToken();
+            const about = await profileService.getAboutMe(token);
+            console.log('AboutMe data from API:', about);
+            // Chỉ set aboutMe nếu có dữ liệu thực sự (không phải null hoặc empty object)
+            if (about && (about.aboutMeId || about.id)) {
+              setAboutMe(about);
+            } else {
+              setAboutMe(null);
+            }
+          } catch (e) {
+            console.log('Error fetching AboutMe:', e);
+            setAboutMe(null);
+          }
+          setAboutMeLoading(false);
       } catch (e) {
-        setError('Unable to load profile information.');
+          setError('Unable to load profile information.');
+          setAboutMeLoading(false);
       }
       setLoading(false);
     };
     fetchProfile();
-  }, []);
+    }, [])
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchEducations = async () => {
+        const token = await AsyncStorage.getItem('token');
+        try {
+          const list = await profileService.getEducationList(token);
+          setEducations(list);
+        } catch (e) {
+          setEducations([]);
+        }
+      };
+      fetchEducations();
+    }, [])
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchWorks = async () => {
+        const token = await AsyncStorage.getItem('token');
+        try {
+          const list = await profileService.getWorkExperienceList(token);
+          setWorkExperiences(list);
+        } catch (e) {
+          setWorkExperiences([]);
+        }
+      };
+      fetchWorks();
+    }, [])
+  );
+
+  const handleAddEducation = () => {
+    navigation.navigate('EducationEdit', { mode: 'add' });
+  };
+  const handleEditEducation = (item) => {
+    navigation.navigate('EducationEdit', { education: item, mode: 'edit' });
+  };
+  const handleDeleteEducation = async (item) => {
+    const token = await AsyncStorage.getItem('token');
+    await profileService.deleteEducation(item.educationId, token);
+    // Reload list
+    const list = await profileService.getEducationList(token);
+    setEducations(list);
+  };
+
+  const handleAddWorkExperience = () => {
+    navigation.navigate('WorkExperienceEdit', { mode: 'add' });
+  };
+  const handleEditWorkExperience = (item) => {
+    navigation.navigate('WorkExperienceEdit', { work: item, mode: 'edit' });
+  };
+
+  // Hàm edit About Me
+  const handleEditAboutMe = async (desc, id) => {
+    try {
+      const token = await getToken(); // Hàm lấy token, bạn cần thay thế bằng logic thực tế
+      if (id) {
+        await profileService.updateAboutMe(id, desc, token);
+        setAboutMe({ ...aboutMe, aboutMeDescription: desc });
+      } else {
+        const about = await profileService.createAboutMe(desc, token);
+        setAboutMe(about);
+      }
+    } catch (e) {
+      setError('Failed to update About Me.');
+    }
+  };
 
   // Validate function
   const validate = () => {
@@ -148,8 +267,9 @@ export default function ProfileScreen() {
       </ImageBackground>
       {/* Form fields */}
       <View style={[styles.formWrapper, { width: SCREEN_WIDTH - 32 }]}> 
-        {/* Fullname */}
+        {/* Personal Info Card: gộp các trường cơ bản vào 1 card lớn */}
         <View style={styles.card}>
+          {/* Fullname */}
           <Text style={styles.label}>Fullname</Text>
           <TextInput
             style={styles.input}
@@ -158,22 +278,20 @@ export default function ProfileScreen() {
             placeholder="Fullname"
             placeholderTextColor="#bcbcbc"
           />
-        </View>
         {/* Date of birth */}
-        <View style={styles.card}>
           <Text style={styles.label}>Date of birth</Text>
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={dob}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#bcbcbc"
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              value={dob}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#bcbcbc"
                 editable={false}
                 pointerEvents="none"
-              />
-              <MaterialIcons name="calendar-today" size={22} color="#514a6b" style={{ marginLeft: 8 }} />
-            </View>
+            />
+            <MaterialIcons name="calendar-today" size={22} color="#514a6b" style={{ marginLeft: 8 }} />
+          </View>
           </TouchableOpacity>
           {showDatePicker && (
             <DateTimePicker
@@ -192,11 +310,9 @@ export default function ProfileScreen() {
               }}
             />
           )}
-        </View>
         {/* Gender */}
-        <View style={styles.card}>
           <Text style={styles.label}>Gender</Text>
-          <View style={styles.genderRow}>
+          <View style={[styles.genderRow, { marginBottom: 24 }]}> 
             <TouchableOpacity style={[styles.genderOption, gender === 'Male' && styles.genderOptionActive]} onPress={() => setGender('Male')}>
               <View style={[styles.radioOuter, gender === 'Male' && styles.radioOuterActive]}>
                 {gender === 'Male' && <View style={styles.radioInnerActive} />}
@@ -209,10 +325,8 @@ export default function ProfileScreen() {
               </View>
               <Text style={styles.genderText}>Female</Text>
             </TouchableOpacity>
-          </View>
         </View>
         {/* Email address */}
-        <View style={styles.card}>
           <Text style={styles.label}>Email address</Text>
           <TextInput
             style={styles.input}
@@ -222,9 +336,34 @@ export default function ProfileScreen() {
             placeholderTextColor="#bcbcbc"
             keyboardType="email-address"
           />
-        </View>
-        {/* Phone number */}
-        <View style={styles.card}>
+          {/* Address */}
+          <Text style={styles.label}>Address</Text>
+          <TextInput
+            style={styles.input}
+            value={address}
+            onChangeText={setAddress}
+            placeholder="Address"
+            placeholderTextColor="#bcbcbc"
+          />
+          {/* City */}
+          <Text style={styles.label}>City</Text>
+          <TextInput
+            style={styles.input}
+            value={city}
+            onChangeText={setCity}
+            placeholder="City"
+            placeholderTextColor="#bcbcbc"
+          />
+          {/* Province */}
+          <Text style={styles.label}>Province</Text>
+          <TextInput
+            style={styles.input}
+            value={province}
+            onChangeText={setProvince}
+            placeholder="Province"
+            placeholderTextColor="#bcbcbc"
+          />
+          {/* Phone number */}
           <Text style={styles.label}>Phone number</Text>
           <TextInput
             style={styles.input}
@@ -235,42 +374,40 @@ export default function ProfileScreen() {
             keyboardType="phone-pad"
           />
         </View>
-        {/* Location */}
-        <View style={styles.card}>
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={styles.input}
-            value={address}
-            onChangeText={setAddress}
-            placeholder="Address"
-            placeholderTextColor="#bcbcbc"
-          />
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.label}>City</Text>
-          <TextInput
-            style={styles.input}
-            value={city}
-            onChangeText={setCity}
-            placeholder="City"
-            placeholderTextColor="#bcbcbc"
-          />
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.label}>Province</Text>
-          <TextInput
-            style={styles.input}
-            value={province}
-            onChangeText={setProvince}
-            placeholder="Province"
-            placeholderTextColor="#bcbcbc"
-          />
-        </View>
-      </View>
+        {/* About Me Section */}
+        <AboutMeSection
+          aboutMe={aboutMe}
+          onEdit={handleEditAboutMe}
+          loading={aboutMeLoading}
+          onAdd={() => navigation.getParent()?.navigate('AboutMeEdit', { aboutMe: null })}
+        />
+        {/* Education Section */}
+        <EducationSection
+          educations={educations}
+          onAdd={handleAddEducation}
+          onEdit={handleEditEducation}
+          onDelete={handleDeleteEducation}
+        />
+        {/* Work Experience Section */}
+        <WorkExperienceSection
+          works={workExperiences}
+          onAdd={handleAddWorkExperience}
+          onEdit={handleEditWorkExperience}
+        />
+        {/* Skills Section */}
+        <SkillsSection navigation={navigation} />
+        <ForeignLanguageSection navigation={navigation} />
+        {/* Highlight Project Section */}
+        <HighlightProjectSection onAdd={() => {}} />
+        {/* Certificate Section */}
+        <CertificateSection onAdd={() => {}} />
+        {/* Awards Section */}
+        <AwardsSection onAdd={() => {}} />
       {error ? <Text style={{ color: 'red', marginBottom: 8 }}>{error}</Text> : null}
       <TouchableOpacity style={[styles.saveBtn, { width: SCREEN_WIDTH - 64, opacity: saving ? 0.7 : 1 }]} onPress={handleSave} disabled={saving}>
         {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>SAVE</Text>}
       </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -363,7 +500,7 @@ const styles = StyleSheet.create({
   },
   formWrapper: {
     alignSelf: 'center',
-    marginTop: -140, // giảm khoảng cách phía trên form
+    marginTop: -140, // tăng giá trị âm để card nổi lên sát header tím
     marginBottom: 20,
   },
   card: {
@@ -384,7 +521,7 @@ const styles = StyleSheet.create({
     color: '#150a33',
     fontSize: 15,
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: 12, // tăng thêm khoảng cách với input bên dưới
     letterSpacing: 0.1,
   },
   input: {
@@ -396,8 +533,8 @@ const styles = StyleSheet.create({
     color: '#514a6b',
     borderWidth: 1,
     borderColor: '#f0f0f0',
-    marginTop: 2,
-    marginBottom: 0,
+    marginTop: 0,
+    marginBottom: 18, // tăng thêm khoảng cách với label tiếp theo
     fontWeight: '400',
   },
   genderRow: {
@@ -487,5 +624,31 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  title: {
+    color: '#150a33',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  content: {
+    color: '#514a6b',
+    fontSize: 15,
+    fontWeight: '400',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
+    marginVertical: 12,
+  },
+  emptyText: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+    paddingVertical: 10,
   },
 }); 
