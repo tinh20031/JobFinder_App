@@ -31,6 +31,7 @@ import HighlightProjectEditScreen from '../screens/Profile/HighlightProjectEditS
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import CvMatchingHistory from '../screens/dashboard/CvMatchingHistory';
 import TryMatchDetail from '../screens/dashboard/TryMatchDetail';
+import ChangePasswordScreen from '../screens/dashboard/ChangePasswordScreen';
 
 // Custom tab bar button cho nút giữa (Profile)
 function CustomTabBarButton({ children, onPress, profileCompletion = 0 }) {
@@ -353,7 +354,8 @@ export default function AppNavigator() {
           <Stack.Screen name="CertificateEdit" component={CertificateEditScreen} options={{ headerShown: false }} />
           <Stack.Screen name="HighlightProjectEdit" component={HighlightProjectEditScreen} options={{ headerShown: false }} />
                   <Stack.Screen name="CvMatchingHistory" component={CvMatchingHistory} options={{ headerShown: false }} />
-        <Stack.Screen name="TryMatchDetail" component={TryMatchDetail} options={{ headerShown: false }} />
+          <Stack.Screen name="TryMatchDetail" component={TryMatchDetail} options={{ headerShown: false }} />
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ headerShown: false }} />
           
         </Stack.Navigator>
       </NavigationContainer>

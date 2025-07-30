@@ -1,22 +1,43 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import HeaderCandidate from '../../components/HeaderCandidate';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
-
+import { authService } from '../../services/authService';
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handlePasswordPress = () => {
     // Xử lý khi nhấn vào Password
-    console.log('Password pressed');
+    navigation.navigate('ChangePassword');
   };
 
   const handleLogoutPress = () => {
-    // Xử lý khi nhấn vào Logout
-    console.log('Logout pressed');
+    // Hiển thị modal xác nhận logout
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    try {
+      setShowLogoutModal(false);
+      // Gọi authService để logout
+      await authService.logout();
+      // Chuyển về màn hình login
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Lỗi', 'Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.');
+    }
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleAppliedJobsPress = () => {
@@ -105,6 +126,35 @@ const DashboardScreen = () => {
           </Animatable.View>
         </View>
       </ScrollView>
+
+             <Modal
+         visible={showLogoutModal}
+         animationType="none"
+         transparent={true}
+         onRequestClose={handleCancelLogout}
+       >
+         <View style={styles.modalOverlay}>
+           <View style={styles.modalContainer}>
+             <Animatable.View 
+               animation={showLogoutModal ? "slideInUp" : "slideOutDown"}
+               duration={300}
+               style={styles.modalContent}
+             >
+               <View style={styles.modalHandle} />
+               <Text style={styles.modalTitle}>Log out</Text>
+               <Text style={styles.modalMessage}>Are you sure you want to leave?</Text>
+               <View style={styles.modalButtons}>
+                 <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmLogout}>
+                   <Text style={styles.confirmButtonText}>YES</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity style={styles.cancelButton} onPress={handleCancelLogout}>
+                   <Text style={styles.cancelButtonText}>CANCEL</Text>
+                 </TouchableOpacity>
+               </View>
+             </Animatable.View>
+           </View>
+         </View>
+       </Modal>
     </View>
   );
 };
@@ -144,6 +194,82 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#D1D5DB',
+    borderRadius: 2,
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+    color: '#111827',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
+  },
+  modalButtons: {
+    width: '100%',
+    gap: 12,
+  },
+  confirmButton: {
+    backgroundColor: '#7C3AED',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    minHeight: 48,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  cancelButton: {
+    backgroundColor: '#E5E7EB',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    minHeight: 48,
+  },
+  cancelButtonText: {
+    color: '#374151',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });
 

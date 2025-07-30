@@ -199,4 +199,44 @@ export const authService = {
       throw error;
     }
   },
+
+  async changePassword(currentPassword, newPassword) {
+    try {
+      const token = await this.getToken();
+      const response = await fetch(`${BASE_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        const error = new Error(errorData.message || 'Change password failed');
+        error.data = errorData;
+        throw error;
+      }
+      
+      // Try to parse as JSON first, if fails, treat as text
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        // If not JSON, treat as success message
+        data = { message: responseText || 'Password changed successfully' };
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
 }; 
