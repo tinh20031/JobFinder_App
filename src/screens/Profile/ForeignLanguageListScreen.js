@@ -2,20 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, FlatList, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import Modal from 'react-native-modal';
 import profileService from '../../services/profileService';
+import { getLanguageFlag } from '../../constants/languages';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 
 export default function ForeignLanguageListScreen({ navigation, route }) {
   const { languages: initialLanguages } = route.params || {};
   const [languages, setLanguages] = useState(initialLanguages || []);
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [languageToDelete, setLanguageToDelete] = useState(null);
 
   useEffect(() => {
     if (!initialLanguages) {
       loadLanguages();
     }
   }, [initialLanguages]);
+
+  // Reload data when screen is focused (after adding/editing language)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadLanguages();
+    }, [])
+  );
 
   const loadLanguages = async () => {
     try {
@@ -37,39 +50,60 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
   };
 
   const handleDeleteLanguage = async (languageId, languageName) => {
-    Alert.alert(
-      `Remove ${languageName} ?`,
-      `Are you sure you want to delete this ${languageName} language?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
+    setLanguageToDelete({ id: languageId, name: languageName });
+    setModalVisible(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!languageToDelete) return;
+    
+    setModalVisible(false);
+    setLoading(true);
+    
             try {
               const token = await AsyncStorage.getItem('token');
-              await profileService.deleteForeignLanguage(languageId, token);
+      await profileService.deleteForeignLanguage(languageToDelete.id, token);
               
               // Update local state
               setLanguages(prevLanguages => 
-                prevLanguages.filter(lang => lang.foreignLanguageId !== languageId)
+        prevLanguages.filter(lang => lang.foreignLanguageId !== languageToDelete.id)
               );
               
-              Alert.alert('Success', 'Language removed successfully!');
+      setLanguageToDelete(null);
             } catch (error) {
               console.log('Remove language error:', error);
               Alert.alert('Error', 'Failed to remove language. Please try again.');
-            }
+    } finally {
+      setLoading(false);
           }
-        }
-      ]
-    );
+  };
+
+  const handleDeleteCancel = () => {
+    setModalVisible(false);
+    setLanguageToDelete(null);
+  };
+
+  const handleSave = () => {
+    // Navigate back to profile screen
+    navigation.navigate('ProfileScreen');
+  };
+
+  const handleAddFromBottom = () => {
+    navigation.navigate('AddLanguageScreen');
+  };
+
+  const getLanguageFlagLocal = (languageName) => {
+    return getLanguageFlag(languageName);
   };
 
   const renderLanguageItem = ({ item }) => (
-    <View style={styles.languageCard}>
+    <TouchableOpacity 
+      style={styles.languageCard}
+      onPress={() => handleEditLanguage(item)}
+    >
       <View style={styles.languageInfo}>
         <View style={styles.languageHeader}>
+          <Text style={styles.flagText}>{getLanguageFlag(item.languageName)}</Text>
           <Text style={styles.languageName}>{item.languageName}</Text>
         </View>
         <View style={styles.levelInfo}>
@@ -78,35 +112,33 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
       </View>
       <View style={styles.actionButtons}>
         <TouchableOpacity 
-          style={styles.editButton}
-          onPress={() => handleEditLanguage(item)}
-        >
-          <Icon name="edit" size={20} color="#130160" />
-        </TouchableOpacity>
-        <TouchableOpacity 
           style={styles.deleteButton}
           onPress={() => handleDeleteLanguage(item.foreignLanguageId, item.languageName)}
         >
           <Icon name="delete" size={20} color="#FF6B35" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
+      {/* Back button */}
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
         <Icon name="arrow-back" size={24} color="#150b3d" />
       </TouchableOpacity>
       
-      <Text style={styles.header}>Language ({languages.length})</Text>
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>Language</Text>
+      </View>
       
       {languages.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Icon name="translate" size={64} color="#ccc" />
           <Text style={styles.emptyText}>No languages added yet</Text>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddLanguage}>
-            <Text style={styles.addButtonText}>Add Your First Language</Text>
+          <TouchableOpacity style={styles.addFirstButton} onPress={handleAddLanguage}>
+            <Text style={styles.addFirstButtonText}>Add Your First Language</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -119,11 +151,37 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
             showsVerticalScrollIndicator={false}
           />
           
-          <TouchableOpacity style={styles.changeButton} onPress={handleAddLanguage}>
-            <Text style={styles.changeButtonText}>CHANGE</Text>
+          <TouchableOpacity style={styles.saveButton} onPress={handleAddFromBottom}>
+            <Text style={styles.saveButtonText}>ADD LANGUAGE</Text>
           </TouchableOpacity>
         </>
       )}
+
+      {/* Modal xác nhận xóa ngôn ngữ */}
+      <Modal
+        isVisible={modalVisible}
+        onBackdropPress={handleDeleteCancel}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>
+            Delete Language ?
+          </Text>
+          <Text style={styles.sheetDesc}>
+            Are you sure you want to delete the "{languageToDelete?.name}" language?
+          </Text>
+          <TouchableOpacity style={styles.sheetBtn} onPress={handleDeleteConfirm}>
+            <Text style={styles.sheetBtnText}>
+              {loading ? 'DELETING...' : 'DELETE'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleDeleteCancel}>
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -144,13 +202,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  header: {
+  headerContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 24,
+    marginBottom: 24,
+    width: '100%',
+  },
+  headerTitle: {
     fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
     textAlign: 'center',
-    marginTop: 24,
-    marginBottom: 24,
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#130160',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
   },
   emptyContainer: {
     flex: 1,
@@ -165,14 +237,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
-  addButton: {
+  addFirstButton: {
     backgroundColor: '#130160',
     borderRadius: 8,
     paddingVertical: 16,
     paddingHorizontal: 32,
     alignItems: 'center',
   },
-  addButtonText: {
+  addFirstButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
@@ -198,11 +270,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  flagText: {
+    fontSize: 24,
+    marginRight: 12,
+  },
   languageName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#150b3d',
-    marginRight: 8,
   },
   levelInfo: {
     flexDirection: 'row',
@@ -222,19 +297,85 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: 8,
   },
-  changeButton: {
+  saveButton: {
+    position: 'absolute',
+    bottom: 100,
+    left: '50%',
+    marginLeft: -107.5,
+    width: 215,
+    height: 50,
     backgroundColor: '#130160',
-    borderRadius: 8,
-    marginHorizontal: 18,
-    marginBottom: 24,
-    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    elevation: 3,
+    justifyContent: 'center',
+    shadowColor: '#99aac5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 5,
   },
-  changeButtonText: {
+  saveButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
+  },
+  modal: { 
+    justifyContent: 'flex-end', 
+    margin: 0 
+  },
+  sheet: { 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    padding: 24, 
+    alignItems: 'center' 
+  },
+  sheetHandle: { 
+    width: 34, 
+    height: 4, 
+    backgroundColor: '#ccc', 
+    borderRadius: 2, 
+    marginBottom: 16 
+  },
+  sheetTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 18, 
+    color: '#150b3d', 
+    marginBottom: 12 
+  },
+  sheetDesc: { 
+    color: '#514a6b', 
+    fontSize: 14, 
+    marginBottom: 24, 
+    textAlign: 'center' 
+  },
+  sheetBtn: {
+    width: '100%',
+    backgroundColor: '#130160',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 12,
+  },
+  sheetBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  sheetBtnUndo: {
+    width: '100%',
+    backgroundColor: '#d6cdfe',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 0,
+  },
+  sheetBtnUndoText: {
+    color: '#130160',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 }); 

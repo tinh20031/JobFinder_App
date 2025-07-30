@@ -20,6 +20,10 @@ import AddLanguageScreen from '../screens/Profile/AddLanguageScreen';
 import SearchLanguageScreen from '../screens/Profile/SearchLanguageScreen';
 import ForeignLanguageListScreen from '../screens/Profile/ForeignLanguageListScreen';
 import EditSkillScreen from '../screens/Profile/EditSkillScreen';
+import PersonalInfoEditScreen from '../screens/Profile/PersonalInfoEditScreen';
+import AwardEditScreen from '../screens/Profile/AwardEditScreen';
+import CertificateEditScreen from '../screens/Profile/CertificateEditScreen';
+import HighlightProjectEditScreen from '../screens/Profile/HighlightProjectEditScreen';
 
 // Thêm màn hình AddScreen (dấu cộng)
 function AddScreen() {
@@ -137,6 +141,10 @@ export default function AppNavigator() {
         <Stack.Screen name="SearchLanguageScreen" component={SearchLanguageScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AddLanguageScreen" component={AddLanguageScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ForeignLanguageListScreen" component={ForeignLanguageListScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="PersonalInfoEdit" component={PersonalInfoEditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AwardEdit" component={AwardEditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CertificateEdit" component={CertificateEditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="HighlightProjectEdit" component={HighlightProjectEditScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

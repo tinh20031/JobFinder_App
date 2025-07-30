@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ImageBackground, Dimensions, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ImageBackground, Dimensions, TextInput, ActivityIndicator, Alert, StatusBar } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import profileService, { getToken } from '../../services/profileService';
@@ -16,6 +17,8 @@ import ForeignLanguageSection from './ForeignLanguageSection';
 import HighlightProjectSection from './HighlightProjectSection';
 import CertificateSection from './CertificateSection';
 import AwardsSection from './AwardsSection';
+import PersonalInfoSection from './PersonalInfoSection';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,6 +53,14 @@ export default function ProfileScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [aboutMe, setAboutMe] = useState(null);
   const [aboutMeLoading, setAboutMeLoading] = useState(true);
+  const [awards, setAwards] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [highlightProjects, setHighlightProjects] = useState([]);
+  const [profileStrength, setProfileStrength] = useState({
+    percentage: 0,
+    missingFields: []
+  });
+
 
   const navigation = useNavigation();
   const [educations, setEducations] = useState([]);
@@ -57,28 +68,27 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      // Gọi lại fetchProfile để reload About Me khi màn hình được focus
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const profile = await profileService.getCandidateProfile();
-        setFullname(profile.fullName || '');
-        setEmail(profile.email || '');
-        setPhone(profile.phone || '');
-        setAddress(profile.address || '');
-        setGender(profile.gender || '');
-        setDob(profile.dob ? profile.dob.substring(0, 10) : '');
-        setImage(profile.image || '');
-        setProvince(profile.province || '');
-        setCity(profile.city || '');
+      const fetchProfile = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const profile = await profileService.getCandidateProfile();
+          setFullname(profile.fullName || '');
+          setEmail(profile.email || '');
+          setPhone(profile.phone || '');
+          setAddress(profile.address || '');
+          setGender(profile.gender || '');
+          setDob(profile.dob ? profile.dob.substring(0, 10) : '');
+          setImage(profile.image || '');
+          setProvince(profile.province || '');
+          setCity(profile.city || '');
+          
           // Lấy About Me
           setAboutMeLoading(true);
           try {
             const token = await getToken();
             const about = await profileService.getAboutMe(token);
             console.log('AboutMe data from API:', about);
-            // Chỉ set aboutMe nếu có dữ liệu thực sự (không phải null hoặc empty object)
             if (about && (about.aboutMeId || about.id)) {
               setAboutMe(about);
             } else {
@@ -89,13 +99,13 @@ export default function ProfileScreen() {
             setAboutMe(null);
           }
           setAboutMeLoading(false);
-      } catch (e) {
+        } catch (e) {
           setError('Unable to load profile information.');
           setAboutMeLoading(false);
-      }
-      setLoading(false);
-    };
-    fetchProfile();
+        }
+        setLoading(false);
+      };
+      fetchProfile();
     }, [])
   );
 
@@ -129,6 +139,67 @@ export default function ProfileScreen() {
     }, [])
   );
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchAwards = async () => {
+        const token = await AsyncStorage.getItem('token');
+        try {
+          const list = await profileService.getAwardList(token);
+          setAwards(list);
+        } catch (e) {
+          setAwards([]);
+        }
+      };
+      fetchAwards();
+    }, [])
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchCertificates = async () => {
+        const token = await AsyncStorage.getItem('token');
+        try {
+          const list = await profileService.getCertificateList(token);
+          setCertificates(list);
+        } catch (e) {
+          setCertificates([]);
+        }
+      };
+      fetchCertificates();
+    }, [])
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchHighlightProjects = async () => {
+        const token = await AsyncStorage.getItem('token');
+        try {
+          const list = await profileService.getHighlightProjectList(token);
+          setHighlightProjects(list);
+        } catch (e) {
+          setHighlightProjects([]);
+        }
+      };
+      fetchHighlightProjects();
+    }, [])
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchProfileStrength = async () => {
+        const token = await AsyncStorage.getItem('token');
+        try {
+          const strength = await profileService.getProfileStrength(token);
+          setProfileStrength(strength);
+        } catch (e) {
+          console.log('Error fetching profile strength:', e);
+          setProfileStrength({ percentage: 0, missingFields: [] });
+        }
+      };
+      fetchProfileStrength();
+    }, [])
+  );
+
   const handleAddEducation = () => {
     navigation.navigate('EducationEdit', { mode: 'add' });
   };
@@ -149,11 +220,18 @@ export default function ProfileScreen() {
   const handleEditWorkExperience = (item) => {
     navigation.navigate('WorkExperienceEdit', { work: item, mode: 'edit' });
   };
+  const handleDeleteWorkExperience = async (id) => {
+    const token = await AsyncStorage.getItem('token');
+    await profileService.deleteWorkExperience(id, token);
+    // Reload list
+    const list = await profileService.getWorkExperienceList(token);
+    setWorkExperiences(list);
+  };
 
   // Hàm edit About Me
   const handleEditAboutMe = async (desc, id) => {
     try {
-      const token = await getToken(); // Hàm lấy token, bạn cần thay thế bằng logic thực tế
+      const token = await getToken();
       if (id) {
         await profileService.updateAboutMe(id, desc, token);
         setAboutMe({ ...aboutMe, aboutMeDescription: desc });
@@ -162,8 +240,51 @@ export default function ProfileScreen() {
         setAboutMe(about);
       }
     } catch (e) {
-      setError('Failed to update About Me.');
+      console.log('Failed to update About Me:', e);
     }
+  };
+
+  const handleAddAward = () => {
+    console.log('handleAddAward called');
+    navigation.navigate('AwardEdit', { mode: 'add' });
+  };
+  const handleEditAward = (item) => {
+    navigation.navigate('AwardEdit', { award: item, mode: 'edit' });
+  };
+  const handleDeleteAward = async (item) => {
+    const token = await AsyncStorage.getItem('token');
+    await profileService.deleteAward(item.awardId, token);
+    // Reload list
+    const list = await profileService.getAwardList(token);
+    setAwards(list);
+  };
+
+  const handleAddCertificate = () => {
+    navigation.navigate('CertificateEdit', { mode: 'add' });
+  };
+  const handleEditCertificate = (item) => {
+    navigation.navigate('CertificateEdit', { certificate: item, mode: 'edit' });
+  };
+  const handleDeleteCertificate = async (item) => {
+    const token = await AsyncStorage.getItem('token');
+    await profileService.deleteCertificate(item.certificateId, token);
+    // Reload list
+    const list = await profileService.getCertificateList(token);
+    setCertificates(list);
+  };
+
+  const handleAddHighlightProject = () => {
+    navigation.navigate('HighlightProjectEdit', { mode: 'add' });
+  };
+  const handleEditHighlightProject = (item) => {
+    navigation.navigate('HighlightProjectEdit', { project: item, mode: 'edit' });
+  };
+  const handleDeleteHighlightProject = async (item) => {
+    const token = await AsyncStorage.getItem('token');
+    await profileService.deleteHighlightProject(item.highlightProjectId, token);
+    // Reload list
+    const list = await profileService.getHighlightProjectList(token);
+    setHighlightProjects(list);
   };
 
   // Validate function
@@ -172,7 +293,6 @@ export default function ProfileScreen() {
     if (!dob.trim()) return 'Date of birth is required.';
     if (!gender.trim()) return 'Gender is required.';
     if (!email.trim()) return 'Email is required.';
-    // Simple email regex
     if (!/^\S+@\S+\.\S+$/.test(email)) return 'Invalid email format.';
     if (!phone.trim()) return 'Phone number is required.';
     if (!/^[0-9]{8,}$/.test(phone)) return 'Invalid phone number.';
@@ -199,8 +319,7 @@ export default function ProfileScreen() {
       formData.append('Address', address);
       formData.append('City', city);
       formData.append('Province', province);
-      // Nếu có upload ảnh, thêm imageFile vào formData
-      // formData.append('imageFile', ...)
+      
       await profileService.updateCandidateProfile(formData);
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (e) {
@@ -225,6 +344,261 @@ export default function ProfileScreen() {
 
   const locationText = [address, city, province].filter(Boolean).join(', ');
 
+  // Helper function to map field names to navigation handlers
+  const getFieldHandler = (field) => {
+    const normalized = field.trim().toLowerCase().replace(/s$/, "");
+    if (normalized === "education") return () => handleAddEducation();
+    if (normalized === "skill") return () => navigation.navigate('AddSkill');
+    if (normalized === "about me") return () => navigation.navigate('AboutMeEdit', { aboutMe: null });
+    if (normalized === "work experience") return () => handleAddWorkExperience();
+    if (normalized === "highlight project") return () => handleAddHighlightProject();
+    if (normalized === "certificate") return () => handleAddCertificate();
+    if (normalized === "award") return () => handleAddAward();
+    if (normalized === "foreign language" || normalized === "foregin language") 
+      return () => navigation.navigate('ForeignLanguageList');
+    return null;
+  };
+
+  // Calculate profile completion percentage (fallback if API fails)
+  const calculateProfileCompletion = () => {
+    let completed = 0;
+    let total = 0;
+
+    // Personal Info (7 fields)
+    total += 7;
+    if (fullname) completed++;
+    if (dob) completed++;
+    if (gender) completed++;
+    if (email) completed++;
+    if (phone) completed++;
+    if (address) completed++;
+    if (city && province) completed++;
+
+    // About Me
+    total += 1;
+    if (aboutMe?.aboutMeDescription) completed++;
+
+    // Education
+    total += 1;
+    if (educations.length > 0) completed++;
+
+    // Work Experience
+    total += 1;
+    if (workExperiences.length > 0) completed++;
+
+    // Skills
+    total += 1;
+    // You can add skills check here when available
+
+    // Awards
+    total += 1;
+    if (awards.length > 0) completed++;
+
+    // Certificates
+    total += 1;
+    if (certificates.length > 0) completed++;
+
+    return Math.round((completed / total) * 100);
+  };
+
+  // Use profile strength from API, fallback to local calculation
+  const profileCompletion = profileStrength.percentage || calculateProfileCompletion();
+
+  const ProfileCompletionCard = () => (
+    <View style={styles.completionCard}>
+      <View style={styles.completionHeader}>
+        <Icon name="account-check" size={20} color="#ff9228" />
+        <Text style={styles.completionTitle}>Profile Completion</Text>
+        <Text style={styles.completionPercentage}>{profileCompletion}%</Text>
+      </View>
+      <View style={styles.progressBar}>
+        <View style={[styles.progressFill, { width: `${profileCompletion}%` }]} />
+      </View>
+      <Text style={styles.completionText}>
+        {profileCompletion < 70 
+          ? "Complete your profile to increase your chances of getting hired!"
+          : "Excellent! Your profile is well-rounded and attractive to recruiters."
+        }
+      </Text>
+      
+      {/* Missing Fields List */}
+      {profileStrength.missingFields && profileStrength.missingFields.length > 0 && (
+        <View style={styles.missingFieldsContainer}>
+          <Text style={styles.missingFieldsTitle}>Missing Information:</Text>
+          {profileStrength.missingFields.slice(0, 3).map((field, index) => {
+            const handler = getFieldHandler(field);
+            return (
+              <TouchableOpacity 
+                key={index} 
+                style={styles.missingFieldItem}
+                onPress={handler}
+                disabled={!handler}
+              >
+                <Text style={styles.missingFieldBullet}>•</Text>
+                <Text style={[
+                  styles.missingFieldText,
+                  handler && styles.missingFieldTextClickable
+                ]}>
+                  {field}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+          {profileStrength.missingFields.length > 3 && (
+            <Text style={styles.missingFieldsMore}>
+              +{profileStrength.missingFields.length - 3} more items
+            </Text>
+          )}
+        </View>
+      )}
+      
+
+    </View>
+  );
+
+  // Create sections data for FlatList
+  const sections = [
+    { id: 'completion', type: 'completion' },
+    { id: 'personal', type: 'personal' },
+    { id: 'about', type: 'about' },
+    { id: 'education', type: 'education' },
+    { id: 'work', type: 'work' },
+    { id: 'skills', type: 'skills' },
+    { id: 'languages', type: 'languages' },
+    { id: 'projects', type: 'projects' },
+    { id: 'certificates', type: 'certificates' },
+    { id: 'awards', type: 'awards' },
+  ];
+
+  const renderSection = ({ item }) => {
+    switch (item.type) {
+      case 'completion':
+        return <ProfileCompletionCard />;
+      case 'personal':
+        return (
+        <PersonalInfoSection profile={{
+          fullName: fullname,
+          dob,
+          gender,
+          email,
+          phone,
+          address,
+          city,
+          province
+        }} />
+        );
+      case 'about':
+        return (
+        <AboutMeSection
+          aboutMe={aboutMe}
+          onEdit={handleEditAboutMe}
+          loading={aboutMeLoading}
+          onAdd={() => navigation.getParent()?.navigate('AboutMeEdit', { aboutMe: null })}
+        />
+        );
+      case 'education':
+        return (
+        <EducationSection
+          educations={educations}
+          onAdd={handleAddEducation}
+          onEdit={handleEditEducation}
+          onDelete={handleDeleteEducation}
+        />
+        );
+      case 'work':
+        return (
+        <WorkExperienceSection
+          works={workExperiences}
+          onAdd={handleAddWorkExperience}
+          onEdit={handleEditWorkExperience}
+          onDelete={handleDeleteWorkExperience}
+        />
+        );
+      case 'skills':
+        return <SkillsSection navigation={navigation} />;
+      case 'languages':
+        return <ForeignLanguageSection navigation={navigation} />;
+      case 'projects':
+        return (
+        <HighlightProjectSection
+          projects={highlightProjects}
+          onAdd={handleAddHighlightProject}
+          onEdit={handleEditHighlightProject}
+          onDelete={handleDeleteHighlightProject}
+        />
+        );
+      case 'certificates':
+        return (
+        <CertificateSection
+          certificates={certificates}
+          onAdd={handleAddCertificate}
+          onEdit={handleEditCertificate}
+          onDelete={handleDeleteCertificate}
+        />
+        );
+      case 'awards':
+        return (
+        <AwardsSection
+          awards={awards}
+          onAdd={handleAddAward}
+          onEdit={handleEditAward}
+          onDelete={handleDeleteAward}
+        />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <ImageBackground
+        source={require('../../images/profile_header_bg.png')}
+        style={[styles.headerWrapper, { paddingTop: (insets.top || 0) + 24 }]}
+        imageStyle={styles.headerBgImg}
+      >
+      {/* Gradient overlay for better text readability */}
+      <LinearGradient
+        colors={['rgba(19, 1, 96, 0.3)', 'rgba(19, 1, 96, 0.7)', 'rgba(19, 1, 96, 0.9)']}
+        style={styles.gradientOverlay}
+      />
+      
+              {/* Avatar with status indicator */}
+        <View style={[styles.avatarWrapper, { top: (insets.top || 0) + 24, left: 16 }]}>  
+        <Image
+          source={image ? { uri: image } : require('../../images/banner-hero.jpg')}
+          style={styles.avatar}
+        />
+        <View style={styles.onlineIndicator} />
+        <TouchableOpacity style={styles.cameraIcon} onPress={handlePickImage}>
+          <MaterialIcons name="camera-alt" size={16} color="#fff" />
+        </TouchableOpacity>
+      </View>
+      
+              {/* Name & Location & Change image */}
+        <View style={[styles.nameLocationWrapper, { top: (insets.top || 0) + 110, left: 16 }]}>  
+        <Text style={styles.name}>{fullname}</Text>
+        <View style={styles.locationContainer}>
+          <MaterialIcons name="location-on" size={16} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.location}>{locationText}</Text>
+        </View>
+        <TouchableOpacity style={styles.changeImageBtn} onPress={handlePickImage}>
+          <MaterialIcons name="edit" size={14} color="#fff" style={{ marginRight: 6 }} />
+          <Text style={styles.changeImageText}>Change image</Text>
+        </TouchableOpacity>
+      </View>
+      
+              {/* Settings & Share icons */}
+        <TouchableOpacity style={[styles.iconSetting, { right: 16 }]}>
+          <MaterialIcons name="settings" size={26} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.iconShare, { right: 16 + 56 }]}>
+          <MaterialIcons name="share" size={26} color="#fff" />
+        </TouchableOpacity>
+      </ImageBackground>
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -235,180 +609,28 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ alignItems: 'center', paddingBottom: (insets.bottom || 0) + 64 }}>
-      {/* Header with image background */}
-      <ImageBackground
-        source={require('../../images/profile_header_bg.png')}
-        style={[styles.headerWrapper, { width: SCREEN_WIDTH, paddingTop: (insets.top || 0) + 24 }]}
-        imageStyle={styles.headerBgImg}
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={{ 
+          paddingBottom: (insets.bottom || 0) + 64,
+        }}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
       >
-        {/* Avatar */}
-        <View style={[styles.avatarWrapper, { top: (insets.top || 0) + 24 }]}> 
-          <Image
-            source={image ? { uri: image } : require('../../images/banner-hero.jpg')}
-            style={styles.avatar}
-          />
-        </View>
-        {/* Name & Location & Change image */}
-        <View style={[styles.nameLocationWrapper, { top: (insets.top || 0) + 110 }]}> 
-          <Text style={styles.name}>{fullname}</Text>
-          <Text style={styles.location}>{locationText}</Text>
-          <TouchableOpacity style={styles.changeImageBtn} onPress={handlePickImage}>
-            <Text style={styles.changeImageText}>Change image</Text>
-          </TouchableOpacity>
-        </View>
-        {/* Settings & Share icons */}
-        <TouchableOpacity style={styles.iconSetting}>
-          <MaterialIcons name="settings" size={26} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconShare}>
-          <MaterialIcons name="share" size={26} color="#fff" />
-        </TouchableOpacity>
-      </ImageBackground>
-      {/* Form fields */}
-      <View style={[styles.formWrapper, { width: SCREEN_WIDTH - 32 }]}> 
-        {/* Personal Info Card: gộp các trường cơ bản vào 1 card lớn */}
-        <View style={styles.card}>
-          {/* Fullname */}
-          <Text style={styles.label}>Fullname</Text>
-          <TextInput
-            style={styles.input}
-            value={fullname}
-            onChangeText={setFullname}
-            placeholder="Fullname"
-            placeholderTextColor="#bcbcbc"
-          />
-        {/* Date of birth */}
-          <Text style={styles.label}>Date of birth</Text>
-          <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              value={dob}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor="#bcbcbc"
-                editable={false}
-                pointerEvents="none"
-            />
-            <MaterialIcons name="calendar-today" size={22} color="#514a6b" style={{ marginLeft: 8 }} />
-          </View>
-          </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={dob ? new Date(dob) : new Date()}
-              mode="date"
-              display="default"
-              maximumDate={new Date()}
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  const yyyy = selectedDate.getFullYear();
-                  const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
-                  const dd = String(selectedDate.getDate()).padStart(2, '0');
-                  setDob(`${yyyy}-${mm}-${dd}`);
-                }
-              }}
-            />
-          )}
-        {/* Gender */}
-          <Text style={styles.label}>Gender</Text>
-          <View style={[styles.genderRow, { marginBottom: 24 }]}> 
-            <TouchableOpacity style={[styles.genderOption, gender === 'Male' && styles.genderOptionActive]} onPress={() => setGender('Male')}>
-              <View style={[styles.radioOuter, gender === 'Male' && styles.radioOuterActive]}>
-                {gender === 'Male' && <View style={styles.radioInnerActive} />}
-              </View>
-              <Text style={styles.genderText}>Male</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.genderOption, gender === 'Female' && styles.genderOptionActive]} onPress={() => setGender('Female')}>
-              <View style={[styles.radioOuter, gender === 'Female' && styles.radioOuterActive]}>
-                {gender === 'Female' && <View style={styles.radioInnerActive} />}
-              </View>
-              <Text style={styles.genderText}>Female</Text>
-            </TouchableOpacity>
-        </View>
-        {/* Email address */}
-          <Text style={styles.label}>Email address</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            editable={false}
-            placeholder="Email address"
-            placeholderTextColor="#bcbcbc"
-            keyboardType="email-address"
-          />
-          {/* Address */}
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={styles.input}
-            value={address}
-            onChangeText={setAddress}
-            placeholder="Address"
-            placeholderTextColor="#bcbcbc"
-          />
-          {/* City */}
-          <Text style={styles.label}>City</Text>
-          <TextInput
-            style={styles.input}
-            value={city}
-            onChangeText={setCity}
-            placeholder="City"
-            placeholderTextColor="#bcbcbc"
-          />
-          {/* Province */}
-          <Text style={styles.label}>Province</Text>
-          <TextInput
-            style={styles.input}
-            value={province}
-            onChangeText={setProvince}
-            placeholder="Province"
-            placeholderTextColor="#bcbcbc"
-          />
-          {/* Phone number */}
-          <Text style={styles.label}>Phone number</Text>
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Phone number"
-            placeholderTextColor="#bcbcbc"
-            keyboardType="phone-pad"
-          />
-        </View>
-        {/* About Me Section */}
-        <AboutMeSection
-          aboutMe={aboutMe}
-          onEdit={handleEditAboutMe}
-          loading={aboutMeLoading}
-          onAdd={() => navigation.getParent()?.navigate('AboutMeEdit', { aboutMe: null })}
-        />
-        {/* Education Section */}
-        <EducationSection
-          educations={educations}
-          onAdd={handleAddEducation}
-          onEdit={handleEditEducation}
-          onDelete={handleDeleteEducation}
-        />
-        {/* Work Experience Section */}
-        <WorkExperienceSection
-          works={workExperiences}
-          onAdd={handleAddWorkExperience}
-          onEdit={handleEditWorkExperience}
-        />
-        {/* Skills Section */}
-        <SkillsSection navigation={navigation} />
-        <ForeignLanguageSection navigation={navigation} />
-        {/* Highlight Project Section */}
-        <HighlightProjectSection onAdd={() => {}} />
-        {/* Certificate Section */}
-        <CertificateSection onAdd={() => {}} />
-        {/* Awards Section */}
-        <AwardsSection onAdd={() => {}} />
-      {error ? <Text style={{ color: 'red', marginBottom: 8 }}>{error}</Text> : null}
-      <TouchableOpacity style={[styles.saveBtn, { width: SCREEN_WIDTH - 64, opacity: saving ? 0.7 : 1 }]} onPress={handleSave} disabled={saving}>
-        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>SAVE</Text>}
-      </TouchableOpacity>
+        {renderHeader()}
+        <View style={styles.contentContainer}>
+          {sections.map((item) => (
+            <View key={item.id} style={styles.sectionContainer}>
+              {renderSection({ item })}
+            </View>
+          ))}
       </View>
     </ScrollView>
+      
+
+    </>
   );
 }
 
@@ -422,15 +644,24 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     overflow: 'hidden',
-    marginBottom: 8, // giảm khoảng cách phía dưới header
     position: 'relative',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
+    width: '100%',
   },
   headerBgImg: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
   },
@@ -444,11 +675,35 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#fff',
     backgroundColor: '#eee',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#4CAF50', // Green color for online
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  cameraIcon: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   nameLocationWrapper: {
     position: 'absolute',
@@ -460,37 +715,42 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 2,
   },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 0,
+  },
   location: {
-    color: '#fff',
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 15,
     fontWeight: '400',
-    marginBottom: 0,
+    marginLeft: 4,
   },
   iconSetting: {
     position: 'absolute',
     top: 28,
-    right: 28,
   },
   iconShare: {
     position: 'absolute',
     top: 28,
-    right: 70,
   },
   changeImageBtn: {
     marginTop: 14,
-    paddingHorizontal: 20,
-    height: 34,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.7)',
+    borderColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignSelf: 'flex-start',
-    shadowColor: '#fff',
+    flexDirection: 'row',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 3,
   },
   changeImageText: {
     color: '#fff',
@@ -502,6 +762,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: -140, // tăng giá trị âm để card nổi lên sát header tím
     marginBottom: 20,
+    width: '100%',
   },
   card: {
     backgroundColor: '#fff',
@@ -611,13 +872,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 36,
+    marginTop: 16,
+    marginBottom: 8,
     shadowColor: '#99aac5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 16,
     elevation: 5,
     alignSelf: 'center',
+    width: '100%',
   },
   saveBtnText: {
     color: '#fff',
@@ -650,5 +913,105 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 10,
+  },
+
+  completionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    marginTop: -60, // Đặt margin âm để card overlap với header
+    elevation: 2,
+    shadowColor: '#99aac5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff9228',
+  },
+  completionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  completionTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#150b3d',
+    marginLeft: 8,
+  },
+  completionPercentage: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ff9228',
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#ff9228',
+    borderRadius: 4,
+  },
+  completionText: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+    fontStyle: 'italic',
+  },
+  missingFieldsContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  missingFieldsTitle: {
+    fontSize: 14,
+    color: '#e60023',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  missingFieldItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  missingFieldBullet: {
+    color: '#e60023',
+    marginRight: 6,
+    fontSize: 13,
+  },
+  missingFieldText: {
+    fontSize: 13,
+    color: '#888',
+    flex: 1,
+  },
+  missingFieldTextClickable: {
+    textDecorationLine: 'underline',
+    color: '#7367F0',
+  },
+  missingFieldsMore: {
+    fontSize: 13,
+    color: '#7367F0',
+    fontWeight: '500',
+    marginTop: 4,
+    textDecorationLine: 'underline',
+  },
+
+  sectionContainer: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+  },
+  headerContainer: {
+    width: '100%',
+    marginBottom: -80, // Điều chỉnh overlap phù hợp với marginTop âm của completionCard
   },
 }); 

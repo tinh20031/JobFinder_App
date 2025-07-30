@@ -246,6 +246,189 @@ const deleteForeignLanguage = async (id, token) => {
   if (!res.ok) throw new Error('Failed to delete foreign language');
 };
 
+// Award API
+const getAwardList = async (token) => {
+  const res = await fetch(`${BASE_URL}/api/Award/me`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to fetch award list');
+  return res.json();
+};
+
+const createAward = async (data, token) => {
+  console.log('createAward - URL:', `${BASE_URL}/api/Award/me`);
+  console.log('createAward - Data:', data);
+  console.log('createAward - Token:', token);
+
+  const res = await fetch(`${BASE_URL}/api/Award/me`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+
+  console.log('createAward - Response status:', res.status);
+  console.log('createAward - Response ok:', res.ok);
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('createAward - Error response:', errorText);
+    throw new Error('Failed to create award: ' + errorText);
+  }
+
+  const result = await res.json();
+  console.log('createAward - Success result:', result);
+  return result;
+};
+
+const updateAward = async (id, data, token) => {
+  const res = await fetch(`${BASE_URL}/api/Award/me/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update award');
+};
+
+const deleteAward = async (id, token) => {
+  const res = await fetch(`${BASE_URL}/api/Award/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to delete award');
+};
+
+// Certificate API
+const getCertificateList = async (token) => {
+  const res = await fetch(`${BASE_URL}/api/Certificate/me`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to fetch certificate list');
+  return res.json();
+};
+
+const createCertificate = async (data, token) => {
+  console.log('createCertificate - URL:', `${BASE_URL}/api/Certificate/me`);
+  console.log('createCertificate - Data:', data);
+  console.log('createCertificate - Token:', token);
+
+  const res = await fetch(`${BASE_URL}/api/Certificate/me`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+
+  console.log('createCertificate - Response status:', res.status);
+  console.log('createCertificate - Response ok:', res.ok);
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('createCertificate - Error response:', errorText);
+    throw new Error('Failed to create certificate: ' + errorText);
+  }
+
+  const result = await res.json();
+  console.log('createCertificate - Success result:', result);
+  return result;
+};
+
+const updateCertificate = async (id, data, token) => {
+  const res = await fetch(`${BASE_URL}/api/Certificate/me/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update certificate');
+};
+
+const deleteCertificate = async (id, token) => {
+  const res = await fetch(`${BASE_URL}/api/Certificate/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to delete certificate');
+};
+
+// Highlight Project API
+const getHighlightProjectList = async (token) => {
+  const res = await fetch(`${BASE_URL}/api/HighlightProject/me`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to fetch highlight project list');
+  return res.json();
+};
+
+const createHighlightProject = async (data, token) => {
+  console.log('createHighlightProject - URL:', `${BASE_URL}/api/HighlightProject/me`);
+  console.log('createHighlightProject - Data:', data);
+  console.log('createHighlightProject - Token:', token);
+
+  const res = await fetch(`${BASE_URL}/api/HighlightProject/me`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+
+  console.log('createHighlightProject - Response status:', res.status);
+  console.log('createHighlightProject - Response ok:', res.ok);
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('createHighlightProject - Error response:', errorText);
+    throw new Error('Failed to create highlight project: ' + errorText);
+  }
+
+  const result = await res.json();
+  console.log('createHighlightProject - Success result:', result);
+  return result;
+};
+
+const updateHighlightProject = async (id, data, token) => {
+  const res = await fetch(`${BASE_URL}/api/HighlightProject/me/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update highlight project');
+};
+
+const deleteHighlightProject = async (id, token) => {
+  const res = await fetch(`${BASE_URL}/api/HighlightProject/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to delete highlight project');
+};
+
+// Profile Strength API
+const getProfileStrength = async (token) => {
+  const res = await fetch(`${BASE_URL}/api/CandidateProfile/me/profile-strength`, {
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      Accept: '*/*'
+    }
+  });
+  if (!res.ok) throw new Error('Failed to fetch profile strength');
+  return res.json();
+};
+
 const profileService = {
   getCandidateProfile: async () => {
     const token = await getToken();
@@ -297,4 +480,17 @@ export default {
   createForeignLanguage,
   updateForeignLanguage,
   deleteForeignLanguage,
+  getAwardList,
+  createAward,
+  updateAward,
+  deleteAward,
+  getCertificateList,
+  createCertificate,
+  updateCertificate,
+  deleteCertificate,
+  getHighlightProjectList,
+  createHighlightProject,
+  updateHighlightProject,
+  deleteHighlightProject,
+  getProfileStrength,
 }; 

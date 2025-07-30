@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert, SectionList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, FlatList, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Modal from 'react-native-modal';
 import profileService from '../../services/profileService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -26,6 +27,8 @@ function groupSkillsByGroupNameAndType(skills) {
 export default function SkillsSection({ navigation }) {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   useEffect(() => {
     loadSkills();
@@ -51,32 +54,30 @@ export default function SkillsSection({ navigation }) {
     navigation.navigate('EditSkillScreen', { group });
   };
 
-  const handleDeleteGroup = async (group) => {
-    Alert.alert(
-      'Delete Group',
-      `Are you sure you want to delete all skills in group "${group.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete', style: 'destructive', onPress: async () => {
-            try {
-              setLoading(true);
-              const token = await AsyncStorage.getItem('token');
-              // Lọc ra các skillId trong group
-              const skillIds = group.data.map(skill => skill.skillId).filter(Boolean);
-              for (const id of skillIds) {
-                await profileService.deleteSkill(id, token);
-              }
-              await loadSkills();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete group.');
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
+  const handleDeleteGroup = (group) => {
+    setSelectedGroup(group);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!selectedGroup) return;
+    
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      // Lọc ra các skillId trong group
+      const skillIds = selectedGroup.data.map(skill => skill.skillId).filter(Boolean);
+      for (const id of skillIds) {
+        await profileService.deleteSkill(id, token);
+      }
+      await loadSkills();
+    } catch (error) {
+      console.log('Delete group error:', error);
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+      setSelectedGroup(null);
+    }
   };
 
   const renderSkillTag = (skill, index) => (
@@ -94,27 +95,46 @@ export default function SkillsSection({ navigation }) {
     </View>
   );
 
-  const renderSection = ({ section }) => (
+  const renderSkillGroup = ({ item: group }) => (
     <TouchableOpacity
       style={styles.groupBox}
       activeOpacity={0.85}
-      onPress={() => handleEditGroup(section)}
+      onPress={() => handleEditGroup(group)}
     >
       <View style={styles.groupHeader}>
-        <Text style={styles.groupTitle}>
-          {section.title} {section.type === 0 || section.type === 'Core' ? '(Core Skills)' : '(Soft Skills)'}
-        </Text>
-        <TouchableOpacity onPress={() => handleDeleteGroup(section)} style={styles.groupActionBtn} onPressOut={e => e.stopPropagation && e.stopPropagation()}>
-          <Icon name="delete" size={18} color="#757575" />
+        <View style={styles.groupTitleContainer}>
+          <Icon 
+            name={group.type === 0 || group.type === 'Core' ? 'star' : 'heart'} 
+            size={16} 
+            color={group.type === 0 || group.type === 'Core' ? '#ff9228' : '#ff6b35'} 
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.groupTitle}>
+            {group.title} {group.type === 0 || group.type === 'Core' ? '(Core Skills)' : '(Soft Skills)'}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => handleDeleteGroup(group)} style={styles.groupActionBtn} onPressOut={e => e.stopPropagation && e.stopPropagation()}>
+          <Icon name="delete" size={16} color="#ff4757" />
         </TouchableOpacity>
       </View>
       <View style={styles.skillChipWrap}>
-        {section.data.map(renderSkillTag)}
+        {group.data.map(renderSkillTag)}
       </View>
     </TouchableOpacity>
   );
 
   const groupedSections = groupSkillsByGroupNameAndType(skills);
+
+  if (loading) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ff9228" />
+          <Text style={styles.loadingText}>Loading skills...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
@@ -126,18 +146,58 @@ export default function SkillsSection({ navigation }) {
         </TouchableOpacity>
       </View>
       <View style={styles.separator} />
-      {skills.length === 0 && !loading ? (
-        <Text style={styles.emptyText}>No skills added yet.</Text>
+      {skills.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Icon name="star-outline" size={48} color="#ccc" />
+          <Text style={styles.emptyText}>No skills added yet.</Text>
+          <Text style={styles.emptySubtext}>Add your skills to showcase your expertise to employers</Text>
+        </View>
       ) : (
-        <SectionList
-          sections={groupedSections}
-          keyExtractor={(item, index) => item.skillId ? item.skillId.toString() : index.toString()}
-          renderSectionHeader={renderSection}
-          renderItem={() => null}
+        <FlatList
+          data={groupedSections}
+          renderItem={renderSkillGroup}
+          keyExtractor={(item, index) => `${item.title}-${item.type}-${index}`}
           contentContainerStyle={styles.sectionListContent}
-          stickySectionHeadersEnabled={false}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={false}
         />
       )}
+      
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isVisible={showDeleteModal}
+        onBackdropPress={() => {
+          setShowDeleteModal(false);
+          setSelectedGroup(null);
+        }}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>
+            Delete Group ?
+          </Text>
+          <Text style={styles.sheetDesc}>
+            Are you sure you want to delete all skills in group "{selectedGroup?.title}"?
+          </Text>
+          <TouchableOpacity 
+            style={styles.sheetBtn} 
+            onPress={() => {
+              setShowDeleteModal(false);
+              setSelectedGroup(null);
+            }}
+          >
+            <Text style={styles.sheetBtnText}>CONTINUE EDITING</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
+            onPress={confirmDeleteGroup}
+          >
+            <Text style={styles.sheetBtnUndoText}>DELETE</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -148,7 +208,11 @@ const styles = StyleSheet.create({
     borderRadius: 16, 
     padding: 20, 
     marginBottom: 16, 
-    elevation: 2 
+    elevation: 2,
+    shadowColor: '#99aac5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
   },
   header: { 
     flexDirection: 'row', 
@@ -164,24 +228,44 @@ const styles = StyleSheet.create({
   addBtn: {
     backgroundColor: '#fff6f2',
     borderRadius: 20,
-    padding: 4,
-    marginLeft: 8,
-    borderWidth: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 6,
     width: 32,
     height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ff9228',
   },
   separator: { 
     height: 1, 
     backgroundColor: '#eee', 
-    marginBottom: 12 
+    marginBottom: 16 
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#666',
+    fontSize: 14,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 24,
   },
   emptyText: { 
-    color: '#aaa', 
-    fontStyle: 'italic', 
-    textAlign: 'center', 
-    marginVertical: 12 
+    color: '#666', 
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    color: '#999',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   sectionListContent: {
     paddingBottom: 8,
@@ -189,94 +273,124 @@ const styles = StyleSheet.create({
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  groupTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   groupTitle: {
     fontWeight: 'bold',
     fontSize: 16,
     color: '#130160',
-    flex: 1,
-  },
-  groupActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
   },
   groupActionBtn: {
-    marginLeft: 8,
-    padding: 4,
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor: '#fff5f5',
+    borderWidth: 1,
+    borderColor: '#ffebee',
   },
   skillTag: {
     backgroundColor: '#f0f0f0',
     borderRadius: 16,
-    paddingHorizontal: 12,
     paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 8,
-    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    marginBottom: 4,
   },
   skillText: {
-    color: '#130160',
     fontSize: 14,
+    color: '#150b3d',
     fontWeight: '500',
   },
   coreSkillTag: {
-    backgroundColor: '#d6cdfe', // Light purple for Core skills
-    borderColor: '#130160', // Dark purple for border
+    backgroundColor: '#fff7ed',
     borderWidth: 1,
+    borderColor: '#ff9228',
   },
   softSkillTag: {
-    backgroundColor: '#ffe0b2', // Light orange for Soft skills
-    borderColor: '#ff9800', // Orange for border
+    backgroundColor: '#fff5f5',
     borderWidth: 1,
+    borderColor: '#ff6b35',
   },
   coreSkillText: {
-    color: '#130160', // Dark purple for Core skills
+    color: '#ff9228',
   },
   softSkillText: {
-    color: '#130160', // Dark orange for Soft skills
+    color: '#ff6b35',
   },
   groupBox: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
+    backgroundColor: '#f8f9ff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#ececec',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 1,
+    borderColor: '#e8eaff',
   },
   skillChipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
     marginTop: 8,
   },
-  coreSkillChip: {
-    backgroundColor: '#e3e9ff',
-    borderColor: '#130160',
-    borderWidth: 1,
+  // Modal styles
+  modal: { 
+    justifyContent: 'flex-end', 
+    margin: 0 
   },
-  softSkillChip: {
-    backgroundColor: '#fff7e0',
-    borderColor: '#ff9800',
-    borderWidth: 1,
+  sheet: { 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    padding: 24, 
+    alignItems: 'center' 
   },
-  skillChip: {
-    flexDirection: 'row',
+  sheetHandle: { 
+    width: 34, 
+    height: 4, 
+    backgroundColor: '#ccc', 
+    borderRadius: 2, 
+    marginBottom: 16 
+  },
+  sheetTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 18, 
+    color: '#150b3d', 
+    marginBottom: 12 
+  },
+  sheetDesc: { 
+    color: '#514a6b', 
+    fontSize: 14, 
+    marginBottom: 24, 
+    textAlign: 'center' 
+  },
+  sheetBtn: {
+    width: '100%',
+    backgroundColor: '#130160',
+    borderRadius: 8,
     alignItems: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    marginRight: 8,
-    marginBottom: 8,
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 12,
   },
-  skillChipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginRight: 6,
+  sheetBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  sheetBtnUndo: {
+    width: '100%',
+    backgroundColor: '#d6cdfe',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 0,
+  },
+  sheetBtnUndoText: {
     color: '#130160',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 }); 

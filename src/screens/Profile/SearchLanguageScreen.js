@@ -2,27 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
+import { LANGUAGE_SUGGESTIONS, searchLanguages } from '../../constants/languages';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Mock language suggestions with flags
-const LANGUAGE_SUGGESTIONS = [
-  { name: 'Arabic', flag: '🇸🇦' },
-  { name: 'Indonesian', flag: '🇮🇩' },
-  { name: 'Malaysian', flag: '🇲🇾' },
-  { name: 'English', flag: '🇬🇧' },
-  { name: 'French', flag: '🇫🇷' },
-  { name: 'German', flag: '🇩🇪' },
-  { name: 'Hindi', flag: '🇮🇳' },
-  { name: 'Italian', flag: '🇮🇹' },
-  { name: 'Japanese', flag: '🇯🇵' },
-  { name: 'Korean', flag: '🇰🇷' },
-  { name: 'Chinese', flag: '🇨🇳' },
-  { name: 'Spanish', flag: '🇪🇸' },
-  { name: 'Portuguese', flag: '🇵🇹' },
-  { name: 'Russian', flag: '🇷🇺' },
-  { name: 'Vietnamese', flag: '🇻🇳' },
-];
 
 export default function SearchLanguageScreen({ navigation, route }) {
   const { selectedLanguage } = route.params || {};

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Switch, Alert, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Switch, Alert, Dimensions, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
@@ -30,11 +30,94 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
   const [yearEnd, setYearEnd] = useState(getYear(work?.monthEnd));
   const [isWorking, setIsWorking] = useState(work?.isWorking || false);
   const [workDescription, setWorkDescription] = useState(work?.workDescription || '');
+  const [responsibilities, setResponsibilities] = useState(work?.responsibilities || '');
+  const [achievements, setAchievements] = useState(work?.achievements || '');
+  const [technologies, setTechnologies] = useState(work?.technologies || '');
+  const [projectName, setProjectName] = useState(work?.projectName || '');
   const [saving, setSaving] = useState(false);
   const [modalType, setModalType] = useState(null); // 'back' | 'save' | 'remove' | null
   const [removing, setRemoving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
-  const handleSave = () => setModalType('save');
+  // Validation function - tương tự web version
+  const validateForm = () => {
+    const newErrors = {};
+    let endBeforeStart = false;
+    
+    if (!jobTitle.trim()) {
+      newErrors.jobTitle = 'Job Title is required.';
+    }
+    
+    if (!companyName.trim()) {
+      newErrors.companyName = 'Company Name is required.';
+    }
+    
+    if (!workDescription.trim()) {
+      newErrors.workDescription = 'Work Description is required.';
+    }
+    
+    if (!responsibilities.trim()) {
+      newErrors.responsibilities = 'Responsibilities is required.';
+    }
+    
+    if (!achievements.trim()) {
+      newErrors.achievements = 'Achievements is required.';
+    }
+    
+    if (!monthStart) {
+      newErrors.monthStart = 'Month is required.';
+    }
+    
+    if (!yearStart) {
+      newErrors.yearStart = 'Year is required.';
+    }
+    
+    if (!isWorking) {
+      if (!monthEnd) {
+        newErrors.monthEnd = 'Month is required.';
+      }
+      if (!yearEnd) {
+        newErrors.yearEnd = 'Year is required.';
+      }
+      
+      // Validate end > start
+      if (monthStart && yearStart && monthEnd && yearEnd) {
+        const start = new Date(`${yearStart}-${monthStart}-01T00:00:00.000Z`);
+        const end = new Date(`${yearEnd}-${monthEnd}-01T00:00:00.000Z`);
+        if (end <= start) {
+          endBeforeStart = true;
+        }
+      }
+    }
+    
+    if (endBeforeStart) {
+      newErrors.dateRange = 'Please enter an end date bigger than the start date.';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = () => {
+    // Set all fields as touched for validation
+    setTouched({
+      jobTitle: true,
+      companyName: true,
+      workDescription: true,
+      responsibilities: true,
+      achievements: true,
+      monthStart: true,
+      yearStart: true,
+      monthEnd: true,
+      yearEnd: true,
+    });
+    
+    if (validateForm()) {
+      setModalType('save');
+    }
+  };
+
   const handleBack = useCallback(() => {
     if (
       jobTitle !== (work?.jobTitle || '') ||
@@ -44,13 +127,17 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
       monthEnd !== getMonth(work?.monthEnd) ||
       yearEnd !== getYear(work?.monthEnd) ||
       isWorking !== (work?.isWorking || false) ||
-      workDescription !== (work?.workDescription || '')
+      workDescription !== (work?.workDescription || '') ||
+      responsibilities !== (work?.responsibilities || '') ||
+      achievements !== (work?.achievements || '') ||
+      technologies !== (work?.technologies || '') ||
+      projectName !== (work?.projectName || '')
     ) {
       setModalType('back');
     } else {
       navigation.goBack();
     }
-  }, [jobTitle, companyName, monthStart, yearStart, monthEnd, yearEnd, isWorking, workDescription, work, navigation]);
+  }, [jobTitle, companyName, monthStart, yearStart, monthEnd, yearEnd, isWorking, workDescription, responsibilities, achievements, technologies, projectName, work, navigation]);
 
   const handleModalMainAction = async () => {
     if (modalType === 'back') {
@@ -63,23 +150,31 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
   };
 
   const handleSaveMain = async () => {
-    if (!jobTitle || !companyName || !monthStart || !yearStart || (!isWorking && (!monthEnd || !yearEnd))) {
-      Alert.alert('Error', 'Please fill in all required fields.');
+    if (!validateForm()) {
       return;
     }
     setSaving(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      const monthStartStr = yearStart && monthStart ? `${yearStart}-${String(monthStart).padStart(2, '0')}-01` : null;
-      const monthEndStr = (!isWorking && yearEnd && monthEnd) ? `${yearEnd}-${String(monthEnd).padStart(2, '0')}-01` : null;
+      
+      // Format data theo BE expectation - tương tự web version
+      const toISO = (y, m) => (y && m ? `${y}-${m}-01T00:00:00.000Z` : null);
+      
       const workData = {
-        jobTitle: jobTitle || null,
-        companyName: companyName || null,
+        jobTitle: jobTitle.trim(),
+        companyName: companyName.trim(),
         isWorking,
-        monthStart: monthStartStr,
-        monthEnd: monthEndStr,
-        workDescription: workDescription || null
+        monthStart: toISO(yearStart, monthStart),
+        yearStart: toISO(yearStart, monthStart),
+        monthEnd: isWorking ? null : toISO(yearEnd, monthEnd),
+        yearEnd: isWorking ? null : toISO(yearEnd, monthEnd),
+        workDescription: workDescription.trim() || null,
+        responsibilities: responsibilities.trim() || null,
+        achievements: achievements.trim() || null,
+        technologies: technologies.trim() || null,
+        projectName: projectName.trim() || null,
       };
+      
       if (mode === 'edit' && work?.workExperienceId) {
         await profileService.updateWorkExperience(work.workExperienceId, workData, token);
       } else {
@@ -87,7 +182,7 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
       }
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Lỗi', 'Không thể lưu thông tin work experience.\n' + (e && e.message ? e.message : ''));
+      Alert.alert('Error', 'Failed to save work experience.\n' + (e.message || ''));
     }
     setSaving(false);
   };
@@ -106,17 +201,63 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
     setRemoving(false);
   };
 
+  const handleInputChange = (field, value, setter) => {
+    setter(value);
+    if (errors[field]) {
+      setErrors({...errors, [field]: null});
+    }
+  };
+
+  const handleInputBlur = (field) => {
+    setTouched({...touched, [field]: true});
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
         <Icon name="arrow-back" size={24} color="#150b3d" />
       </TouchableOpacity>
-      <Text style={styles.header}>{mode === 'edit' ? 'Change work experience' : 'Add work experience'}</Text>
-      <View style={styles.form}>
-        <Text style={styles.label}>Job title</Text>
-        <TextInput style={styles.input} value={jobTitle} onChangeText={setJobTitle} placeholder="e.g. Manager" />
-        <Text style={styles.label}>Company</Text>
-        <TextInput style={styles.input} value={companyName} onChangeText={setCompanyName} placeholder="e.g. Amazon Inc" />
+      <Text style={styles.header}>{mode === 'edit' ? 'Edit Work Experience' : 'Add Work Experience'}</Text>
+      
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.form}>
+          {/* Tips Section - tương tự web version */}
+          <View style={styles.tipsContainer}>
+            <Icon name="lightbulb-outline" size={20} color="#1967d2" style={{ marginRight: 8 }} />
+            <Text style={styles.tipsText}>
+              <Text style={styles.tipsBold}>Tips:</Text> Brief the company's industry, then detail your responsibilities and achievements. For projects, write on the "Project" field below.
+            </Text>
+          </View>
+
+          <Text style={styles.label}>Job Title <Text style={styles.required}>*</Text></Text>
+          <TextInput 
+            style={[
+              styles.input, 
+              (errors.jobTitle || (touched.jobTitle && !jobTitle.trim())) && styles.inputError,
+              jobTitle.trim() && styles.inputValid
+            ]} 
+            value={jobTitle} 
+            onChangeText={(text) => handleInputChange('jobTitle', text, setJobTitle)}
+            onBlur={() => handleInputBlur('jobTitle')}
+          />
+          {(errors.jobTitle || (touched.jobTitle && !jobTitle.trim())) && (
+            <Text style={styles.errorText}>Please enter your Job Title</Text>
+          )}
+
+          <Text style={styles.label}>Company Name <Text style={styles.required}>*</Text></Text>
+          <TextInput 
+            style={[
+              styles.input, 
+              (errors.companyName || (touched.companyName && !companyName.trim())) && styles.inputError,
+              companyName.trim() && styles.inputValid
+            ]} 
+            value={companyName} 
+            onChangeText={(text) => handleInputChange('companyName', text, setCompanyName)}
+            onBlur={() => handleInputBlur('companyName')}
+          />
+          {(errors.companyName || (touched.companyName && !companyName.trim())) && (
+            <Text style={styles.errorText}>Please enter your company name</Text>
+          )}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View style={{ flex: 1, marginRight: 8 }}>
             <Text style={styles.label}>Start month</Text>
@@ -189,17 +330,92 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
         )}
         <View style={styles.rowBetween}>
           <Switch value={isWorking} onValueChange={setIsWorking} />
-          <Text style={styles.switchLabel}>This is my position now</Text>
+          <Text style={styles.switchLabel}>I am currently working here</Text>
         </View>
-        <Text style={styles.label}>Description</Text>
+
+        <Text style={styles.label}>Description <Text style={styles.required}>*</Text></Text>
         <TextInput
-          style={styles.textarea}
+          style={[
+            styles.textarea,
+            (errors.workDescription || (touched.workDescription && !workDescription.trim())) && styles.inputError,
+            workDescription.trim() && styles.inputValid
+          ]}
           value={workDescription}
-          onChangeText={setWorkDescription}
-          placeholder="Write additional information here"
+          onChangeText={(text) => handleInputChange('workDescription', text, setWorkDescription)}
+          onBlur={() => handleInputBlur('workDescription')}
           multiline
           scrollEnabled
         />
+        {(errors.workDescription || (touched.workDescription && !workDescription.trim())) && (
+          <Text style={styles.errorText}>Please enter your work description</Text>
+        )}
+        <Text style={styles.charCounter}>
+          {workDescription.length}/2500
+        </Text>
+
+        <Text style={styles.label}>Key Responsibilities <Text style={styles.required}>*</Text></Text>
+        <TextInput
+          style={[
+            styles.textarea,
+            (errors.responsibilities || (touched.responsibilities && !responsibilities.trim())) && styles.inputError,
+            responsibilities.trim() && styles.inputValid
+          ]}
+          value={responsibilities}
+          onChangeText={(text) => handleInputChange('responsibilities', text, setResponsibilities)}
+          onBlur={() => handleInputBlur('responsibilities')}
+          multiline
+          scrollEnabled
+        />
+        {(errors.responsibilities || (touched.responsibilities && !responsibilities.trim())) && (
+          <Text style={styles.errorText}>Please enter your key responsibilities</Text>
+        )}
+        <Text style={styles.charCounter}>
+          {responsibilities.length}/2500
+        </Text>
+
+        <Text style={styles.label}>Key Achievements <Text style={styles.required}>*</Text></Text>
+        <TextInput
+          style={[
+            styles.textarea,
+            (errors.achievements || (touched.achievements && !achievements.trim())) && styles.inputError,
+            achievements.trim() && styles.inputValid
+          ]}
+          value={achievements}
+          onChangeText={(text) => handleInputChange('achievements', text, setAchievements)}
+          onBlur={() => handleInputBlur('achievements')}
+          multiline
+          scrollEnabled
+        />
+        {(errors.achievements || (touched.achievements && !achievements.trim())) && (
+          <Text style={styles.errorText}>Please enter your key achievements</Text>
+        )}
+        <Text style={styles.charCounter}>
+          {achievements.length}/2500
+        </Text>
+
+        <Text style={styles.label}>Technologies Used (Optional)</Text>
+        <TextInput
+          style={styles.textarea}
+          value={technologies}
+          onChangeText={setTechnologies}
+          multiline
+          scrollEnabled
+        />
+        <Text style={styles.charCounter}>
+          {technologies.length}/2500
+        </Text>
+
+        <Text style={styles.label}>Project Name (Optional)</Text>
+        <TextInput
+          style={styles.textarea}
+          value={projectName}
+          onChangeText={setProjectName}
+          multiline
+          scrollEnabled
+        />
+        <Text style={styles.charCounter}>
+          {projectName.length}/2500
+        </Text>
         <View style={styles.actionRow}>
           {mode === 'edit' && work?.workExperienceId && (
             <TouchableOpacity style={styles.removeBtn} onPress={handleRemove} disabled={removing}>
@@ -211,6 +427,7 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+      </ScrollView>
       {/* Modal xác nhận */}
       <Modal
         isVisible={modalType !== null}
@@ -256,15 +473,71 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8', alignItems: 'center', paddingTop: 24 },
+  container: { flex: 1, backgroundColor: '#f8f8f8' },
   backBtn: { position: 'absolute', top: 30, left: 20, zIndex: 10, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 24, marginBottom: 16 },
-  form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2 },
-  label: { fontWeight: '500', fontSize: 14, color: '#150b3d', marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: '#f8f8f8', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14, fontSize: 15, color: '#514a6b', borderWidth: 1, borderColor: '#eee', marginBottom: 0, fontWeight: '400' },
+  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 24, marginBottom: 16, textAlign: 'center' },
+  scrollView: { flex: 1 },
+  form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2, alignSelf: 'center', marginTop: 16, marginBottom: 20 },
+  tipsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f8ff',
+    borderLeftWidth: 3,
+    borderLeftColor: '#1967d2',
+    padding: 12,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+  tipsText: { fontSize: 15, color: '#222', flex: 1 },
+  tipsBold: { fontWeight: 'bold' },
+  label: { fontWeight: '600', fontSize: 15, color: '#222', marginBottom: 6, marginTop: 12 },
+  required: { color: '#e60023' },
+  input: { 
+    backgroundColor: '#fff', 
+    borderRadius: 8, 
+    paddingVertical: 12, 
+    paddingHorizontal: 14, 
+    fontSize: 16, 
+    color: '#222', 
+    borderWidth: 1.5, 
+    borderColor: '#ddd', 
+    marginBottom: 0, 
+    fontWeight: '400' 
+  },
+  inputError: {
+    borderColor: '#e60023',
+    borderWidth: 2,
+  },
+  inputValid: {
+    borderColor: '#28a745',
+    borderWidth: 2,
+  },
+  errorText: {
+    color: '#e60023',
+    fontSize: 13,
+    marginTop: 4,
+    minHeight: 18,
+  },
   rowBetween: { flexDirection: 'row', alignItems: 'center', marginVertical: 12 },
   switchLabel: { marginLeft: 12, color: '#514a6b', fontSize: 14 },
-  textarea: { minHeight: 100, maxHeight: 200, backgroundColor: '#f8f8f8', borderRadius: 8, padding: 14, fontSize: 15, color: '#514a6b', borderWidth: 1, borderColor: '#eee', textAlignVertical: 'top', marginTop: 0 },
+  textarea: { 
+    minHeight: 120, 
+    maxHeight: 200, 
+    backgroundColor: '#fff', 
+    borderRadius: 8, 
+    padding: 14, 
+    fontSize: 16, 
+    color: '#222', 
+    borderWidth: 1.5, 
+    borderColor: '#ddd', 
+    textAlignVertical: 'top', 
+    marginTop: 0 
+  },
+  charCounter: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'right',
+    marginTop: 4,
+  },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, gap: 12 },
   removeBtn: { flex: 1, backgroundColor: '#d6cdfe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginRight: 6 },
   removeBtnText: { color: '#130160', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
