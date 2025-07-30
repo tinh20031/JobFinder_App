@@ -133,6 +133,17 @@ export const authService = {
     return AsyncStorage.getItem('fullName');
   },
 
+  async getUserId() {
+    const userStr = await AsyncStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.id || user.userId) return user.id || user.userId;
+      } catch {}
+    }
+    return AsyncStorage.getItem('UserId');
+  },
+
   async verifyEmail(email, verificationCode) {
     try {
       const response = await fetch(`${BASE_URL}/api/auth/verify-email`, {

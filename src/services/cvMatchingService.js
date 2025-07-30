@@ -103,20 +103,39 @@ export const cvMatchingService = {
         throw new Error('Vui lòng đăng nhập');
       }
 
-      const url = `${BASE_URL}/api/application/try-match/${tryMatchId}`;
+      console.log('Fetching try match detail for ID:', tryMatchId);
+      // Sử dụng endpoint giống như web
+      const url = `${BASE_URL}/api/application/try-match-details/${tryMatchId}`;
+      console.log('API URL:', url);
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || `Lỗi HTTP! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        
+        let errorMessage;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || `HTTP ${response.status}`;
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${errorText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('Success response:', data);
+      return data;
     } catch (error) {
       console.error('Error fetching try match detail:', error);
       throw error;

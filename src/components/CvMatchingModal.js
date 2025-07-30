@@ -15,6 +15,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import DocumentPicker from 'react-native-document-picker';
 import { cvMatchingService } from '../services/cvMatchingService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,6 +27,7 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const navigation = useNavigation();
 
 
 
@@ -269,6 +271,8 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
               onPress={() => {
                 setShowSuccessModal(false);
                 onClose();
+                // Navigate to CV Matching History
+                navigation.navigate('CvMatchingHistory');
               }}
             >
               <Text style={styles.successButtonText}>OK</Text>

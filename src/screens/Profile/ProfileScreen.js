@@ -18,6 +18,7 @@ import HighlightProjectSection from './HighlightProjectSection';
 import CertificateSection from './CertificateSection';
 import AwardsSection from './AwardsSection';
 import PersonalInfoSection from './PersonalInfoSection';
+import { useProfileCompletion } from '../../navigation/AppNavigator';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -38,6 +39,7 @@ function SectionCard({ iconName, title, emptyText }) {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { setProfileCompletion } = useProfileCompletion();
   const [fullname, setFullname] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
@@ -190,14 +192,20 @@ export default function ProfileScreen() {
         const token = await AsyncStorage.getItem('token');
         try {
           const strength = await profileService.getProfileStrength(token);
+          console.log('ProfileStrength from API:', strength);
           setProfileStrength(strength);
+          // Cập nhật profile completion cho tab bar
+          const percentage = strength.percentage || 0;
+          console.log('Setting profileCompletion to:', percentage);
+          setProfileCompletion(percentage);
         } catch (e) {
           console.log('Error fetching profile strength:', e);
           setProfileStrength({ percentage: 0, missingFields: [] });
+          setProfileCompletion(0);
         }
       };
       fetchProfileStrength();
-    }, [])
+    }, [setProfileCompletion])
   );
 
   const handleAddEducation = () => {

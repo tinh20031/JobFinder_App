@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import HeaderDetail from '../components/HeaderDetail';
-import chatService from '../services/chatService';
+import HeaderDetail from '../../components/HeaderDetail';
+import chatService from '../../services/chatService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URL } from '../constants/api';
+import { BASE_URL } from '../../constants/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const Listchat = () => {
