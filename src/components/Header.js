@@ -1,19 +1,25 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Header = () => {
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../images/jobfinder-logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-    </View>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.container}>
+        <Image
+          source={require('../images/jobfinder-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: '#fff',
+  },
   container: {
     width: '100%',
     alignItems: 'flex-start',
@@ -26,7 +32,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 160,
     height: 40,
-    tintColor: '#2563eb', // Màu xanh tương tự logo
+    tintColor: '#2563eb',
   },
 });
 

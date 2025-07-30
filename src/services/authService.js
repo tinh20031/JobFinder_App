@@ -41,7 +41,7 @@ export const authService = {
       } else if (decodedToken && (decodedToken.sub || decodedToken.userId || decodedToken.id)) {
         userId = decodedToken.sub || decodedToken.userId || decodedToken.id;
       }
-      if (userId) await AsyncStorage.setItem('userId', String(userId));
+      if (userId) await AsyncStorage.setItem('UserId', String(userId));
       return data;
     } catch (error) {
       // Xử lý lỗi email chưa xác thực
@@ -70,7 +70,7 @@ export const authService = {
 
   async register(fullName, email, phone, password) {
     try {
-      const response = await fetch(`${BASE_URL}/auth/register`, {
+      const response = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,20 +90,24 @@ export const authService = {
     }
   },
 
-  async logout() {
-    await AsyncStorage.multiRemove([
-      'token',
-      'role',
-      'name',
-      'CompanyProfileId',
-      'fullName',
-      'profileImage',
-      'UserId',
-      'user',
-      'fullNameCompany',
-      'profileImageCompany',
-      'userId',
-    ]);
+  logout: async () => {
+    try {
+      const token = await authService.getToken();
+      const res = await fetch(`${BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      await AsyncStorage.removeItem('token');
+      if (!res.ok) {
+        // Vẫn tiếp tục logout ở client dù API lỗi
+        console.error('API logout failed, but logged out on client');
+      }
+    } catch (error) {
+      await AsyncStorage.removeItem('token'); // Đảm bảo token luôn được xóa
+      throw error;
+    }
   },
 
   async getToken() {
@@ -131,7 +135,7 @@ export const authService = {
 
   async verifyEmail(email, verificationCode) {
     try {
-      const response = await fetch(`${BASE_URL}/auth/verify-email`, {
+      const response = await fetch(`${BASE_URL}/api/auth/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +169,7 @@ export const authService = {
 
   async resendVerification(email) {
     try {
-      const response = await fetch(`${BASE_URL}/auth/resend-verification`, {
+      const response = await fetch(`${BASE_URL}/api/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -10,6 +10,10 @@ import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CompanyListScreen from '../screens/Company/CompanyListScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
+import CompanyDetailScreen from '../screens/Company/CompanyDetailScreen';
+import JobDetailScreen from '../screens/Jobs/JobDetailScreen';
+import Listchat from '../screens/Listchat';
+import ChatDetail from '../screens/ChatDetail';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import AboutMeEditScreen from '../screens/Profile/AboutMeEditScreen';
 import EducationEditScreen from '../screens/Profile/EducationEditScreen';
@@ -24,7 +28,6 @@ import PersonalInfoEditScreen from '../screens/Profile/PersonalInfoEditScreen';
 import AwardEditScreen from '../screens/Profile/AwardEditScreen';
 import CertificateEditScreen from '../screens/Profile/CertificateEditScreen';
 import HighlightProjectEditScreen from '../screens/Profile/HighlightProjectEditScreen';
-
 // Thêm màn hình AddScreen (dấu cộng)
 function AddScreen() {
   return (
@@ -133,7 +136,11 @@ export default function AppNavigator() {
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
-        <Stack.Screen name="AboutMeEdit" component={AboutMeEditScreen} options={{ headerShown: true }} />
+        <Stack.Screen name="CompanyDetail" component={CompanyDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="JobDetail" component={JobDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Listchat" component={Listchat} options={{ headerShown: false }} />
+        <Stack.Screen name="ChatDetail" component={ChatDetail} options={{ headerShown: false }} />
+		<Stack.Screen name="AboutMeEdit" component={AboutMeEditScreen} options={{ headerShown: true }} />
         <Stack.Screen name="EducationEdit" component={EducationEditScreen} options={{ headerShown: false }} />
         <Stack.Screen name="WorkExperienceEdit" component={WorkExperienceEditScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AddSkillScreen" component={AddSkillScreen} options={{ headerShown: false }} />
@@ -144,8 +151,7 @@ export default function AppNavigator() {
         <Stack.Screen name="PersonalInfoEdit" component={PersonalInfoEditScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AwardEdit" component={AwardEditScreen} options={{ headerShown: false }} />
         <Stack.Screen name="CertificateEdit" component={CertificateEditScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="HighlightProjectEdit" component={HighlightProjectEditScreen} options={{ headerShown: false }} />
-      </Stack.Navigator>
+        <Stack.Screen name="HighlightProjectEdit" component={HighlightProjectEditScreen} options={{ headerShown: false }} />      </Stack.Navigator>
     </NavigationContainer>
   );
 }

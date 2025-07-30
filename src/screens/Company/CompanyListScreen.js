@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import companyService from '../../services/companyService';
 import HeaderCandidates from '../../components/HeaderCandidate';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { BASE_URL } from '../../constants/api';
+import * as Animatable from 'react-native-animatable';
 
 const CompanyListScreen = () => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -34,8 +37,9 @@ const CompanyListScreen = () => {
       <TouchableOpacity
         activeOpacity={0.85}
         style={{ marginBottom: 24 }}
-        onPress={() => { /* Xử lý khi nhấn vào company */ }}
+        onPress={() => navigation.navigate('CompanyDetail', { companyId: item.userId })}
       >
+        <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
         <View style={styles.companyCard}>
           {/* Hàng trên: logo + company name + location (location dưới company name) */}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -71,6 +75,7 @@ const CompanyListScreen = () => {
             </View>
           )}
         </View>
+        </Animatable.View>
       </TouchableOpacity>
     );
   };
@@ -123,7 +128,7 @@ const CompanyListScreen = () => {
         ) : (
           <FlatList
             data={companies}
-            keyExtractor={(item, idx) => item.id?.toString() || idx.toString()}
+            keyExtractor={(item, idx) => item.userId?.toString() || idx.toString()}
             renderItem={renderCompanyCard}
             contentContainerStyle={styles.companyListWrap}
             showsVerticalScrollIndicator={false}
