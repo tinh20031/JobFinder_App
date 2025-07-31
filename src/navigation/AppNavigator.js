@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import HeaderDetail from '../components/HeaderDetail';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import JobListScreen from '../screens/Jobs/JobListScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
@@ -140,18 +141,19 @@ export default function AppNavigator() {
         <Stack.Screen name="JobDetail" component={JobDetailScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Listchat" component={Listchat} options={{ headerShown: false }} />
         <Stack.Screen name="ChatDetail" component={ChatDetail} options={{ headerShown: false }} />
-		<Stack.Screen name="AboutMeEdit" component={AboutMeEditScreen} options={{ headerShown: true }} />
-        <Stack.Screen name="EducationEdit" component={EducationEditScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="WorkExperienceEdit" component={WorkExperienceEditScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AddSkillScreen" component={AddSkillScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="EditSkillScreen" component={EditSkillScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="SearchLanguageScreen" component={SearchLanguageScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AddLanguageScreen" component={AddLanguageScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="ForeignLanguageListScreen" component={ForeignLanguageListScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="PersonalInfoEdit" component={PersonalInfoEditScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AwardEdit" component={AwardEditScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="CertificateEdit" component={CertificateEditScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="HighlightProjectEdit" component={HighlightProjectEditScreen} options={{ headerShown: false }} />      </Stack.Navigator>
+		<Stack.Screen name="AboutMeEdit" component={AboutMeEditScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="EducationEdit" component={EducationEditScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="WorkExperienceEdit" component={WorkExperienceEditScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="AddSkillScreen" component={AddSkillScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="EditSkillScreen" component={EditSkillScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="SearchLanguageScreen" component={SearchLanguageScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="AddLanguageScreen" component={AddLanguageScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="ForeignLanguageListScreen" component={ForeignLanguageListScreen} options={{ headerShown: true }} />
+        <Stack.Screen name="PersonalInfoEdit" component={PersonalInfoEditScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="AwardEdit" component={AwardEditScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="CertificateEdit" component={CertificateEditScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+        <Stack.Screen name="HighlightProjectEdit" component={HighlightProjectEditScreen} options={{ headerShown: true, header: () => <HeaderDetail /> }} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
