@@ -33,7 +33,7 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
   const AwardItem = ({ item, index }) => (
     <View style={styles.awardItem}>
       <View style={styles.awardIconContainer}>
-        <Icon name="trophy" size={20} color="#ff6b35" />
+        <Icon name="trophy" size={20} color="#2563eb" />
       </View>
       <View style={styles.awardContent}>
         {item.awardName && (

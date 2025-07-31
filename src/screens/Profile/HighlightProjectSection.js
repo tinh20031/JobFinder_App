@@ -44,7 +44,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
 
   const formatDateRange = (startMonth, startYear, endMonth, endYear, isWorking) => {
     const start = formatMonthYear(startMonth);
-    if (isWorking) {
+    if (isWorking || !endMonth) {
       return `${start} - Now`;
     }
     const end = formatMonthYear(endMonth);
@@ -78,35 +78,45 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
         {item.projectDescription && (
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Description:</Text>
-            <Text style={styles.projectDesc}>{item.projectDescription}</Text>
+            <Text style={styles.projectDesc} numberOfLines={2} ellipsizeMode="tail">
+              {item.projectDescription}
+            </Text>
           </View>
         )}
         
         {item.technologies && (
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Technologies Used:</Text>
-            <Text style={styles.projectDesc}>{item.technologies}</Text>
+            <Text style={styles.projectDesc} numberOfLines={1} ellipsizeMode="tail">
+              {item.technologies}
+            </Text>
           </View>
         )}
         
         {item.responsibilities && (
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Key Responsibilities:</Text>
-            <Text style={styles.projectDesc}>{item.responsibilities}</Text>
+            <Text style={styles.projectDesc} numberOfLines={2} ellipsizeMode="tail">
+              {item.responsibilities}
+            </Text>
           </View>
         )}
         
         {item.teamSize && (
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Team Size:</Text>
-            <Text style={styles.projectDesc}>{item.teamSize}</Text>
+            <Text style={styles.projectDesc} numberOfLines={1} ellipsizeMode="tail">
+              {item.teamSize}
+            </Text>
           </View>
         )}
         
         {item.achievements && (
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Achievements/Results:</Text>
-            <Text style={styles.projectDesc}>{item.achievements}</Text>
+            <Text style={styles.projectDesc} numberOfLines={2} ellipsizeMode="tail">
+              {item.achievements}
+            </Text>
           </View>
         )}
         
