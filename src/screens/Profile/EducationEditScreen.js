@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Switch, Alert, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Switch, Alert, Dimensions, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import profileService from '../../services/profileService';
@@ -16,13 +16,13 @@ export default function EducationEditScreen({ route, navigation }) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d)) return '';
-    return (d.getMonth() + 1).toString();
+    return (d.getMonth() + 1);
   }
   function getYear(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d)) return '';
-    return d.getFullYear().toString();
+    return d.getFullYear();
   }
   const [level, setLevel] = useState(education?.degree || '');
   const [school, setSchool] = useState(education?.school || '');
@@ -36,29 +36,47 @@ export default function EducationEditScreen({ route, navigation }) {
   const [saving, setSaving] = useState(false);
   const [modalType, setModalType] = useState(null); // 'back' | 'save' | 'remove' | null
   const [removing, setRemoving] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+    let endBeforeStart = false;
+    
+    if (!level.trim()) newErrors.level = 'Degree is required.';
+    if (!school.trim()) newErrors.school = 'School is required.';
+    if (!major.trim()) newErrors.major = 'Major is required.';
+    if (!monthStart) newErrors.monthStart = 'Start month is required.';
+    if (!yearStart) newErrors.yearStart = 'Start year is required.';
+    
+    if (!isStudying) {
+      if (!monthEnd) newErrors.monthEnd = 'End month is required.';
+      if (!yearEnd) newErrors.yearEnd = 'End year is required.';
+      
+      // Validate end > start
+      if (monthStart && yearStart && monthEnd && yearEnd) {
+        const start = new Date(`${yearStart}-${monthStart}-01T00:00:00.000Z`);
+        const end = new Date(`${yearEnd}-${monthEnd}-01T00:00:00.000Z`);
+        if (end <= start) {
+          endBeforeStart = true;
+        }
+      }
+    }
+    
+    if (endBeforeStart) {
+      newErrors.dateRange = 'Please enter an end date bigger than the start date.';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSave = () => {
+    if (!validate()) return;
     setModalType('save');
   };
 
-  const handleBack = useCallback(() => {
-    // Nếu có thay đổi thì hỏi xác nhận, không thì quay lại luôn
-    if (
-      level !== (education?.degree || '') ||
-      school !== (education?.school || '') ||
-      major !== (education?.major || '') ||
-      monthStart !== getMonth(education?.monthStart) ||
-      yearStart !== getYear(education?.monthStart) ||
-      monthEnd !== getMonth(education?.monthEnd) ||
-      yearEnd !== getYear(education?.monthEnd) ||
-      isStudying !== (education?.isStudying || false) ||
-      description !== (education?.detail || '')
-    ) {
-      setModalType('back');
-    } else {
-      navigation.goBack();
-    }
-  }, [level, school, major, monthStart, yearStart, monthEnd, yearEnd, isStudying, description, education, navigation]);
+
 
   const handleModalMainAction = async () => {
     if (modalType === 'back') {
@@ -71,36 +89,66 @@ export default function EducationEditScreen({ route, navigation }) {
   };
 
   const handleSaveMain = async () => {
-    if (!level || !school || !major || !monthStart || !yearStart || (!isStudying && (!monthEnd || !yearEnd))) {
+    // Validate required fields
+    if (!level || !school || !major || !monthStart || !yearStart) {
       Alert.alert('Error', 'Please fill in all required fields.');
       return;
+    }
+    
+    // Validate end date if not currently studying
+    if (!isStudying && (!monthEnd || !yearEnd)) {
+      Alert.alert('Error', 'Please fill in end date or check "I am currently studying".');
+      return;
+    }
+
+    // Validate date range
+    if (!isStudying && monthStart && yearStart && monthEnd && yearEnd) {
+      const start = new Date(`${yearStart}-${monthStart}-01T00:00:00.000Z`);
+      const end = new Date(`${yearEnd}-${monthEnd}-01T00:00:00.000Z`);
+      if (end <= start) {
+        Alert.alert('Error', 'Please enter an end date bigger than the start date.');
+        return;
+      }
     }
     setSaving(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      console.log('Giá trị input:', { school, level, major, monthStart, yearStart, monthEnd, yearEnd, isStudying, description });
-      const monthStartStr = yearStart && monthStart ? `${yearStart}-${String(monthStart).padStart(2, '0')}-01` : null;
-      const monthEndStr = (!isStudying && yearEnd && monthEnd) ? `${yearEnd}-${String(monthEnd).padStart(2, '0')}-01` : null;
-      const eduData = {
-        school: school || null,
-        degree: level || null,
-        major: major || null,
-        isStudying,
-        monthStart: monthStartStr,
-        monthEnd: monthEndStr,
-        detail: description || null
+      if (!token) {
+        Alert.alert('Error', 'Authentication required.');
+        return;
+      }
+
+      // Format dates safely - similar to web version
+      const toISO = (y, m) => (y && m ? `${y}-${m.toString().padStart(2, '0')}-01T00:00:00.000Z` : null);
+
+      const educationData = {
+        educationId: education?.educationId || 0,
+        candidateProfileId: education?.candidateProfileId || 0,
+        degree: level,
+        school: school,
+        major: major,
+        isStudying: isStudying,
+        monthStart: toISO(yearStart, monthStart),
+        yearStart: toISO(yearStart, monthStart),
+        monthEnd: isStudying ? null : toISO(yearEnd, monthEnd),
+        yearEnd: isStudying ? null : toISO(yearEnd, monthEnd),
+        detail: description,
+        createdAt: education?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
-      if (mode === 'edit' && education?.educationId) {
-        await profileService.updateEducation(education.educationId, eduData, token);
+
+      if (mode === 'edit') {
+        await profileService.updateEducation(education.educationId, educationData, token);
       } else {
-        await profileService.createEducation(eduData, token);
+        await profileService.createEducation(educationData, token);
       }
       navigation.goBack();
-    } catch (e) {
-      console.log('Save education error:', e && e.message ? e.message : e);
-      Alert.alert('Lỗi', 'Không thể lưu thông tin học vấn.\n' + (e && e.message ? e.message : ''));
+    } catch (error) {
+      console.error('Error saving education:', error);
+      Alert.alert('Error', 'Failed to save education. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleRemove = () => {
@@ -108,74 +156,104 @@ export default function EducationEditScreen({ route, navigation }) {
   };
 
   const handleRemoveConfirm = async () => {
-    setModalType(null);
     setRemoving(true);
     try {
       const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert('Error', 'Authentication required.');
+        return;
+      }
       await profileService.deleteEducation(education.educationId, token);
       navigation.goBack();
-    } catch (e) {
-      Alert.alert('Error', 'Failed to remove education.');
+    } catch (error) {
+      console.error('Error removing education:', error);
+      Alert.alert('Error', 'Failed to remove education. Please try again.');
+    } finally {
+      setRemoving(false);
+      setModalType(null);
     }
-    setRemoving(false);
   };
 
-  return (
+  const getInputStyle = (fieldName) => {
+    const hasError = errors[fieldName] || (touched[fieldName] && !getFieldValue(fieldName));
+    const hasValue = getFieldValue(fieldName);
+    
+    if (hasError) return [styles.input, styles.inputError];
+    if (hasValue && touched[fieldName]) return [styles.input, styles.inputSuccess];
+    return styles.input;
+  };
+
+  const getFieldValue = (fieldName) => {
+    switch (fieldName) {
+      case 'level': return level;
+      case 'school': return school;
+      case 'major': return major;
+      default: return '';
+    }
+  };
+
+  const handleFieldBlur = (fieldName) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+  };
+
+    return (
     <View style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
-      <Text style={styles.header}>{mode === 'edit' ? 'Change Education' : 'Add Education'}</Text>
-      <View style={styles.form}>
-        <Text style={styles.label}>Degree</Text>
-        <TextInput style={styles.input} value={level} onChangeText={setLevel} placeholder="e.g. Bachelor" />
-        <Text style={styles.label}>School</Text>
-        <TextInput style={styles.input} value={school} onChangeText={setSchool} placeholder="e.g. University of Oxford" />
-        <Text style={styles.label}>Major</Text>
-        <TextInput style={styles.input} value={major} onChangeText={setMajor} placeholder="e.g. Information Technology" />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <View style={{ flex: 1, marginRight: 8 }}>
-            <Text style={styles.label}>Start month</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={monthStart}
-                onValueChange={setMonthStart}
-                style={styles.picker}
-                dropdownIconColor="#514a6b"
-              >
-                <Picker.Item label="Month" value="" />
-                {[...Array(12)].map((_, i) => (
-                  <Picker.Item key={i+1} label={`${i+1}`} value={i+1} />
-                ))}
-              </Picker>
-            </View>
+      <Text style={styles.header}>Education</Text>
+      <ScrollView  
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.form}>
+          {/* Tips Section - tương tự Work Experience */}
+          <View style={styles.tipsContainer}>
+            <Icon name="lightbulb-outline" size={20} color="#1967d2" style={{ marginRight: 8 }} />
+            <Text style={styles.tipsText}>
+              <Text style={styles.tipsBold}>Tips:</Text> Include your highest level of education, relevant coursework, and any academic achievements that showcase your skills and knowledge.
+            </Text>
           </View>
-          <View style={{ flex: 1, marginLeft: 8 }}>
-            <Text style={styles.label}>Start year</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={yearStart}
-                onValueChange={setYearStart}
-                style={styles.picker}
-                dropdownIconColor="#514a6b"
-              >
-                <Picker.Item label="Year" value="" />
-                {Array.from({length: 50}, (_, i) => 1980 + i).map(y => (
-                  <Picker.Item key={y} label={`${y}`} value={y} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-        </View>
-        {!isStudying && (
+
+          <Text style={styles.label}>
+            Degree <Text style={styles.required}>*</Text>
+          </Text>
+          <TextInput 
+            style={getInputStyle('level')} 
+            value={level} 
+            onChangeText={setLevel} 
+            onBlur={() => handleFieldBlur('level')}
+          />
+          {errors.level && <Text style={styles.errorText}>{errors.level}</Text>}
+          
+          <Text style={styles.label}>
+            School <Text style={styles.required}>*</Text>
+          </Text>
+          <TextInput 
+            style={getInputStyle('school')} 
+            value={school} 
+            onChangeText={setSchool} 
+            onBlur={() => handleFieldBlur('school')}
+          />
+          {errors.school && <Text style={styles.errorText}>{errors.school}</Text>}
+          
+          <Text style={styles.label}>
+            Major <Text style={styles.required}>*</Text>
+          </Text>
+          <TextInput 
+            style={getInputStyle('major')} 
+            value={major} 
+            onChangeText={setMajor} 
+            onBlur={() => handleFieldBlur('major')}
+          />
+          {errors.major && <Text style={styles.errorText}>{errors.major}</Text>}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.label}>End month</Text>
+              <Text style={styles.label}>
+                Start month <Text style={styles.required}>*</Text>
+              </Text>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={monthEnd}
-                  onValueChange={setMonthEnd}
+                  selectedValue={monthStart || ''}
+                  onValueChange={(value) => setMonthStart(value === '' ? '' : value)}
                   style={styles.picker}
                   dropdownIconColor="#514a6b"
                 >
@@ -187,11 +265,13 @@ export default function EducationEditScreen({ route, navigation }) {
               </View>
             </View>
             <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.label}>End year</Text>
+              <Text style={styles.label}>
+                Start year <Text style={styles.required}>*</Text>
+              </Text>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={yearEnd}
-                  onValueChange={setYearEnd}
+                  selectedValue={yearStart || ''}
+                  onValueChange={(value) => setYearStart(value === '' ? '' : value)}
                   style={styles.picker}
                   dropdownIconColor="#514a6b"
                 >
@@ -203,31 +283,67 @@ export default function EducationEditScreen({ route, navigation }) {
               </View>
             </View>
           </View>
-        )}
-        <View style={styles.rowBetween}>
-          <Switch value={isStudying} onValueChange={setIsStudying} />
-          <Text style={styles.switchLabel}>I am currently studying</Text>
-        </View>
-        <Text style={styles.label}>Additional detail (Optional)</Text>
-        <TextInput
-          style={styles.textarea}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Write additional information here"
-          multiline
-          scrollEnabled
-        />
-        <View style={styles.actionRow}>
-          {mode === 'edit' && education?.educationId && (
-            <TouchableOpacity style={styles.removeBtn} onPress={handleRemove} disabled={removing}>
-              <Text style={styles.removeBtnText}>REMOVE</Text>
-            </TouchableOpacity>
+          {!isStudying && (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.label}>End month</Text>
+                <View style={styles.pickerWrapper}>
+                  <Picker
+                    selectedValue={monthEnd || ''}
+                    onValueChange={(value) => setMonthEnd(value === '' ? '' : value)}
+                    style={styles.picker}
+                    dropdownIconColor="#514a6b"
+                  >
+                    <Picker.Item label="Month" value="" />
+                    {[...Array(12)].map((_, i) => (
+                      <Picker.Item key={i+1} label={`${i+1}`} value={i+1} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+              <View style={{ flex: 1, marginLeft: 8 }}>
+                <Text style={styles.label}>End year</Text>
+                <View style={styles.pickerWrapper}>
+                  <Picker
+                    selectedValue={yearEnd || ''}
+                    onValueChange={(value) => setYearEnd(value === '' ? '' : value)}
+                    style={styles.picker}
+                    dropdownIconColor="#514a6b"
+                  >
+                    <Picker.Item label="Year" value="" />
+                    {Array.from({length: 50}, (_, i) => 1980 + i).map(y => (
+                      <Picker.Item key={y} label={`${y}`} value={y} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            </View>
           )}
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
-            <Text style={styles.saveBtnText}>SAVE</Text>
-          </TouchableOpacity>
+          <View style={styles.rowBetween}>
+            <Switch value={isStudying} onValueChange={setIsStudying} />
+            <Text style={styles.switchLabel}>I am currently studying</Text>
+          </View>
+          <Text style={styles.label}>Additional detail (Optional)</Text>
+          <TextInput
+            style={styles.textarea}
+            multiline
+            placeholder="Write additional information here"
+            value={description}
+            onChangeText={setDescription}
+            textAlignVertical="top"
+          />
+          <View style={styles.actionRow}>
+            {mode === 'edit' && education?.educationId && (
+              <TouchableOpacity style={styles.removeBtn} onPress={handleRemove} disabled={removing}>
+                <Text style={styles.removeBtnText}>REMOVE</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
+              <Text style={styles.saveBtnText}>SAVE</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </ScrollView>
       {/* Modal xác nhận */}
       <Modal
         isVisible={modalType !== null}
@@ -249,20 +365,20 @@ export default function EducationEditScreen({ route, navigation }) {
           </Text>
           {modalType === 'remove' ? (
             <>
-              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
-              </TouchableOpacity>
               <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleRemoveConfirm}>
                 <Text style={styles.sheetBtnUndoText}>REMOVE</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
-              </TouchableOpacity>
               <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleModalMainAction}>
                 <Text style={styles.sheetBtnUndoText}>{modalType === 'back' ? 'UNDO CHANGES' : 'SAVE CHANGES'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
               </TouchableOpacity>
             </>
           )}
@@ -273,18 +389,56 @@ export default function EducationEditScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8', alignItems: 'center', paddingTop: 24 },
-  backBtn: { position: 'absolute', top: 30, left: 20, zIndex: 10, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 24, marginBottom: 16 },
+  container: { flex: 1, backgroundColor: '#f8f8f8', paddingTop: 24 },
+  scrollView: { flex: 1, width: '100%' },
+  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center' },
+  scrollContent: { alignItems: 'center', paddingBottom: 20 },
+
+
   form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2 },
-  label: { fontWeight: '500', fontSize: 14, color: '#150b3d', marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: '#f8f8f8', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14, fontSize: 15, color: '#514a6b', borderWidth: 1, borderColor: '#eee', marginBottom: 0, fontWeight: '400' },
+  tipsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f8ff',
+    borderLeftWidth: 3,
+    borderLeftColor: '#1967d2',
+    padding: 12,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+  tipsText: { fontSize: 15, color: '#222', flex: 1 },
+  tipsBold: { fontWeight: 'bold' },
+  label: { fontWeight: '600', fontSize: 15, color: '#222', marginBottom: 6, marginTop: 12 },
+  input: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: '#222', borderWidth: 1.5, borderColor: '#ddd', marginBottom: 0, fontWeight: '400' },
+  required: {
+    color: '#e60023',
+  },
+  inputError: {
+    borderColor: '#e60023',
+    borderWidth: 2,
+  },
+  inputSuccess: {
+    borderColor: '#28a745',
+    borderWidth: 2,
+  },
+  inputFocus: {
+    borderColor: '#1967d2',
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: '#e60023',
+    marginTop: 4,
+    fontSize: 13,
+    marginBottom: 8,
+  },
   rowBetween: { flexDirection: 'row', alignItems: 'center', marginVertical: 12 },
   switchLabel: { marginLeft: 12, color: '#514a6b', fontSize: 14 },
   textarea: { minHeight: 100, maxHeight: 200, backgroundColor: '#f8f8f8', borderRadius: 8, padding: 14, fontSize: 15, color: '#514a6b', borderWidth: 1, borderColor: '#eee', textAlignVertical: 'top', marginTop: 0 },
+  actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, gap: 12 },
+  removeBtn: { flex: 1, backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginRight: 6 },
+  removeBtnText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
   saveBtn: {
     flex: 1,
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -327,60 +481,32 @@ const styles = StyleSheet.create({
   sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
   sheetBtn: {
     width: '100%',
-    backgroundColor: '#130160',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 50,
-    marginBottom: 12,
-  },
-  sheetBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  sheetBtnUndo: {
-    width: '100%',
-    backgroundColor: '#d6cdfe',
+    backgroundColor: '#dbeafe',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     height: 50,
     marginBottom: 0,
   },
-  sheetBtnUndoText: {
-    color: '#130160',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  removeBtn: {
-    flex: 1,
-    backgroundColor: '#d6cdfe',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 50,
-    marginRight: 6,
-  },
-  removeBtnText: {
-    color: '#130160',
+  sheetBtnText: {
+    color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
   },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 24,
-    gap: 12,
-  },
-  actionRowModal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  sheetBtnUndo: {
     width: '100%',
-    gap: 12,
-    marginTop: 12,
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 12,
+  },
+  sheetBtnUndoText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 0.84,
   },
 }); 

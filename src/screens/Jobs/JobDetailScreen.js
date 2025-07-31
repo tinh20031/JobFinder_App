@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, useWindowDimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, useWindowDimensions, TextInput, Alert } from 'react-native';
 import HeaderDetail from '../../components/HeaderDetail';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { JobService } from '../../services/JobService';
@@ -9,6 +9,8 @@ import * as Animatable from 'react-native-animatable';
 import JobApplyModal from '../../components/JobApplyModal';
 import CvMatchingModal from '../../components/CvMatchingModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { authService } from '../../services/authService';
+import chatService from '../../services/chatService';
 
 const JobDetailScreen = ({ route }) => {
   const { jobId } = route?.params || {};
@@ -21,6 +23,8 @@ const JobDetailScreen = ({ route }) => {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showCvMatchModal, setShowCvMatchModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Thêm state này
+  const [showMessageModal, setShowMessageModal] = useState(false); // Thêm state cho message modal
+  const [message, setMessage] = useState(''); // Thêm state cho nội dung tin nhắn
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -79,6 +83,52 @@ const JobDetailScreen = ({ route }) => {
     if (url) Linking.openURL(url);
   };
 
+  const handleSendMessage = async () => {
+    if (!message.trim()) {
+      Alert.alert('Error', 'Message cannot be empty.');
+      return;
+    }
+
+    try {
+      // Lấy thông tin user hiện tại
+      const token = await authService.getToken();
+      const userId = await authService.getUserId();
+      
+      if (!userId) {
+        Alert.alert('Error', 'You must be logged in to send messages.');
+        return;
+      }
+
+      // Chuẩn bị payload cho API
+      const payload = {
+        senderId: Number(userId),
+        receiverId: Number(job.company?.id || job.companyId),
+        relatedJobId: Number(job.id),
+        messageText: message.trim(),
+      };
+
+      // Gửi tin nhắn
+      await chatService.sendMessage(payload);
+      
+      // Đóng modal và chuyển qua trang ChatDetail
+      setMessage('');
+      setShowMessageModal(false);
+      
+      // Chuyển qua trang ChatDetail với thông tin contact
+      navigation.navigate('ChatDetail', {
+        contact: {
+          id: job.company?.id || job.companyId,
+          name: job.company?.companyName || 'Employer',
+          avatar: job.company?.urlCompanyLogo || require('../../images/jobfinder-logo.png'),
+        },
+        partnerOnline: false, // Mặc định offline
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#F7F8FD' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -99,9 +149,9 @@ const JobDetailScreen = ({ route }) => {
         <Animatable.View animation="fadeInUp" duration={600} delay={150}>
           {/* Action Buttons */}
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.followBtn}>
-              <MaterialIcons name="add" size={20} color="#fff" />
-              <Text style={styles.followBtnText}>Follow</Text>
+            <TouchableOpacity style={styles.followBtn} onPress={() => setShowMessageModal(true)}>
+              <MaterialIcons name="message" size={20} color="#fff" />
+              <Text style={styles.followBtnText}>Message</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cvMatchBtn} onPress={() => setShowCvMatchModal(true)}>
               <MaterialIcons name="search" size={20} color="#fff" />
@@ -290,6 +340,54 @@ const JobDetailScreen = ({ route }) => {
         jobId={job.id}
         jobTitle={job.jobTitle}
       />
+      
+      {/* Message Modal */}
+      {showMessageModal && (
+        <View style={styles.modalOverlay}>
+          <Animatable.View animation="fadeInUp" duration={300} style={styles.messageModal}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderContent}>
+                <Image 
+                  source={job.company?.urlCompanyLogo ? { uri: job.company.urlCompanyLogo } : require('../../images/jobfinder-logo.png')} 
+                  style={styles.modalCompanyLogo} 
+                />
+                <View style={styles.modalHeaderText}>
+                  <Text style={styles.modalCompanyName}>{job.company?.companyName || 'Contact Employer'}</Text>
+                  <Text style={styles.modalCompanyIndustry}>{job.company?.industryName || 'Replies instantly'}</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setShowMessageModal(false)} style={styles.modalCloseBtn}>
+                <MaterialIcons name="close" size={24} color="#606770" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Message Input */}
+            <View style={styles.modalBody}>
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Enter Message..."
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Footer */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity 
+                style={styles.sendButton} 
+                onPress={handleSendMessage}
+              >
+                <MaterialIcons name="send" size={20} color="#fff" />
+                <Text style={styles.sendButtonText}>Send Message</Text>
+              </TouchableOpacity>
+            </View>
+          </Animatable.View>
+        </View>
+      )}
     </View>
   );
 };
@@ -620,6 +718,98 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 100, // Adjust based on the height of the bottom menu bar
     zIndex: 1,
+  },
+  // Message Modal Styles
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  messageModal: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+  },
+  modalHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  modalCompanyLogo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  modalHeaderText: {
+    flex: 1,
+  },
+  modalCompanyName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+    marginBottom: 2,
+  },
+  modalCompanyIndustry: {
+    fontSize: 13,
+    color: '#65676b',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: 16,
+  },
+  messageInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 18,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 15,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  modalFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+  },
+  sendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1967D2',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 8,
   },
 });
 

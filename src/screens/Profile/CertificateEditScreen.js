@@ -23,8 +23,7 @@ export default function CertificateEditScreen({ route, navigation }) {
   const [saving, setSaving] = useState(false);
   const [modalType, setModalType] = useState(null); // 'back' | 'save' | 'remove' | null
   const [removing, setRemoving] = useState(false);
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [showYearPicker, setShowYearPicker] = useState(false);
+
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
@@ -54,23 +53,7 @@ export default function CertificateEditScreen({ route, navigation }) {
     }
   };
 
-  const handleBack = useCallback(() => {
-    const originalMonth = certificate?.month ? certificate.month.slice(5, 7) : '';
-    const originalYear = certificate?.year ? certificate.year.slice(0, 4) : '';
-    
-    if (
-      certificateName !== (certificate?.certificateName || '') ||
-      organization !== (certificate?.organization || '') ||
-      selectedMonth !== originalMonth ||
-      selectedYear !== originalYear ||
-      certificateUrl !== (certificate?.certificateUrl || '') ||
-      certificateDescription !== (certificate?.certificateDescription || '')
-    ) {
-      setModalType('back');
-    } else {
-      navigation.goBack();
-    }
-  }, [certificateName, organization, selectedMonth, selectedYear, certificateUrl, certificateDescription, certificate, navigation]);
+
 
   const handleModalMainAction = async () => {
     if (modalType === 'back') {
@@ -146,14 +129,11 @@ export default function CertificateEditScreen({ route, navigation }) {
     return '';
   };
 
-  return (
+    return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
       <Text style={styles.header}>{mode === 'edit' ? 'Edit Certificate' : 'Add Certificate'}</Text>
-      
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           {/* Tips Section */}
           <View style={styles.tipsContainer}>
@@ -187,33 +167,43 @@ export default function CertificateEditScreen({ route, navigation }) {
 
           <Text style={styles.label}>Issue Date <Text style={styles.required}>*</Text></Text>
           <View style={styles.dateRow}>
-            <TouchableOpacity 
-              style={[
-                styles.datePickerBtn,
-                (errors.selectedMonth || (touched.selectedMonth && !selectedMonth)) && styles.inputError,
-                selectedMonth && styles.inputValid
-              ]}
-              onPress={() => setShowMonthPicker(true)}
-            >
-              <Text style={styles.datePickerText}>
-                {selectedMonth || 'Month'}
-              </Text>
-              <Icon name="keyboard-arrow-down" size={20} color="#514a6b" />
-            </TouchableOpacity>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={selectedMonth || ''}
+                onValueChange={(value) => {
+                  setSelectedMonth(value === '' ? '' : value);
+                  if (errors.selectedMonth) {
+                    setErrors({...errors, selectedMonth: null});
+                  }
+                }}
+                style={styles.picker}
+                dropdownIconColor="#514a6b"
+              >
+                <Picker.Item label="Month" value="" />
+                {months.map((month) => (
+                  <Picker.Item key={month} label={month} value={month} />
+                ))}
+              </Picker>
+            </View>
             
-            <TouchableOpacity 
-              style={[
-                styles.datePickerBtn,
-                (errors.selectedYear || (touched.selectedYear && !selectedYear)) && styles.inputError,
-                selectedYear && styles.inputValid
-              ]}
-              onPress={() => setShowYearPicker(true)}
-            >
-              <Text style={styles.datePickerText}>
-                {selectedYear || 'Year'}
-              </Text>
-              <Icon name="keyboard-arrow-down" size={20} color="#514a6b" />
-            </TouchableOpacity>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={selectedYear || ''}
+                onValueChange={(value) => {
+                  setSelectedYear(value === '' ? '' : value);
+                  if (errors.selectedYear) {
+                    setErrors({...errors, selectedYear: null});
+                  }
+                }}
+                style={styles.picker}
+                dropdownIconColor="#514a6b"
+              >
+                <Picker.Item label="Year" value="" />
+                {years.map((year) => (
+                  <Picker.Item key={year} label={year} value={year} />
+                ))}
+              </Picker>
+            </View>
           </View>
           
           {(errors.selectedMonth || (touched.selectedMonth && !selectedMonth)) && (
@@ -268,73 +258,7 @@ export default function CertificateEditScreen({ route, navigation }) {
         </View>
       </ScrollView>
 
-      {/* Month Picker Modal */}
-      <Modal
-        isVisible={showMonthPicker}
-        onBackdropPress={() => setShowMonthPicker(false)}
-        style={styles.pickerModal}
-        backdropOpacity={0.6}
-      >
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerSheetHandle} />
-          <Text style={styles.pickerSheetTitle}>Select Month</Text>
-          <Picker
-            selectedValue={selectedMonth}
-            onValueChange={(itemValue) => {
-              setSelectedMonth(itemValue);
-              if (errors.selectedMonth) {
-                setErrors({...errors, selectedMonth: null});
-              }
-            }}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select Month" value="" />
-            {months.map((month) => (
-              <Picker.Item key={month} label={month} value={month} />
-            ))}
-          </Picker>
-          <TouchableOpacity 
-            style={styles.pickerSheetBtn} 
-            onPress={() => setShowMonthPicker(false)}
-          >
-            <Text style={styles.pickerSheetBtnText}>DONE</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
 
-      {/* Year Picker Modal */}
-      <Modal
-        isVisible={showYearPicker}
-        onBackdropPress={() => setShowYearPicker(false)}
-        style={styles.pickerModal}
-        backdropOpacity={0.6}
-      >
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerSheetHandle} />
-          <Text style={styles.pickerSheetTitle}>Select Year</Text>
-          <Picker
-            selectedValue={selectedYear}
-            onValueChange={(itemValue) => {
-              setSelectedYear(itemValue);
-              if (errors.selectedYear) {
-                setErrors({...errors, selectedYear: null});
-              }
-            }}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select Year" value="" />
-            {years.map((year) => (
-              <Picker.Item key={year} label={year} value={year} />
-            ))}
-          </Picker>
-          <TouchableOpacity 
-            style={styles.pickerSheetBtn} 
-            onPress={() => setShowYearPicker(false)}
-          >
-            <Text style={styles.pickerSheetBtnText}>DONE</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
 
       {/* Confirmation Modal */}
       <Modal
@@ -381,9 +305,10 @@ export default function CertificateEditScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
-  backBtn: { position: 'absolute', top: 30, left: 20, zIndex: 10, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 24, marginBottom: 16, textAlign: 'center' },
+  container: { flex: 1, backgroundColor: '#f8f8f8', paddingTop: 24 },
+
+
+  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center' },
   scrollView: { flex: 1 },
   form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2, alignSelf: 'center', marginTop: 16, marginBottom: 20 },
   tipsContainer: {
@@ -429,22 +354,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  datePickerBtn: {
+  pickerWrapper: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: '#ddd',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    marginBottom: 18,
+    justifyContent: 'center',
+    height: 44,
+    paddingVertical: 0,
   },
-  datePickerText: {
-    fontSize: 16,
-    color: '#222',
-    fontWeight: '400',
+  picker: {
+    color: '#514a6b',
+    fontSize: 10,
+    height: 56,
+    textAlignVertical: 'center',
   },
   textarea: { 
     minHeight: 120, 
@@ -466,24 +391,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, gap: 12 },
-  removeBtn: { flex: 1, backgroundColor: '#d6cdfe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginRight: 6 },
-  removeBtnText: { color: '#130160', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
-  saveBtn: { flex: 1, backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginLeft: 6, shadowColor: '#99aac5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5, alignSelf: 'center' },
+  removeBtn: { flex: 1, backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginRight: 6 },
+  removeBtnText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
+  saveBtn: { flex: 1, backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginLeft: 6, shadowColor: '#99aac5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5, alignSelf: 'center' },
   saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
   modal: { justifyContent: 'flex-end', margin: 0 },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
   sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
   sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
-  sheetBtn: { width: '100%', backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
+  sheetBtn: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
   sheetBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  sheetBtnUndo: { width: '100%', backgroundColor: '#d6cdfe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
-  sheetBtnUndoText: { color: '#130160', fontWeight: 'bold', fontSize: 16 },
+  sheetBtnUndo: { width: '100%', backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
+  sheetBtnUndoText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16 },
   pickerModal: { justifyContent: 'flex-end', margin: 0 },
   pickerSheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   pickerSheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
   pickerSheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 16 },
-  picker: { width: '100%', height: 200 },
-  pickerSheetBtn: { width: '100%', backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginTop: 16 },
+
+  pickerSheetBtn: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginTop: 16 },
   pickerSheetBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 }); 

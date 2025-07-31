@@ -14,13 +14,13 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d)) return '';
-    return (d.getMonth() + 1).toString();
+    return (d.getMonth() + 1);
   }
   function getYear(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d)) return '';
-    return d.getFullYear().toString();
+    return d.getFullYear();
   }
   const [jobTitle, setJobTitle] = useState(work?.jobTitle || '');
   const [companyName, setCompanyName] = useState(work?.companyName || '');
@@ -118,26 +118,7 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
     }
   };
 
-  const handleBack = useCallback(() => {
-    if (
-      jobTitle !== (work?.jobTitle || '') ||
-      companyName !== (work?.companyName || '') ||
-      monthStart !== getMonth(work?.monthStart) ||
-      yearStart !== getYear(work?.monthStart) ||
-      monthEnd !== getMonth(work?.monthEnd) ||
-      yearEnd !== getYear(work?.monthEnd) ||
-      isWorking !== (work?.isWorking || false) ||
-      workDescription !== (work?.workDescription || '') ||
-      responsibilities !== (work?.responsibilities || '') ||
-      achievements !== (work?.achievements || '') ||
-      technologies !== (work?.technologies || '') ||
-      projectName !== (work?.projectName || '')
-    ) {
-      setModalType('back');
-    } else {
-      navigation.goBack();
-    }
-  }, [jobTitle, companyName, monthStart, yearStart, monthEnd, yearEnd, isWorking, workDescription, responsibilities, achievements, technologies, projectName, work, navigation]);
+
 
   const handleModalMainAction = async () => {
     if (modalType === 'back') {
@@ -155,12 +136,16 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
     }
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      
       // Format data theo BE expectation - tương tự web version
-      const toISO = (y, m) => (y && m ? `${y}-${m}-01T00:00:00.000Z` : null);
+      const toISO = (y, m) => {
+        if (!y || !m) return null;
+        const monthStr = m.toString().padStart(2, '0');
+        return `${y}-${monthStr}-01T00:00:00.000Z`;
+      };
       
       const workData = {
+        workExperienceId: work?.workExperienceId || 0,
+        candidateProfileId: work?.candidateProfileId || 0,
         jobTitle: jobTitle.trim(),
         companyName: companyName.trim(),
         isWorking,
@@ -173,15 +158,20 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
         achievements: achievements.trim() || null,
         technologies: technologies.trim() || null,
         projectName: projectName.trim() || null,
+        createdAt: work?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       
-      if (mode === 'edit' && work?.workExperienceId) {
-        await profileService.updateWorkExperience(work.workExperienceId, workData, token);
-      } else {
-        await profileService.createWorkExperience(workData, token);
-      }
+      
+      
+              if (mode === 'edit' && work?.workExperienceId) {
+          await profileService.updateWorkExperience(workData);
+        } else {
+          await profileService.createWorkExperience(workData);
+        }
       navigation.goBack();
     } catch (e) {
+      console.error('Error saving work experience:', e);
       Alert.alert('Error', 'Failed to save work experience.\n' + (e.message || ''));
     }
     setSaving(false);
@@ -192,8 +182,7 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
     setModalType(null);
     setRemoving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      await profileService.deleteWorkExperience(work.workExperienceId, token);
+      await profileService.deleteWorkExperience(work.workExperienceId);
       navigation.goBack();
     } catch (e) {
       Alert.alert('Error', 'Failed to remove work experience.');
@@ -212,14 +201,11 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
     setTouched({...touched, [field]: true});
   };
 
-  return (
+    return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
       <Text style={styles.header}>{mode === 'edit' ? 'Edit Work Experience' : 'Add Work Experience'}</Text>
-      
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           {/* Tips Section - tương tự web version */}
           <View style={styles.tipsContainer}>
@@ -263,8 +249,8 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
             <Text style={styles.label}>Start month</Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={monthStart}
-                onValueChange={setMonthStart}
+                selectedValue={monthStart || ''}
+                onValueChange={(value) => setMonthStart(value === '' ? '' : value)}
                 style={styles.picker}
                 dropdownIconColor="#514a6b"
               >
@@ -279,8 +265,8 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
             <Text style={styles.label}>Start year</Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={yearStart}
-                onValueChange={setYearStart}
+                selectedValue={yearStart || ''}
+                onValueChange={(value) => setYearStart(value === '' ? '' : value)}
                 style={styles.picker}
                 dropdownIconColor="#514a6b"
               >
@@ -298,8 +284,8 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
               <Text style={styles.label}>End month</Text>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={monthEnd}
-                  onValueChange={setMonthEnd}
+                  selectedValue={monthEnd || ''}
+                  onValueChange={(value) => setMonthEnd(value === '' ? '' : value)}
                   style={styles.picker}
                   dropdownIconColor="#514a6b"
                 >
@@ -314,8 +300,8 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
               <Text style={styles.label}>End year</Text>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={yearEnd}
-                  onValueChange={setYearEnd}
+                  selectedValue={yearEnd || ''}
+                  onValueChange={(value) => setYearEnd(value === '' ? '' : value)}
                   style={styles.picker}
                   dropdownIconColor="#514a6b"
                 >
@@ -449,20 +435,20 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
           </Text>
           {modalType === 'remove' ? (
             <>
-              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
-              </TouchableOpacity>
               <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleRemoveConfirm}>
                 <Text style={styles.sheetBtnUndoText}>REMOVE</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
-              </TouchableOpacity>
               <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleModalMainAction}>
                 <Text style={styles.sheetBtnUndoText}>{modalType === 'back' ? 'UNDO CHANGES' : 'SAVE CHANGES'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
               </TouchableOpacity>
             </>
           )}
@@ -473,9 +459,10 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
-  backBtn: { position: 'absolute', top: 30, left: 20, zIndex: 10, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 24, marginBottom: 16, textAlign: 'center' },
+  container: { flex: 1, backgroundColor: '#f8f8f8', paddingTop: 24 },
+
+
+  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center' },
   scrollView: { flex: 1 },
   form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2, alignSelf: 'center', marginTop: 16, marginBottom: 20 },
   tipsContainer: {
@@ -539,9 +526,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, gap: 12 },
-  removeBtn: { flex: 1, backgroundColor: '#d6cdfe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginRight: 6 },
-  removeBtnText: { color: '#130160', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
-  saveBtn: { flex: 1, backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginLeft: 6, shadowColor: '#99aac5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5, alignSelf: 'center' },
+  removeBtn: { flex: 1, backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginRight: 6 },
+  removeBtnText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
+  saveBtn: { flex: 1, backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginLeft: 6, shadowColor: '#99aac5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5, alignSelf: 'center' },
   saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
   pickerWrapper: { backgroundColor: '#f8f8f8', borderRadius: 12, borderWidth: 1, borderColor: '#f0f0f0', marginBottom: 18, justifyContent: 'center', height: 44, paddingVertical: 0 },
   picker: { color: '#514a6b', fontSize: 10, height: 56, textAlignVertical: 'center' },
@@ -550,8 +537,8 @@ const styles = StyleSheet.create({
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
   sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
   sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
-  sheetBtn: { width: '100%', backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
-  sheetBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  sheetBtnUndo: { width: '100%', backgroundColor: '#d6cdfe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
-  sheetBtnUndoText: { color: '#130160', fontWeight: 'bold', fontSize: 16 },
+  sheetBtn: { width: '100%', backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
+  sheetBtnText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16 },
+  sheetBtnUndo: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
+  sheetBtnUndoText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 }); 

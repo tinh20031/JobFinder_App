@@ -22,7 +22,7 @@ const LoginScreen = ({ navigation }) => {
     try {
       const data = await authService.login(email, password);
       const token = await AsyncStorage.getItem('token');
-      console.log('Token just saved after login:', token);
+
       if (!token) {
         Alert.alert('Error', 'Token not saved! Please try again.');
         setLoading(false);

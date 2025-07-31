@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Modal from 'react-native-modal';
 
 export default function CertificateSection({ certificates = [], onAdd, onEdit, onDelete }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState(null);
+
+  // Helper to format date MM/YYYY - đồng nhất với các section khác
+  const formatMonthYear = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${mm}/${yyyy}`;
+  };
+
   const handleOpenUrl = async (url) => {
     try {
       const supported = await Linking.canOpenURL(url);
@@ -17,30 +30,51 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
     }
   };
 
+  const handleDeleteCertificate = (certificate) => {
+    setSelectedCertificate(certificate);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteCertificate = () => {
+    if (selectedCertificate && onDelete) {
+      onDelete(selectedCertificate);
+    }
+    setShowDeleteModal(false);
+    setSelectedCertificate(null);
+  };
+
   const CertificateItem = ({ item, index }) => (
     <View style={styles.certificateItem}>
       <View style={styles.certificateIconContainer}>
-        <Icon name="certificate" size={20} color="#ff9228" />
+        <Icon name="certificate" size={20} color="#2563eb" />
       </View>
       <View style={styles.certificateContent}>
-        {item.certificateName && <Text style={styles.certificateTitle}>{item.certificateName}</Text>}
+        {item.certificateName && (
+          <Text style={styles.certificateTitle} numberOfLines={1} ellipsizeMode="tail">
+            {item.certificateName}
+          </Text>
+        )}
         {item.organization && (
           <View style={styles.orgContainer}>
             <MaterialIcons name="business" size={14} color="#666" />
-            <Text style={styles.certificateOrg}>{item.organization}</Text>
+            <Text style={styles.certificateOrg} numberOfLines={1} ellipsizeMode="tail">
+              {item.organization}
+            </Text>
           </View>
         )}
         {(item.month || item.year) && (
           <View style={styles.timeContainer}>
             <MaterialIcons name="schedule" size={14} color="#666" />
-            <Text style={styles.certificateTime}>
-              {item.month ? `${item.month.slice(5, 7)}/${item.month.slice(0, 4)}` : ''}
+            <Text style={styles.certificateTime} numberOfLines={1} ellipsizeMode="tail">
+              {formatMonthYear(item.month || item.year)}
             </Text>
           </View>
         )}
         {item.certificateDescription && (
           <View style={styles.certificateSection}>
-            <Text style={styles.certificateDesc}>{item.certificateDescription}</Text>
+            <Text style={styles.certificateDesc} numberOfLines={3} ellipsizeMode="tail">
+              {item.certificateDescription}
+            </Text>
           </View>
         )}
         {item.certificateUrl && (
@@ -48,7 +82,7 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
             style={styles.certificateUrl}
             onPress={() => handleOpenUrl(item.certificateUrl)}
           >
-            <Icon name="link" size={14} color="#ff9228" style={{ marginRight: 6 }} />
+            <Icon name="link" size={14} color="#2563eb" style={{ marginRight: 6 }} />
             <Text style={styles.certificateUrlText}>View Certificate</Text>
           </TouchableOpacity>
         )}
@@ -56,11 +90,11 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
       <View style={styles.certificateActions}>
         {onEdit && (
           <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#ff9228" />
+            <Icon name="pencil" size={16} color="#2563eb" />
           </TouchableOpacity>
         )}
         {onDelete && (
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => onDelete(item)}>
+          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteCertificate(item)}>
             <Icon name="delete" size={16} color="#ff4757" />
           </TouchableOpacity>
         )}
@@ -71,11 +105,11 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Icon name="certificate-outline" size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Icon name="certificate-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
         <Text style={styles.title}>Certificates</Text>
         {onAdd && (
           <TouchableOpacity style={styles.addBtn} onPress={onAdd}>
-            <Icon name="plus" size={18} color="#ff9228" />
+            <Icon name="plus" size={18} color="#2563eb" />
           </TouchableOpacity>
         )}
       </View>
@@ -93,6 +127,42 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
           ))}
         </View>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isVisible={showDeleteModal}
+        onBackdropPress={() => {
+          setShowDeleteModal(false);
+          setSelectedCertificate(null);
+        }}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>
+            Delete Certificate ?
+          </Text>
+          <Text style={styles.sheetDesc}>
+            Are you sure you want to delete this certificate "{selectedCertificate?.certificateName}"?
+          </Text>
+          <TouchableOpacity 
+            style={styles.sheetBtn} 
+            onPress={confirmDeleteCertificate}
+          >
+            <Text style={styles.sheetBtnText}>DELETE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
+            onPress={() => {
+              setShowDeleteModal(false);
+              setSelectedCertificate(null);
+            }}
+          >
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -121,7 +191,7 @@ const styles = StyleSheet.create({
     flex: 1 
   },
   addBtn: {
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     padding: 6,
     width: 32,
@@ -129,7 +199,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   separator: { 
     height: 1, 
@@ -169,7 +239,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f0f7ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -204,33 +274,50 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 4,
   },
-  certificateSection: { 
+  fieldSection: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     marginBottom: 8,
   },
+  fieldLabel: {
+    fontSize: 13,
+    color: '#514a6b',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  fieldContent: {
+    fontSize: 13,
+    color: '#514a6b',
+    lineHeight: 18,
+  },
+  certificateSection: { 
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
   certificateDesc: { 
     fontSize: 13, 
     color: '#514a6b', 
-    fontStyle: 'italic', 
-    lineHeight: 18,
+    lineHeight: 18 
   },
   certificateUrl: { 
     flexDirection: 'row', 
     alignItems: 'center',
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f0f7ff',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
+    marginTop: 8,
   },
   certificateUrlText: { 
     fontSize: 13, 
-    color: '#ff9228', 
+    color: '#2563eb', 
     fontWeight: '500',
   },
   certificateActions: { 
@@ -250,5 +337,64 @@ const styles = StyleSheet.create({
   deleteBtn: {
     borderColor: '#ffebee',
     backgroundColor: '#fff5f5',
+  },
+  // Modal styles
+  modal: { 
+    justifyContent: 'flex-end', 
+    margin: 0 
+  },
+  sheet: { 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    padding: 24, 
+    alignItems: 'center' 
+  },
+  sheetHandle: { 
+    width: 34, 
+    height: 4, 
+    backgroundColor: '#ccc', 
+    borderRadius: 2, 
+    marginBottom: 16 
+  },
+  sheetTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 18, 
+    color: '#150b3d', 
+    marginBottom: 12 
+  },
+  sheetDesc: { 
+    color: '#514a6b', 
+    fontSize: 14, 
+    marginBottom: 24, 
+    textAlign: 'center' 
+  },
+  sheetBtn: {
+    width: '100%',
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 12,
+  },
+  sheetBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  sheetBtnUndo: {
+    width: '100%',
+    backgroundColor: '#dbeafe',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 0,
+  },
+  sheetBtnUndoText: {
+    color: '#2563eb',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 }); 

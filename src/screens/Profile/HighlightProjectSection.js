@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Modal from 'react-native-modal';
 
 export default function HighlightProjectSection({ projects = [], onAdd, onEdit, onDelete }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+
   const handleOpenUrl = async (url) => {
     try {
       const supported = await Linking.canOpenURL(url);
@@ -17,32 +21,46 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
     }
   };
 
-  const formatDate = (month, year) => {
-    if (month && year) {
-      return `${month.slice(5, 7)}/${month.slice(0, 4)}`;
+  const formatMonthYear = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${mm}/${yyyy}`;
+  };
+
+  const handleDeleteProject = (project) => {
+    setSelectedProject(project);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteProject = () => {
+    if (selectedProject && onDelete) {
+      onDelete(selectedProject);
     }
-    return '';
+    setShowDeleteModal(false);
+    setSelectedProject(null);
   };
 
   const formatDateRange = (startMonth, startYear, endMonth, endYear, isWorking) => {
-    const start = formatDate(startMonth, startYear);
+    const start = formatMonthYear(startMonth);
     if (isWorking) {
-      return `${start} - Present`;
+      return `${start} - Now`;
     }
-    const end = formatDate(endMonth, endYear);
+    const end = formatMonthYear(endMonth);
     return `${start} - ${end}`;
   };
 
   const ProjectItem = ({ item, index }) => (
     <View style={styles.projectItem}>
       <View style={styles.projectIconContainer}>
-        <Icon name="lightbulb-on" size={20} color="#ff9228" />
+        <Icon name="lightbulb-on" size={20} color="#2563eb" />
       </View>
       <View style={styles.projectContent}>
         {item.projectName && <Text style={styles.projectTitle}>{item.projectName}</Text>}
         
         <View style={styles.projectMeta}>
-          {item.isWorking && (
+          {item.isOngoing && (
             <View style={styles.workingBadge}>
               <Text style={styles.workingText}>Currently Working</Text>
             </View>
@@ -51,12 +69,12 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
             <View style={styles.timeContainer}>
               <MaterialIcons name="schedule" size={14} color="#666" />
               <Text style={styles.projectTime}>
-                {formatDateRange(item.monthStart, item.yearStart, item.monthEnd, item.yearEnd, item.isWorking)}
+                {formatDateRange(item.monthStart, item.yearStart, item.monthEnd, item.yearEnd, item.isOngoing)}
               </Text>
             </View>
           )}
         </View>
-
+        
         {item.projectDescription && (
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Description:</Text>
@@ -98,7 +116,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
               style={styles.projectLink}
               onPress={() => handleOpenUrl(item.projectLink)}
             >
-              <Icon name="link" size={14} color="#ff9228" style={{ marginRight: 6 }} />
+              <Icon name="link" size={14} color="#2563eb" style={{ marginRight: 6 }} />
               <Text style={styles.projectLinkText}>View project</Text>
             </TouchableOpacity>
           </View>
@@ -107,11 +125,11 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
       <View style={styles.projectActions}>
         {onEdit && (
           <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#ff9228" />
+            <Icon name="pencil" size={16} color="#2563eb" />
           </TouchableOpacity>
         )}
         {onDelete && (
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => onDelete(item)}>
+          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteProject(item)}>
             <Icon name="delete" size={16} color="#ff4757" />
           </TouchableOpacity>
         )}
@@ -122,11 +140,11 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Icon name="lightbulb-on-outline" size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Icon name="lightbulb-on-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
         <Text style={styles.title}>Highlight Projects</Text>
         {onAdd && (
           <TouchableOpacity style={styles.addBtn} onPress={onAdd}>
-            <Icon name="plus" size={18} color="#ff9228" />
+            <Icon name="plus" size={18} color="#2563eb" />
           </TouchableOpacity>
         )}
       </View>
@@ -144,6 +162,42 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
           ))}
         </View>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isVisible={showDeleteModal}
+        onBackdropPress={() => {
+          setShowDeleteModal(false);
+          setSelectedProject(null);
+        }}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>
+            Delete Project ?
+          </Text>
+          <Text style={styles.sheetDesc}>
+            Are you sure you want to delete this project "{selectedProject?.projectName}"?
+          </Text>
+          <TouchableOpacity 
+            style={styles.sheetBtn} 
+            onPress={confirmDeleteProject}
+          >
+            <Text style={styles.sheetBtnText}>DELETE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
+            onPress={() => {
+              setShowDeleteModal(false);
+              setSelectedProject(null);
+            }}
+          >
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -172,7 +226,7 @@ const styles = StyleSheet.create({
     flex: 1 
   },
   addBtn: {
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     padding: 6,
     width: 32,
@@ -180,7 +234,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   separator: { 
     height: 1, 
@@ -220,7 +274,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f0f7ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -281,17 +335,17 @@ const styles = StyleSheet.create({
   projectLink: { 
     flexDirection: 'row', 
     alignItems: 'center',
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f0f7ff',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   projectLinkText: { 
     fontSize: 13, 
-    color: '#ff9228', 
+    color: '#2563eb', 
     fontWeight: '500',
   },
   projectActions: { 
@@ -311,5 +365,64 @@ const styles = StyleSheet.create({
   deleteBtn: {
     borderColor: '#ffebee',
     backgroundColor: '#fff5f5',
+  },
+  // Modal styles
+  modal: { 
+    justifyContent: 'flex-end', 
+    margin: 0 
+  },
+  sheet: { 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    padding: 24, 
+    alignItems: 'center' 
+  },
+  sheetHandle: { 
+    width: 34, 
+    height: 4, 
+    backgroundColor: '#ccc', 
+    borderRadius: 2, 
+    marginBottom: 16 
+  },
+  sheetTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 18, 
+    color: '#150b3d', 
+    marginBottom: 12 
+  },
+  sheetDesc: { 
+    color: '#514a6b', 
+    fontSize: 14, 
+    marginBottom: 24, 
+    textAlign: 'center' 
+  },
+  sheetBtn: {
+    width: '100%',
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 12,
+  },
+  sheetBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  sheetBtnUndo: {
+    width: '100%',
+    backgroundColor: '#dbeafe',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 0,
+  },
+  sheetBtnUndoText: {
+    color: '#2563eb',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 }); 

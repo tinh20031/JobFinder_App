@@ -83,7 +83,7 @@ export default function EditSkillScreen({ navigation, route }) {
 
   const handleDeleteGroup = () => setModalType('delete');
   const handleSaveGroup = () => setModalType('save');
-  const handleBack = () => setModalType('back');
+
 
   const handleDeleteGroupConfirm = async () => {
     setModalType(null);
@@ -157,13 +157,10 @@ export default function EditSkillScreen({ navigation, route }) {
     </View>
   );
 
-  return (
+    return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
       <Text style={styles.header}>Edit Skill Group</Text>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Group Name *</Text>
@@ -292,27 +289,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     paddingTop: 24,
   },
-  scrollView: {
-    flex: 1,
-  },
-  backBtn: {
-    position: 'absolute',
-    top: 30,
-    left: 20,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   header: {
     fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
-    textAlign: 'center',
-    marginTop: 24,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 16,
+    alignSelf: 'center',
   },
+  scrollView: {
+    flex: 1,
+  },
+
+
   inputGroup: {
     marginHorizontal: 18,
     marginBottom: 20,
@@ -339,7 +328,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addBtn: {
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     marginLeft: 8,
     padding: 8,
@@ -366,7 +355,7 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     flex: 1,
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -390,13 +379,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   coreBadge: {
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
   },
   softBadge: {
     backgroundColor: '#ffd700',
   },
   coreSkillText: {
-    color: '#130160',
+    color: '#2563eb',
   },
   softSkillText: {
     color: '#e65100',
@@ -428,14 +417,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff7e0',
   },
   skillChipText: {
-    color: '#130160',
+    color: '#2563eb',
     fontSize: 14,
     fontWeight: '500',
     marginRight: 6,
   },
   deleteGroupBtn: {
     flex: 1,
-    backgroundColor: '#d6cdfe',
+    backgroundColor: '#dbeafe',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -443,7 +432,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   deleteGroupBtnText: {
-    color: '#130160',
+    color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
@@ -471,7 +460,7 @@ const styles = StyleSheet.create({
   sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
   sheetBtn: {
     width: '100%',
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -485,7 +474,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndo: {
     width: '100%',
-    backgroundColor: '#d6cdfe',
+    backgroundColor: '#dbeafe',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -493,7 +482,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   sheetBtnUndoText: {
-    color: '#130160',
+    color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
   },

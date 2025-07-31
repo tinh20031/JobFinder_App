@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Modal from 'react-native-modal';
 
 export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedAward, setSelectedAward] = useState(null);
+
   // Helper to format date MM/YYYY
   const formatMonthYear = (iso) => {
     if (!iso) return "";
@@ -13,41 +17,54 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
     return `${mm}/${yyyy}`;
   };
 
+  const handleDeleteAward = (award) => {
+    setSelectedAward(award);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAward = () => {
+    if (selectedAward && onDelete) {
+      onDelete(selectedAward);
+    }
+    setShowDeleteModal(false);
+    setSelectedAward(null);
+  };
+
   const AwardItem = ({ item, index }) => (
     <View style={styles.awardItem}>
       <View style={styles.awardIconContainer}>
-        <Icon name="trophy" size={20} color="#ff9228" />
+        <Icon name="trophy" size={20} color="#ff6b35" />
       </View>
       <View style={styles.awardContent}>
-        {item.awardName && <Text style={styles.awardTitle}>{item.awardName}</Text>}
+        {item.awardName && (
+          <Text style={styles.awardTitle} numberOfLines={1} ellipsizeMode="tail">
+            {item.awardName}
+          </Text>
+        )}
         {item.awardOrganization && (
-          <View style={styles.orgContainer}>
-            <MaterialIcons name="business" size={14} color="#666" />
-            <Text style={styles.awardOrg}>{item.awardOrganization}</Text>
-          </View>
+          <Text style={styles.awardOrg} numberOfLines={1} ellipsizeMode="tail">
+            {item.awardOrganization}
+          </Text>
         )}
         {(item.month || item.year) && (
-          <View style={styles.timeContainer}>
-            <MaterialIcons name="schedule" size={14} color="#666" />
-            <Text style={styles.awardTime}>
-              {formatMonthYear(item.month || item.year)}
-            </Text>
-          </View>
+          <Text style={styles.awardTime} numberOfLines={1} ellipsizeMode="tail">
+            {formatMonthYear(item.month || item.year)}
+          </Text>
         )}
         {item.awardDescription && (
-          <View style={styles.awardSection}>
-            <Text style={styles.awardDesc}>{item.awardDescription}</Text>
-          </View>
+          <Text style={styles.awardDesc} numberOfLines={3} ellipsizeMode="tail">
+            {item.awardDescription}
+          </Text>
         )}
       </View>
       <View style={styles.awardActions}>
         {onEdit && (
           <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#ff9228" />
+            <Icon name="pencil" size={16} color="#2563eb" />
           </TouchableOpacity>
         )}
         {onDelete && (
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => onDelete(item)}>
+          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteAward(item)}>
             <Icon name="delete" size={16} color="#ff4757" />
           </TouchableOpacity>
         )}
@@ -58,11 +75,11 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Icon name="trophy-outline" size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Icon name="trophy-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
         <Text style={styles.title}>Awards</Text>
         {onAdd && (
           <TouchableOpacity style={styles.addBtn} onPress={onAdd}>
-            <Icon name="plus" size={18} color="#ff9228" />
+            <Icon name="plus" size={18} color="#2563eb" />
           </TouchableOpacity>
         )}
       </View>
@@ -80,6 +97,42 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
           ))}
         </View>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isVisible={showDeleteModal}
+        onBackdropPress={() => {
+          setShowDeleteModal(false);
+          setSelectedAward(null);
+        }}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>
+            Delete Award ?
+          </Text>
+          <Text style={styles.sheetDesc}>
+            Are you sure you want to delete this award "{selectedAward?.awardName}"?
+          </Text>
+          <TouchableOpacity 
+            style={styles.sheetBtn} 
+            onPress={confirmDeleteAward}
+          >
+            <Text style={styles.sheetBtnText}>DELETE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
+            onPress={() => {
+              setShowDeleteModal(false);
+              setSelectedAward(null);
+            }}
+          >
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -108,7 +161,7 @@ const styles = StyleSheet.create({
     flex: 1 
   },
   addBtn: {
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     padding: 6,
     width: 32,
@@ -116,7 +169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   separator: { 
     height: 1, 
@@ -156,7 +209,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f0f7ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -170,32 +223,16 @@ const styles = StyleSheet.create({
     color: '#150b3d', 
     marginBottom: 4 
   },
-  orgContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
   awardOrg: { 
     fontSize: 14, 
     color: '#514a6b', 
-    marginLeft: 4,
+    marginBottom: 4,
     fontWeight: '500',
-  },
-  timeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
   },
   awardTime: { 
     fontSize: 13, 
     color: '#666',
-    marginLeft: 4,
-  },
-  awardSection: { 
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    marginBottom: 8,
   },
   awardDesc: { 
     fontSize: 13, 
@@ -220,5 +257,64 @@ const styles = StyleSheet.create({
   deleteBtn: {
     borderColor: '#ffebee',
     backgroundColor: '#fff5f5',
+  },
+  // Modal styles
+  modal: { 
+    justifyContent: 'flex-end', 
+    margin: 0 
+  },
+  sheet: { 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    padding: 24, 
+    alignItems: 'center' 
+  },
+  sheetHandle: { 
+    width: 34, 
+    height: 4, 
+    backgroundColor: '#ccc', 
+    borderRadius: 2, 
+    marginBottom: 16 
+  },
+  sheetTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 18, 
+    color: '#150b3d', 
+    marginBottom: 12 
+  },
+  sheetDesc: { 
+    color: '#514a6b', 
+    fontSize: 14, 
+    marginBottom: 24, 
+    textAlign: 'center' 
+  },
+  sheetBtn: {
+    width: '100%',
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 12,
+  },
+  sheetBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  sheetBtnUndo: {
+    width: '100%',
+    backgroundColor: '#dbeafe',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 0,
+  },
+  sheetBtnUndoText: {
+    color: '#2563eb',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 }); 

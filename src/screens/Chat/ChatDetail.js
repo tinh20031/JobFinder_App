@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import HeaderDetail from '../components/HeaderDetail';
-import chatService from '../services/chatService';
+import HeaderDetail from '../../components/HeaderDetail';
+import chatService from '../../services/chatService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 import DocumentPicker from 'react-native-document-picker';
@@ -35,7 +35,7 @@ const ChatDetail = (props) => {
       try {
         const token = await AsyncStorage.getItem('token');
         const url = `${chatService.hubUrl.replace('/chatHub','')}/api/Message/history/${candidateId}/${contact.id}`;
-        console.log('candidateId:', candidateId, 'contact.id:', contact.id, 'token:', token, 'url:', url);
+    
         const res = await chatService.getMessageHistory(candidateId, contact.id, true); // true: trả về response thô
         const status = res.status;
         const text = await res.text();

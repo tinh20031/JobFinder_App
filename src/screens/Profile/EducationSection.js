@@ -1,66 +1,104 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Modal from 'react-native-modal';
 
 export default function EducationSection({ educations, onAdd, onEdit, onDelete }) {
-  // Helper: parse date string 'YYYY-MM-01' => 'Mon YYYY'
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedEducation, setSelectedEducation] = useState(null);
+
+  // Helper: format date MM/YYYY - đồng nhất với các section khác
   function formatMonthYear(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d)) return '';
-    return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${mm}/${yyyy}`;
   }
   function calcDuration(start, end) {
-    if (!start || !end) return '';
-    const d1 = new Date(start);
-    const d2 = new Date(end);
-    let years = d2.getFullYear() - d1.getFullYear();
-    let months = d2.getMonth() - d1.getMonth();
-    if (months < 0) { years--; months += 12; }
-    if (years < 0) return '';
-    if (years === 0) return `${months} Months`;
-    if (months === 0) return `${years} Years`;
-    return `${years} Years`;
+    if (!start) return '';
+    const startDate = new Date(start);
+    const endDate = end ? new Date(end) : new Date();
+    const diffTime = Math.abs(endDate - startDate);
+    const diffYears = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 365));
+    return diffYears === 1 ? "1 year" : `${diffYears} years`;
   }
+
+  const handleDeleteEducation = (education) => {
+    setSelectedEducation(education);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteEducation = () => {
+    if (selectedEducation && onDelete) {
+      onDelete(selectedEducation);
+    }
+    setShowDeleteModal(false);
+    setSelectedEducation(null);
+  };
 
   const EducationItem = ({ item, index }) => {
     const start = formatMonthYear(item.monthStart);
     const end = item.isStudying ? 'Now' : formatMonthYear(item.monthEnd);
-    let duration = '';
-    if (item.monthStart && item.monthEnd && !item.isStudying) {
-      duration = calcDuration(item.monthStart, item.monthEnd);
-    }
+    const duration = calcDuration(item.monthStart, item.monthEnd);
 
     return (
       <View style={styles.eduItem}>
         <View style={styles.eduIconContainer}>
-          <Icon name="school" size={20} color="#ff9228" />
+          <Icon name="school" size={20} color="#2563eb" />
         </View>
         <View style={styles.eduContent}>
-          {item.major && <Text style={styles.eduMajor}>{item.major}</Text>}
+          {item.level && (
+            <Text style={styles.eduLevel} numberOfLines={1} ellipsizeMode="tail">
+              {item.level}
+            </Text>
+          )}
           {item.school && (
             <View style={styles.schoolContainer}>
               <MaterialIcons name="business" size={14} color="#666" />
-              <Text style={styles.eduSchool}>{item.school}</Text>
+              <Text style={styles.eduSchool} numberOfLines={1} ellipsizeMode="tail">
+                {item.school}
+              </Text>
             </View>
           )}
-          {(start || end) && (
-            <View style={styles.timeContainer}>
-              <MaterialIcons name="schedule" size={14} color="#666" />
-              <Text style={styles.eduTime}>
-                {start} - {end}{duration ? ` · ${duration}` : ''}
+          {item.major && (
+            <Text style={styles.eduMajor} numberOfLines={1} ellipsizeMode="tail">
+              {item.major}
+            </Text>
+          )}
+          <View style={styles.timeRow}>
+            <MaterialIcons name="schedule" size={14} color="#666" />
+            <Text style={styles.eduTime} numberOfLines={1} ellipsizeMode="tail">
+              {start} - {end} ({duration})
+            </Text>
+          </View>
+          
+          {item.gpa && (
+            <View style={styles.fieldSection}>
+              <Text style={styles.fieldLabel}>GPA:</Text>
+              <Text style={styles.fieldContent} numberOfLines={1} ellipsizeMode="tail">
+                {item.gpa}
+              </Text>
+            </View>
+          )}
+          
+          {item.description && (
+            <View style={styles.fieldSection}>
+              <Text style={styles.fieldLabel}>Description:</Text>
+              <Text style={styles.fieldContent} numberOfLines={2} ellipsizeMode="tail">
+                {item.description}
               </Text>
             </View>
           )}
         </View>
         <View style={styles.eduActions}>
           <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#ff9228" />
+            <Icon name="pencil" size={16} color="#2563eb" />
           </TouchableOpacity>
           {onDelete && (
-            <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => onDelete(item)}>
+            <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteEducation(item)}>
               <Icon name="delete" size={16} color="#ff4757" />
             </TouchableOpacity>
           )}
@@ -72,10 +110,10 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Icon name="school-outline" size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Icon name="school-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
         <Text style={styles.title}>Education</Text>
         <TouchableOpacity style={styles.addBtn} onPress={onAdd}>
-          <Icon name="plus" size={18} color="#ff9228" />
+          <Icon name="plus" size={18} color="#2563eb" />
         </TouchableOpacity>
       </View>
       <View style={styles.separator} />
@@ -92,6 +130,42 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
           ))}
         </View>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isVisible={showDeleteModal}
+        onBackdropPress={() => {
+          setShowDeleteModal(false);
+          setSelectedEducation(null);
+        }}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>
+            Delete Education ?
+          </Text>
+          <Text style={styles.sheetDesc}>
+            Are you sure you want to delete this education "{selectedEducation?.level}" at "{selectedEducation?.school}"?
+          </Text>
+          <TouchableOpacity 
+            style={styles.sheetBtn} 
+            onPress={confirmDeleteEducation}
+          >
+            <Text style={styles.sheetBtnText}>DELETE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
+            onPress={() => {
+              setShowDeleteModal(false);
+              setSelectedEducation(null);
+            }}
+          >
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -120,7 +194,7 @@ const styles = StyleSheet.create({
     flex: 1 
   },
   addBtn: {
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     padding: 6,
     width: 32,
@@ -128,7 +202,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   separator: { 
     height: 1, 
@@ -168,7 +242,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f0f7ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -219,5 +293,86 @@ const styles = StyleSheet.create({
   deleteBtn: {
     borderColor: '#ffebee',
     backgroundColor: '#fff5f5',
+  },
+  // Modal styles
+  modal: { 
+    justifyContent: 'flex-end', 
+    margin: 0 
+  },
+  sheet: { 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    padding: 24, 
+    alignItems: 'center' 
+  },
+  sheetHandle: { 
+    width: 34, 
+    height: 4, 
+    backgroundColor: '#ccc', 
+    borderRadius: 2, 
+    marginBottom: 16 
+  },
+  sheetTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 18, 
+    color: '#150b3d', 
+    marginBottom: 12 
+  },
+  sheetDesc: { 
+    color: '#514a6b', 
+    fontSize: 14, 
+    marginBottom: 24, 
+    textAlign: 'center' 
+  },
+  sheetBtn: {
+    width: '100%',
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 12,
+  },
+  sheetBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  sheetBtnUndo: {
+    width: '100%',
+    backgroundColor: '#dbeafe',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 0,
+  },
+  sheetBtnUndoText: {
+    color: '#2563eb',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  fieldSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    color: '#514a6b',
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  fieldContent: {
+    fontSize: 13,
+    color: '#150b3d',
+    flex: 1,
+  },
+
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
   },
 }); 

@@ -14,7 +14,7 @@ export default function PersonalInfoSection({ profile }) {
   const InfoField = ({ icon, label, value, placeholder }) => (
     <View style={styles.fieldContainer}>
       <View style={styles.fieldHeader}>
-        <Icon name={icon} size={16} color="#ff9228" style={{ marginRight: 8 }} />
+                    <Icon name={icon} size={16} color="#2563eb" style={{ marginRight: 8 }} />
         <Text style={styles.fieldLabel}>{label}</Text>
       </View>
       <TextInput
@@ -30,10 +30,10 @@ export default function PersonalInfoSection({ profile }) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Icon name="account-circle-outline" size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Icon name="account-circle-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
         <Text style={styles.title}>Personal Information</Text>
         <TouchableOpacity style={styles.editBtn} onPress={handleEdit}>
-          <Icon name="pencil" size={20} color="#ff9228" />
+                      <Icon name="pencil" size={20} color="#2563eb" />
         </TouchableOpacity>
       </View>
       <View style={styles.separator} />
@@ -44,6 +44,12 @@ export default function PersonalInfoSection({ profile }) {
           label="Full Name" 
           value={profile?.fullName} 
           placeholder="Enter your full name"
+        />
+        <InfoField 
+          icon="briefcase" 
+          label="Job Title" 
+          value={profile?.jobTitle} 
+          placeholder="Enter your job title"
         />
         <InfoField 
           icon="calendar" 
@@ -81,12 +87,18 @@ export default function PersonalInfoSection({ profile }) {
           value={profile?.province} 
           placeholder="Enter your province"
         />
+        <InfoField 
+          icon="link" 
+          label="Personal Link" 
+          value={profile?.personalLink} 
+          placeholder="LinkedIn, portfolio, website..."
+        />
       </View>
 
       {/* Gender Selection */}
       <View style={styles.genderSection}>
         <View style={styles.fieldHeader}>
-          <Icon name="gender-male-female" size={16} color="#ff9228" style={{ marginRight: 8 }} />
+                      <Icon name="gender-male-female" size={16} color="#2563eb" style={{ marginRight: 8 }} />
           <Text style={styles.fieldLabel}>Gender</Text>
         </View>
         <View style={styles.genderRow}> 
@@ -137,7 +149,7 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     padding: 4,
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     width: 32,
     height: 32,
@@ -196,8 +208,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   genderOptionActive: {
-    borderColor: '#ff9228',
-    backgroundColor: '#fff7ed',
+    borderColor: '#2563eb',
+    backgroundColor: '#f0f7ff',
   },
   genderText: {
     color: '#514a6b',
@@ -216,12 +228,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   radioOuterActive: {
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   radioInnerActive: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#ffb237',
+    backgroundColor: '#2563eb',
   },
 }); 

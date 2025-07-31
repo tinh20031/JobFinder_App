@@ -36,7 +36,6 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
       const languagesData = await profileService.getForeignLanguageList(token);
       setLanguages(languagesData);
     } catch (error) {
-      console.log('Load languages error:', error);
       Alert.alert('Error', 'Failed to load languages.');
     }
   };
@@ -71,7 +70,6 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
               
       setLanguageToDelete(null);
             } catch (error) {
-              console.log('Remove language error:', error);
               Alert.alert('Error', 'Failed to remove language. Please try again.');
     } finally {
       setLoading(false);
@@ -123,11 +121,6 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
-      
       {/* Header */}
       <View style={styles.headerContainer}>
         <Text style={styles.headerTitle}>Language</Text>
@@ -192,20 +185,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     paddingTop: 24,
   },
-  backBtn: {
-    position: 'absolute',
-    top: 30,
-    left: 20,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   headerContainer: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginTop: 24,
+    marginTop: 8,
     marginBottom: 24,
     width: '100%',
   },
@@ -219,7 +203,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 2,
@@ -238,7 +222,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addFirstButton: {
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -304,7 +288,7 @@ const styles = StyleSheet.create({
     marginLeft: -107.5,
     width: 215,
     height: 50,
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -352,7 +336,7 @@ const styles = StyleSheet.create({
   },
   sheetBtn: {
     width: '100%',
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -366,7 +350,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndo: {
     width: '100%',
-    backgroundColor: '#d6cdfe',
+    backgroundColor: '#dbeafe',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -374,7 +358,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   sheetBtnUndoText: {
-    color: '#130160',
+    color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
   },

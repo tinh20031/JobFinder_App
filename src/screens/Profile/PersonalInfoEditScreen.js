@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import profileService from '../../services/profileService';
+import locationService from '../../services/locationService';
 import { useNavigation } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 
@@ -18,16 +19,31 @@ export default function PersonalInfoEditScreen({ route }) {
   const [address, setAddress] = useState('');
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [personalLink, setPersonalLink] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [modalType, setModalType] = useState(null); // 'save' | 'back' | null
   const [initialProfile, setInitialProfile] = useState(null);
+  const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [showProvincePicker, setShowProvincePicker] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     loadProfile();
+    loadProvinces();
   }, []);
+
+  useEffect(() => {
+    if (province && provinces.length > 0) {
+      loadCities(province);
+    }
+  }, [province, provinces, loadCities]);
 
   const loadProfile = async () => {
     try {
@@ -40,6 +56,8 @@ export default function PersonalInfoEditScreen({ route }) {
       setDob(profile.dob ? profile.dob.substring(0, 10) : '');
       setProvince(profile.province || '');
       setCity(profile.city || '');
+      setJobTitle(profile.jobTitle || '');
+      setPersonalLink(profile.personalLink || '');
       setInitialProfile({
         fullName: profile.fullName || '',
         email: profile.email || '',
@@ -49,6 +67,8 @@ export default function PersonalInfoEditScreen({ route }) {
         dob: profile.dob ? profile.dob.substring(0, 10) : '',
         province: profile.province || '',
         city: profile.city || '',
+        jobTitle: profile.jobTitle || '',
+        personalLink: profile.personalLink || '',
       });
     } catch (e) {
       setError('Unable to load profile information.');
@@ -56,6 +76,31 @@ export default function PersonalInfoEditScreen({ route }) {
       setLoading(false);
     }
   };
+
+  const loadProvinces = async () => {
+    try {
+      const provincesData = await locationService.getProvinces();
+      setProvinces(provincesData);
+    } catch (error) {
+      console.error('Error loading provinces:', error);
+    }
+  };
+
+  const loadCities = useCallback(async (provinceName) => {
+    try {
+      // Tìm province code từ tên province
+      const selectedProvince = provinces.find(p => p.name === provinceName);
+      if (selectedProvince) {
+        const citiesData = await locationService.getDistricts(selectedProvince.code);
+        setCities(citiesData);
+      } else {
+        setCities([]);
+      }
+    } catch (error) {
+      console.error('Error loading cities:', error);
+      setCities([]);
+    }
+  }, [provinces]);
 
   const hasChanged = () => {
     if (!initialProfile) return false;
@@ -67,38 +112,43 @@ export default function PersonalInfoEditScreen({ route }) {
       gender !== initialProfile.gender ||
       dob !== initialProfile.dob ||
       province !== initialProfile.province ||
-      city !== initialProfile.city
+      city !== initialProfile.city ||
+      jobTitle !== initialProfile.jobTitle ||
+      personalLink !== initialProfile.personalLink
     );
   };
 
-  const handleBack = () => {
-    if (hasChanged()) {
-      setModalType('back');
-    } else {
-      navigation.goBack();
-    }
-  };
+
 
   // Validate function
   const validate = () => {
-    if (!fullname.trim()) return 'Fullname is required.';
-    if (!dob.trim()) return 'Date of birth is required.';
-    if (!gender.trim()) return 'Gender is required.';
-    if (!email.trim()) return 'Email is required.';
-    if (!/^\S+@\S+\.\S+$/.test(email)) return 'Invalid email format.';
-    if (!phone.trim()) return 'Phone number is required.';
-    if (!/^[0-9]{8,}$/.test(phone)) return 'Invalid phone number.';
-    if (!address.trim()) return 'Address is required.';
-    if (!city.trim()) return 'City is required.';
-    if (!province.trim()) return 'Province is required.';
-    return '';
+    const newErrors = {};
+    
+    if (!fullname.trim()) newErrors.fullname = 'Full name is required.';
+    if (!jobTitle.trim()) newErrors.jobTitle = 'Job title is required.';
+    if (!phone.trim()) newErrors.phone = 'Phone is required.';
+    if (!dob || dob.trim() === '') newErrors.dob = 'Date of birth is required.';
+    if (!province.trim()) newErrors.province = 'Province is required.';
+    if (!city.trim()) newErrors.city = 'City is required.';
+    
+    // Email validation (optional but if provided must be valid)
+    if (email.trim() && !/^\S+@\S+\.\S+$/.test(email)) {
+      newErrors.email = 'Invalid email format.';
+    }
+    
+    // Phone validation
+    if (phone.trim() && !/^[0-9]{8,}$/.test(phone)) {
+      newErrors.phone = 'Invalid phone number.';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSave = () => {
     setError('');
-    const err = validate();
-    if (err) {
-      setError(err);
+    const isValid = validate();
+    if (!isValid) {
       return;
     }
     setModalType('save');
@@ -121,6 +171,8 @@ export default function PersonalInfoEditScreen({ route }) {
         formData.append('City', city);
         formData.append('Province', province);
         formData.append('Email', email);
+        formData.append('JobTitle', jobTitle);
+        formData.append('PersonalLink', personalLink);
         await profileService.updateCandidateProfile(formData);
         navigation.goBack();
       } catch (e) {
@@ -128,6 +180,35 @@ export default function PersonalInfoEditScreen({ route }) {
       }
       setSaving(false);
     }
+  };
+
+  // Helper function to get input style based on validation state
+  const getInputStyle = (fieldName) => {
+    const hasError = errors[fieldName] || (touched[fieldName] && !getFieldValue(fieldName)?.trim());
+    const hasValue = getFieldValue(fieldName)?.trim();
+    
+    return [
+      styles.input,
+      hasError && styles.inputError,
+      hasValue && !hasError && touched[fieldName] && styles.inputSuccess
+    ];
+  };
+
+  const getFieldValue = (fieldName) => {
+    switch (fieldName) {
+      case 'fullname': return fullname;
+      case 'jobTitle': return jobTitle;
+      case 'phone': return phone;
+      case 'email': return email;
+      case 'dob': return dob;
+      case 'province': return province;
+      case 'city': return city;
+      default: return '';
+    }
+  };
+
+  const handleFieldBlur = (fieldName) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
   };
 
   if (loading) {
@@ -141,29 +222,45 @@ export default function PersonalInfoEditScreen({ route }) {
 
   return (
     <View style={styles.container}>
-      {/* Back button và tiêu đề giống AddLanguageScreen */}
-      <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-        <MaterialIcons name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
       <Text style={styles.header}>Edit Personal Info</Text>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           {/* Fullname */}
-          <Text style={styles.label}>Fullname</Text>
+          <Text style={styles.label}>
+            Full name <Text style={styles.required}>*</Text>
+          </Text>
           <TextInput
-            style={styles.input}
+            style={getInputStyle('fullname')}
             value={fullname}
             onChangeText={setFullname}
-            placeholder="Fullname"
+            onBlur={() => handleFieldBlur('fullname')}
+            placeholder="Enter your full name"
             placeholderTextColor="#bcbcbc"
           />
+          {errors.fullname && <Text style={styles.errorText}>{errors.fullname}</Text>}
+
+          {/* Job Title */}
+          <Text style={styles.label}>
+            Job Title <Text style={styles.required}>*</Text>
+          </Text>
+          <TextInput
+            style={getInputStyle('jobTitle')}
+            value={jobTitle}
+            onChangeText={setJobTitle}
+            onBlur={() => handleFieldBlur('jobTitle')}
+            placeholder="Enter your job title"
+            placeholderTextColor="#bcbcbc"
+          />
+          {errors.jobTitle && <Text style={styles.errorText}>{errors.jobTitle}</Text>}
 
           {/* Date of birth */}
-          <Text style={styles.label}>Date of birth</Text>
+          <Text style={styles.label}>
+            Date of Birth <Text style={styles.required}>*</Text>
+          </Text>
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TextInput
-                style={[styles.input, { flex: 1 }]}
+                style={[getInputStyle('dob')[0], { flex: 1 }]}
                 value={dob}
                 placeholder="YYYY-MM-DD"
                 placeholderTextColor="#bcbcbc"
@@ -173,6 +270,7 @@ export default function PersonalInfoEditScreen({ route }) {
               <MaterialIcons name="calendar-today" size={22} color="#514a6b" style={{ marginLeft: 8 }} />
             </View>
           </TouchableOpacity>
+          {errors.dob && <Text style={styles.errorText}>{errors.dob}</Text>}
           {showDatePicker && (
             <DateTimePicker
               value={dob ? new Date(dob) : new Date()}
@@ -217,54 +315,84 @@ export default function PersonalInfoEditScreen({ route }) {
           {/* Email address */}
           <Text style={styles.label}>Email address</Text>
           <TextInput
-            style={styles.input}
+            style={[getInputStyle('email')[0], styles.disabledInput]}
             value={email}
             onChangeText={setEmail}
-            placeholder="Email address"
+            onBlur={() => handleFieldBlur('email')}
+            placeholder="Enter your email"
             placeholderTextColor="#bcbcbc"
             keyboardType="email-address"
+            editable={false}
           />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+          {/* Province */}
+          <Text style={styles.label}>
+            Current province/city <Text style={styles.required}>*</Text>
+          </Text>
+          <TouchableOpacity 
+            style={getInputStyle('province')[0]} 
+            onPress={() => setShowProvincePicker(true)}
+          >
+            <Text style={[styles.inputText, !province && styles.placeholderText]}>
+              {province || 'Select province'}
+            </Text>
+            <MaterialIcons name="keyboard-arrow-down" size={24} color="#514a6b" />
+          </TouchableOpacity>
+          {errors.province && <Text style={styles.errorText}>{errors.province}</Text>}
+
+          {/* City */}
+          <Text style={styles.label}>
+            City <Text style={styles.required}>*</Text>
+          </Text>
+          <TouchableOpacity 
+            style={[getInputStyle('city')[0], !province && styles.disabledInput]} 
+            onPress={() => province && setShowCityPicker(true)}
+            disabled={!province}
+          >
+            <Text style={[styles.inputText, !city && styles.placeholderText]}>
+              {city || 'Select city'}
+            </Text>
+            <MaterialIcons name="keyboard-arrow-down" size={24} color="#514a6b" />
+          </TouchableOpacity>
+          {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
 
           {/* Address */}
-          <Text style={styles.label}>Address</Text>
+          <Text style={styles.label}>Address (Street, district,...)</Text>
           <TextInput
             style={styles.input}
             value={address}
             onChangeText={setAddress}
-            placeholder="Address"
+            placeholder="Enter your address"
             placeholderTextColor="#bcbcbc"
           />
 
-          {/* City */}
-          <Text style={styles.label}>City</Text>
+          {/* Personal Link */}
+          <Text style={styles.label}>Personal Link</Text>
           <TextInput
             style={styles.input}
-            value={city}
-            onChangeText={setCity}
-            placeholder="City"
+            value={personalLink}
+            onChangeText={setPersonalLink}
+            placeholder="LinkedIn, portfolio, website..."
             placeholderTextColor="#bcbcbc"
-          />
-
-          {/* Province */}
-          <Text style={styles.label}>Province</Text>
-          <TextInput
-            style={styles.input}
-            value={province}
-            onChangeText={setProvince}
-            placeholder="Province"
-            placeholderTextColor="#bcbcbc"
+            keyboardType="url"
+            autoCapitalize="none"
           />
 
           {/* Phone number */}
-          <Text style={styles.label}>Phone number</Text>
+          <Text style={styles.label}>
+            Phone <Text style={styles.required}>*</Text>
+          </Text>
           <TextInput
-            style={styles.input}
+            style={getInputStyle('phone')}
             value={phone}
             onChangeText={setPhone}
-            placeholder="Phone number"
+            onBlur={() => handleFieldBlur('phone')}
+            placeholder="Enter your phone"
             placeholderTextColor="#bcbcbc"
             keyboardType="phone-pad"
           />
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
           {/* Error message */}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -279,6 +407,73 @@ export default function PersonalInfoEditScreen({ route }) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      {/* Province Picker Modal */}
+      <Modal
+        isVisible={showProvincePicker}
+        onBackdropPress={() => setShowProvincePicker(false)}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Select Province</Text>
+          <ScrollView style={styles.pickerList}>
+            {provinces.map((provinceItem) => (
+              <TouchableOpacity
+                key={provinceItem.code || provinceItem.id}
+                style={styles.pickerItem}
+                onPress={() => {
+                  setProvince(provinceItem.name);
+                  setCity(''); // Reset city when province changes
+                  setShowProvincePicker(false);
+                }}
+              >
+                <Text style={styles.pickerItemText}>{provinceItem.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
+            onPress={() => setShowProvincePicker(false)}
+          >
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* City Picker Modal */}
+      <Modal
+        isVisible={showCityPicker}
+        onBackdropPress={() => setShowCityPicker(false)}
+        style={styles.modal}
+        backdropOpacity={0.6}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Select City</Text>
+          <ScrollView style={styles.pickerList}>
+            {cities.map((cityItem) => (
+              <TouchableOpacity
+                key={cityItem.code || cityItem.id}
+                style={styles.pickerItem}
+                onPress={() => {
+                  setCity(cityItem.name);
+                  setShowCityPicker(false);
+                }}
+              >
+                <Text style={styles.pickerItemText}>{cityItem.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
+            onPress={() => setShowCityPicker(false)}
+          >
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
       {/* Modal xác nhận SAVE hoặc BACK */}
       <Modal
         isVisible={modalType !== null}
@@ -315,21 +510,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 24,
   },
-  backBtn: {
-    position: 'absolute',
-    top: 30,
-    left: 20,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   header: {
     fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
-    marginTop: 24,
+    marginTop: 8,
     marginBottom: 16,
     alignSelf: 'center',
   },
@@ -337,8 +523,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2, alignSelf: 'center', borderWidth: 1, borderColor: '#eee' },
-  label: { fontWeight: '500', fontSize: 14, color: '#150b3d', marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: '#f8f8f8', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14, fontSize: 15, color: '#514a6b', borderWidth: 1, borderColor: '#eee', marginBottom: 0, fontWeight: '400' },
+  label: { fontWeight: '600', fontSize: 15, color: '#222', marginBottom: 6, marginTop: 12 },
+  input: { 
+    backgroundColor: '#fff', 
+    borderRadius: 8, 
+    paddingVertical: 12, 
+    paddingHorizontal: 14, 
+    fontSize: 16, 
+    color: '#222', 
+    borderWidth: 1.5, 
+    borderColor: '#ddd', 
+    marginBottom: 0, 
+    fontWeight: '400',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  inputText: {
+    fontSize: 15,
+    color: '#514a6b',
+    fontWeight: '400',
+    flex: 1
+  },
+  placeholderText: {
+    color: '#bcbcbc'
+  },
   disabledInput: {
     backgroundColor: '#f0f0f0',
     color: '#999',
@@ -359,8 +568,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   genderOptionActive: {
-    borderColor: '#ff9228',
-    backgroundColor: '#fff7ed',
+    borderColor: '#2563eb',
+    backgroundColor: '#f0f7ff',
   },
   genderText: {
     color: '#514a6b',
@@ -379,29 +588,61 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   radioOuterActive: {
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   radioInnerActive: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#ffb237',
+    backgroundColor: '#2563eb',
   },
   errorText: {
-    color: 'red',
-    marginBottom: 16,
-    textAlign: 'center',
-    fontSize: 14,
+    color: '#e60023',
+    marginTop: 4,
+    fontSize: 13,
+    marginBottom: 8,
   },
-  saveBtn: { width: '100%', backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 16, marginTop: 24, alignSelf: 'center' },
+  required: {
+    color: '#e60023',
+  },
+  inputError: {
+    borderColor: '#e60023',
+    borderWidth: 2,
+  },
+  inputSuccess: {
+    borderColor: '#28a745',
+    borderWidth: 2,
+  },
+  inputFocus: {
+    borderColor: '#1967d2',
+    borderWidth: 1.5,
+  },
+  saveBtn: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 16, marginTop: 24, alignSelf: 'center' },
   saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
   modal: { justifyContent: 'flex-end', margin: 0 },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
   sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
   sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
-  sheetBtn: { width: '100%', backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
+  sheetBtn: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
   sheetBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  sheetBtnUndo: { width: '100%', backgroundColor: '#d6cdfe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
-  sheetBtnUndoText: { color: '#130160', fontWeight: 'bold', fontSize: 16 },
+  sheetBtnUndo: { width: '100%', backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
+  sheetBtnUndoText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16 },
+  pickerList: {
+    maxHeight: 300,
+    marginBottom: 16
+  },
+  pickerItem: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginHorizontal: 0
+  },
+  pickerItemText: {
+    fontSize: 16,
+    color: '#514a6b',
+    textAlign: 'center',
+    fontWeight: '500'
+  },
 }); 

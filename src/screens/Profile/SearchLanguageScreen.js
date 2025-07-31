@@ -68,11 +68,7 @@ export default function SearchLanguageScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
-      <Text style={styles.header}>Add Language</Text>
+
       
       <View style={styles.form}>
         <View style={styles.searchContainer}>
@@ -102,26 +98,10 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: '#f8f8f8', 
-    alignItems: 'center', 
-    paddingTop: 24 
+    alignItems: 'center'
   },
-  backBtn: { 
-    position: 'absolute', 
-    top: 30, 
-    left: 20, 
-    zIndex: 10, 
-    width: 36, 
-    height: 36, 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  },
-  header: { 
-    fontWeight: 'bold', 
-    fontSize: 20, 
-    color: '#150b3d', 
-    marginTop: 24, 
-    marginBottom: 16 
-  },
+
+
   form: { 
     width: SCREEN_WIDTH - 36, 
     backgroundColor: '#fff', 

@@ -21,7 +21,7 @@ export default function AboutMeSection({ aboutMe, loading, onAdd }) {
     return (
       <View style={styles.card}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ff9228" />
+          <ActivityIndicator size="large" color="#2563eb" />
           <Text style={styles.loadingText}>Loading about me...</Text>
         </View>
       </View>
@@ -35,7 +35,7 @@ export default function AboutMeSection({ aboutMe, loading, onAdd }) {
         style={styles.gradientBackground}
       >
         <View style={styles.header}>
-          <Icon name="account-circle-outline" size={22} color="#ff9228" style={{ marginRight: 10 }} />
+          <Icon name="account-circle-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
           <Text style={styles.title}>About Me</Text>
           {aboutMe && (aboutMe.aboutMeId || aboutMe.id) && (
             <TouchableOpacity
@@ -44,18 +44,18 @@ export default function AboutMeSection({ aboutMe, loading, onAdd }) {
                 if (navigation.getParent) {
                   const parentNav = navigation.getParent();
                   if (parentNav && parentNav.navigate) {
-                    console.log('Navigating to AboutMeEdit with data:', aboutMe);
+              
                     parentNav.navigate('AboutMeEdit', { aboutMe, token });
                   }
                 }
               }}
             >
-              <Icon name="pencil" size={18} color="#ff9228" />
+              <Icon name="pencil" size={18} color="#2563eb" />
             </TouchableOpacity>
           )}
           {!aboutMe && onAdd && (
             <TouchableOpacity style={styles.addBtn} onPress={onAdd}>
-              <Icon name="plus" size={18} color="#ff9228" />
+              <Icon name="plus" size={18} color="#2563eb" />
             </TouchableOpacity>
           )}
         </View>
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     flex: 1 
   },
   editBtn: {
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     padding: 6,
     width: 32,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addBtn: {
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     padding: 6,
     width: 32,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   content: { 
     color: '#514a6b', 
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     marginBottom: 10 
   },
   saveBtn: { 
-    backgroundColor: '#ff9228', 
+    backgroundColor: '#2563eb', 
     borderRadius: 8, 
     padding: 10, 
     alignItems: 'center' 

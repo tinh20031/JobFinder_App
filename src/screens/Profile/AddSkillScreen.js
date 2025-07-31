@@ -77,7 +77,7 @@ export default function AddSkillScreen({ navigation, route }) {
   };
 
   const handleSaveGroup = () => setModalType('save');
-  const handleBack = () => setModalType('back');
+
 
   const handleModalMainAction = async () => {
     if (modalType === 'back') {
@@ -113,7 +113,7 @@ export default function AddSkillScreen({ navigation, route }) {
         const type = skill.type === 'Core' ? 0 : 1;
         const skillToSend = { ...skill, groupName, type };
         delete skillToSend.skillId;
-        console.log('Skill gửi lên:', skillToSend);
+  
         await profileService.createSkill(skillToSend, token);
       }
       // Không Alert nữa, chỉ goBack
@@ -165,13 +165,10 @@ export default function AddSkillScreen({ navigation, route }) {
     </View>
   );
 
-  return (
+    return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
       <Text style={styles.header}>Add Skill Group</Text>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Group Name *</Text>
@@ -279,12 +276,12 @@ export default function AddSkillScreen({ navigation, route }) {
               ? 'Are you sure you want to undo your changes?'
               : 'Are you sure you want to save this skill group?'}
           </Text>
-          <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-            <Text style={styles.sheetBtnText}>CONTINUE EDITING</Text>
+          <TouchableOpacity style={styles.sheetBtn} onPress={handleModalMainAction}>
+            <Text style={styles.sheetBtnText}>{modalType === 'back' ? 'UNDO CHANGES' : 'SAVE GROUP'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleModalMainAction}>
-            <Text style={styles.sheetBtnUndoText}>{modalType === 'back' ? 'UNDO CHANGES' : 'SAVE GROUP'}</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.sheetBtnUndo} onPress={() => setModalType(null)}>
+            <Text style={styles.sheetBtnUndoText}>CONTINUE FILLING</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -297,27 +294,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     paddingTop: 24,
   },
-  scrollView: {
-    flex: 1,
-  },
-  backBtn: {
-    position: 'absolute',
-    top: 30,
-    left: 20,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   header: {
     fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
-    textAlign: 'center',
-    marginTop: 24,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 16,
+    alignSelf: 'center',
   },
+  scrollView: {
+    flex: 1,
+  },
+
+
   searchContainer: {
     paddingHorizontal: 18,
     marginBottom: 20,
@@ -431,7 +420,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addBtn: {
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     marginLeft: 8,
     padding: 8,
@@ -457,7 +446,7 @@ const styles = StyleSheet.create({
     color: '#150b3d',
   },
   saveBtn: {
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     marginHorizontal: 18,
     marginBottom: 24,
@@ -475,13 +464,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.84,
   },
   coreBadge: {
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
   },
   softBadge: {
     backgroundColor: '#ffd700',
   },
   coreSkillText: {
-    color: '#130160',
+    color: '#2563eb',
   },
   softSkillText: {
     color: '#e65100',
@@ -513,7 +502,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff7e0',
   },
   skillChipText: {
-    color: '#130160',
+    color: '#2563eb',
     fontSize: 14,
     fontWeight: '500',
     marginRight: 6,
@@ -541,7 +530,7 @@ const styles = StyleSheet.create({
   sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
   sheetBtn: {
     width: '100%',
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -555,7 +544,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndo: {
     width: '100%',
-    backgroundColor: '#d6cdfe',
+    backgroundColor: '#f0f7ff',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -563,7 +552,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   sheetBtnUndoText: {
-    color: '#130160',
+    color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
   },

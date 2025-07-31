@@ -133,6 +133,17 @@ export const authService = {
     return AsyncStorage.getItem('fullName');
   },
 
+  async getUserId() {
+    const userStr = await AsyncStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.id || user.userId) return user.id || user.userId;
+      } catch {}
+    }
+    return AsyncStorage.getItem('UserId');
+  },
+
   async verifyEmail(email, verificationCode) {
     try {
       const response = await fetch(`${BASE_URL}/api/auth/verify-email`, {
@@ -183,6 +194,46 @@ export const authService = {
         throw error;
       }
       const data = await response.json();
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    try {
+      const token = await this.getToken();
+      const response = await fetch(`${BASE_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        const error = new Error(errorData.message || 'Change password failed');
+        error.data = errorData;
+        throw error;
+      }
+      
+      // Try to parse as JSON first, if fails, treat as text
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        // If not JSON, treat as success message
+        data = { message: responseText || 'Password changed successfully' };
+      }
       return data;
     } catch (error) {
       throw error;

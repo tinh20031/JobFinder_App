@@ -25,13 +25,13 @@ export default function AddLanguageScreen({ navigation, route }) {
   const filterLanguages = useCallback(() => {
     if (!searchText.trim()) {
       setFilteredLanguages(LANGUAGE_SUGGESTIONS);
-      console.log('No search text, showing all languages:', LANGUAGE_SUGGESTIONS.length);
+
       return;
     }
     const filtered = LANGUAGE_SUGGESTIONS.filter(lang => 
       lang.name.toLowerCase().includes(searchText.toLowerCase())
     );
-    console.log('Filtered languages:', filtered.length, 'for search:', searchText);
+    
     setFilteredLanguages(filtered);
   }, [searchText]);
 
@@ -47,7 +47,7 @@ export default function AddLanguageScreen({ navigation, route }) {
   };
 
   const handleLanguageInputPress = () => {
-    console.log('Opening language dropdown, total languages:', LANGUAGE_SUGGESTIONS.length);
+    
     setShowLanguageDropdown(true);
     setSearchText('');
     setFilteredLanguages(LANGUAGE_SUGGESTIONS);
@@ -75,7 +75,7 @@ export default function AddLanguageScreen({ navigation, route }) {
       
       setShowSuccessModal(true);
     } catch (error) {
-      console.log('Save language error:', error);
+
       Alert.alert('Error', 'Failed to save language. Please try again.');
     } finally {
       setSaving(false);
@@ -105,11 +105,9 @@ export default function AddLanguageScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
-      <Text style={styles.header}>Add Language</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>Language</Text>
+      </View>
       
       <View style={styles.form}>
         <Text style={styles.label}>Language</Text>
@@ -205,7 +203,7 @@ export default function AddLanguageScreen({ navigation, route }) {
             <FlatList
               data={filteredLanguages}
               renderItem={({ item }) => {
-                console.log('Rendering language item:', item.name);
+          
                 return (
                   <TouchableOpacity 
                     style={styles.suggestionItem} 
@@ -273,33 +271,32 @@ export default function AddLanguageScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#f8f8f8', 
-    alignItems: 'center', 
-    paddingTop: 24 
+    backgroundColor: '#f8f8f8',
+    paddingTop: 24,
   },
-  backBtn: { 
-    position: 'absolute', 
-    top: 30, 
-    left: 20, 
-    zIndex: 10, 
-    width: 36, 
-    height: 36, 
-    alignItems: 'center', 
-    justifyContent: 'center' 
+  headerContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 24,
+    width: '100%',
   },
-  header: { 
-    fontWeight: 'bold', 
-    fontSize: 20, 
-    color: '#150b3d', 
-    marginTop: 24, 
-    marginBottom: 16 
+  headerTitle: {
+    fontWeight: 'bold',
+    fontSize: 20,
+    color: '#150b3d',
+    textAlign: 'center',
   },
+
+
   form: { 
-    width: SCREEN_WIDTH - 36, 
     backgroundColor: '#fff', 
     borderRadius: 16, 
     padding: 20, 
-    elevation: 2 
+    elevation: 2,
+    margin: 18,
+    alignSelf: 'center',
+    width: SCREEN_WIDTH - 36,
   },
   label: {
     fontSize: 16,
@@ -348,7 +345,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   saveBtn: {
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -469,7 +466,7 @@ const styles = StyleSheet.create({
   },
   sheetBtn: {
     width: '100%',
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -483,7 +480,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndo: {
     width: '100%',
-    backgroundColor: '#d6cdfe',
+    backgroundColor: '#dbeafe',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -491,7 +488,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   sheetBtnUndoText: {
-    color: '#130160',
+    color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
   },

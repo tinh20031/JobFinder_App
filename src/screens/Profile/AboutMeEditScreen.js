@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Dimensions, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import profileService from '../../services/profileService';
 import Modal from 'react-native-modal';
@@ -12,18 +12,32 @@ export default function AboutMeEditScreen({ route, navigation }) {
   const [value, setValue] = useState(aboutMe?.aboutMeDescription || '');
   const [saving, setSaving] = useState(false);
   const [modalType, setModalType] = useState(null); // 'back' | 'save' | null
+  const [touched, setTouched] = useState(false);
+  const [error, setError] = useState('');
+
+  const validate = () => {
+    if (!value.trim()) {
+      setError('About me description is required.');
+      return false;
+    }
+    if (value.trim().length < 10) {
+      setError('About me description must be at least 10 characters.');
+      return false;
+    }
+    if (value.trim().length > 2500) {
+      setError('About me description must be less than 2500 characters.');
+      return false;
+    }
+    setError('');
+    return true;
+  };
 
   const handleSave = () => {
+    if (!validate()) return;
     setModalType('save');
   };
 
-  const handleBack = useCallback(() => {
-    if (value !== (aboutMe?.aboutMeDescription || '')) {
-      setModalType('back');
-    } else {
-      navigation.goBack();
-    }
-  }, [value, aboutMe, navigation]);
+
 
   const handleModalMainAction = async () => {
     if (modalType === 'back') {
@@ -34,40 +48,25 @@ export default function AboutMeEditScreen({ route, navigation }) {
       setSaving(true);
       try {
         const token = await AsyncStorage.getItem('token');
-        console.log('AboutMe object:', aboutMe);
-        console.log('aboutMe?.aboutMeId:', aboutMe?.aboutMeId);
-        console.log('aboutMe?.aboutMeId type:', typeof aboutMe?.aboutMeId);
+        
         
         // Check if aboutMe exists and has an ID (could be aboutMeId or id)
         const aboutMeId = aboutMe?.aboutMeId || aboutMe?.id;
-        console.log('AboutMe ID found:', aboutMeId);
         
         if (aboutMe && aboutMeId) {
-          console.log('Calling updateAboutMe with ID:', aboutMeId);
           await profileService.updateAboutMe(aboutMeId, value, token);
         } else {
-          console.log('Calling createAboutMe');
           const newAboutMe = await profileService.createAboutMe(value, token);
-          console.log('New AboutMe created:', newAboutMe);
         }
         navigation.goBack();
       } catch (e) {
         Alert.alert('Error', 'Failed to save About Me' + (e && e.message ? ('\n' + e.message) : ''));
-        if (e && e.message) {
-          console.log('Save About Me error:', e.message, e);
-        } else {
-          console.log('Save About Me error:', e);
-        }
       }
       setSaving(false);
     }
   };
 
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false
-    });
-  }, [navigation]);
+
 
   // Modal content
   const modalTitle = modalType === 'back' ? 'Undo Changes ?' : 'Save Changes ?';
@@ -78,28 +77,56 @@ export default function AboutMeEditScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-        <Icon name="arrow-back" size={24} color="#150b3d" />
-      </TouchableOpacity>
+      <Text style={styles.header}>About Me</Text>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.form}>
+          {/* Tips section */}
+          <View style={styles.tipsContainer}>
+            <Icon name="lightbulb-outline" size={20} color="#ffc107" style={{ marginRight: 8 }} />
+            <Text style={styles.tipsText}>
+              <Text style={styles.tipsBold}>Tips:</Text> Summarize your professional experience, highlight your skills and your strengths.
+            </Text>
+          </View>
+          
+          <TextInput
+            style={[
+              styles.textarea,
+              touched && !value.trim() && styles.inputError,
+              value.trim() && touched && !error && styles.inputSuccess
+            ]}
+            multiline
+            placeholder="Write something about yourself..."
+            value={value}
+            onChangeText={(text) => {
+              setValue(text);
+              if (touched) {
+                // Clear error when user starts typing
+                if (text.trim() && text.trim().length >= 10 && text.trim().length <= 2500) {
+                  setError('');
+                }
+              }
+            }}
+            onBlur={() => setTouched(true)}
+            scrollEnabled={true}
+          />
+          
+          {/* Character count */}
+          <Text style={styles.charCount}>
+            {value.replace(/<[^>]+>/g, "").length}/2500 characters
+          </Text>
+          
+          {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* About me card */}
-      <View style={styles.card}>
-        <Text style={styles.title}>About me</Text>
-        <TextInput
-          style={styles.textarea}
-          multiline
-          placeholder="Tell me about you."
-          value={value}
-          onChangeText={setValue}
-          scrollEnabled={true}
-        />
-      </View>
-
-      {/* Save button */}
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
-        <Text style={styles.saveBtnText}>SAVE</Text>
-      </TouchableOpacity>
+          {/* Save Button - Inside the form */}
+          <TouchableOpacity 
+            style={styles.saveBtn} 
+            onPress={handleSave} 
+            disabled={saving}
+          >
+            <Text style={styles.saveBtnText}>SAVE</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       {/* Bottom sheet confirm */}
       <Modal
@@ -112,11 +139,11 @@ export default function AboutMeEditScreen({ route, navigation }) {
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>{modalTitle}</Text>
           <Text style={styles.sheetDesc}>{modalDesc}</Text>
-          <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-            <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleModalMainAction}>
             <Text style={styles.sheetBtnUndoText}>{mainBtnText}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
+            <Text style={styles.sheetBtnText}>CONTINUE FILLING</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -125,20 +152,61 @@ export default function AboutMeEditScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8', alignItems: 'center', justifyContent: 'flex-start' },
-  backBtn: { position: 'absolute', top: 30, left: 20, zIndex: 10, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  card: { width: SCREEN_WIDTH - 36, marginTop: 94, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2 },
-  title: { fontWeight: '600', fontSize: 16, color: '#150b3d', marginBottom: 16 },
-  textarea: { minHeight: 200, maxHeight: 350, backgroundColor: '#fff', borderRadius: 12, padding: 16, fontSize: 14, color: '#514a6b', borderWidth: 1, borderColor: '#eee', textAlignVertical: 'top' },
-  saveBtn: { position: 'absolute', bottom: 100, left: '50%', marginLeft: -107.5, width: 215, height: 50, backgroundColor: '#130160', borderRadius: 12, alignItems: 'center', justifyContent: 'center', shadowColor: '#99aac5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5 },
+  container: { flex: 1, backgroundColor: '#f8f8f8', alignItems: 'center', paddingTop: 24 },
+  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center' },
+  scrollView: { flex: 1 },
+  form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2, alignSelf: 'center', borderWidth: 1, borderColor: '#eee' },
+
+  tipsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff9e6',
+    borderLeftWidth: 3,
+    borderLeftColor: '#ffc107',
+    padding: 12,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+  tipsText: { 
+    fontSize: 15, 
+    color: '#222', 
+    flex: 1 
+  },
+  tipsBold: { 
+    fontWeight: 'bold' 
+  },
+  charCount: {
+    color: '#888',
+    fontSize: 14,
+    marginBottom: 8,
+    textAlign: 'right',
+  },
+  textarea: { minHeight: 200, maxHeight: 350, backgroundColor: '#fff', borderRadius: 12, padding: 16, fontSize: 14, color: '#514a6b', borderWidth: 1, borderColor: '#ddd', textAlignVertical: 'top' },
+  required: {
+    color: '#e60023',
+  },
+  inputError: {
+    borderColor: '#e60023',
+    borderWidth: 2,
+  },
+  inputSuccess: {
+    borderColor: '#28a745',
+    borderWidth: 2,
+  },
+  errorText: {
+    color: '#e60023',
+    marginTop: 4,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  saveBtn: { width: '100%', height: 50, backgroundColor: '#2563eb', borderRadius: 12, alignItems: 'center', justifyContent: 'center', shadowColor: '#99aac5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5, marginTop: 20 },
   saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
   modal: { justifyContent: 'flex-end', margin: 0 },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
   sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
   sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
-  sheetBtn: { width: '100%', backgroundColor: '#130160', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
-  sheetBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  sheetBtnUndo: { width: '100%', backgroundColor: '#d6cdfe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
-  sheetBtnUndoText: { color: '#130160', fontWeight: 'bold', fontSize: 16 }
+  sheetBtn: { width: '100%', backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
+  sheetBtnText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16 },
+  sheetBtnUndo: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
+  sheetBtnUndoText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
 }); 

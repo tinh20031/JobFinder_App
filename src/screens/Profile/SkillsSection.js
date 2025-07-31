@@ -39,9 +39,9 @@ export default function SkillsSection({ navigation }) {
       const token = await AsyncStorage.getItem('token');
       const skillsData = await profileService.getSkillsList(token);
       setSkills(skillsData);
-    } catch (error) {
-      console.log('Load skills error:', error);
-    } finally {
+          } catch (error) {
+        // Handle error silently
+      } finally {
       setLoading(false);
     }
   };
@@ -71,9 +71,9 @@ export default function SkillsSection({ navigation }) {
         await profileService.deleteSkill(id, token);
       }
       await loadSkills();
-    } catch (error) {
-      console.log('Delete group error:', error);
-    } finally {
+          } catch (error) {
+        // Handle error silently
+      } finally {
       setLoading(false);
       setShowDeleteModal(false);
       setSelectedGroup(null);
@@ -106,7 +106,7 @@ export default function SkillsSection({ navigation }) {
           <Icon 
             name={group.type === 0 || group.type === 'Core' ? 'star' : 'heart'} 
             size={16} 
-            color={group.type === 0 || group.type === 'Core' ? '#ff9228' : '#ff6b35'} 
+            color={group.type === 0 || group.type === 'Core' ? '#2563eb' : '#ff6b35'} 
             style={{ marginRight: 8 }}
           />
           <Text style={styles.groupTitle}>
@@ -129,7 +129,7 @@ export default function SkillsSection({ navigation }) {
     return (
       <View style={styles.card}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ff9228" />
+          <ActivityIndicator size="large" color="#2563eb" />
           <Text style={styles.loadingText}>Loading skills...</Text>
         </View>
       </View>
@@ -139,10 +139,10 @@ export default function SkillsSection({ navigation }) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Icon name="star-outline" size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Icon name="star-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
         <Text style={styles.title}>Skills</Text>
         <TouchableOpacity style={styles.addBtn} onPress={handleAddSkill}>
-          <Icon name="plus" size={18} color="#ff9228" />
+          <Icon name="plus" size={18} color="#2563eb" />
         </TouchableOpacity>
       </View>
       <View style={styles.separator} />
@@ -183,18 +183,18 @@ export default function SkillsSection({ navigation }) {
           </Text>
           <TouchableOpacity 
             style={styles.sheetBtn} 
+            onPress={confirmDeleteGroup}
+          >
+            <Text style={styles.sheetBtnText}>DELETE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.sheetBtnUndo} 
             onPress={() => {
               setShowDeleteModal(false);
               setSelectedGroup(null);
             }}
           >
-            <Text style={styles.sheetBtnText}>CONTINUE EDITING</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.sheetBtnUndo} 
-            onPress={confirmDeleteGroup}
-          >
-            <Text style={styles.sheetBtnUndoText}>DELETE</Text>
+            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     flex: 1 
   },
   addBtn: {
-    backgroundColor: '#fff6f2',
+    backgroundColor: '#f0f7ff',
     borderRadius: 20,
     padding: 6,
     width: 32,
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   separator: { 
     height: 1, 
@@ -305,9 +305,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   coreSkillTag: {
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f0f7ff',
     borderWidth: 1,
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   softSkillTag: {
     backgroundColor: '#fff5f5',
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     borderColor: '#ff6b35',
   },
   coreSkillText: {
-    color: '#ff9228',
+    color: '#2563eb',
   },
   softSkillText: {
     color: '#ff6b35',
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   },
   sheetBtn: {
     width: '100%',
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndo: {
     width: '100%',
-    backgroundColor: '#d6cdfe',
+    backgroundColor: '#dbeafe',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   sheetBtnUndoText: {
-    color: '#130160',
+    color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
   },

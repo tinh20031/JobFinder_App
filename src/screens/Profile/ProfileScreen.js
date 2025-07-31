@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ImageBackground, Dimensions, TextInput, ActivityIndicator, Alert, StatusBar } from 'react-native';
+import Modal from 'react-native-modal';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +19,8 @@ import HighlightProjectSection from './HighlightProjectSection';
 import CertificateSection from './CertificateSection';
 import AwardsSection from './AwardsSection';
 import PersonalInfoSection from './PersonalInfoSection';
+import { useProfileCompletion } from '../../navigation/AppNavigator';
+// import HeaderCandidate from '../../components/HeaderCandidate';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -27,7 +30,7 @@ function SectionCard({ iconName, title, emptyText }) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Icon name={iconName} size={22} color="#ff9228" style={{ marginRight: 10 }} />
+        <Icon name={iconName} size={22} color="#2563eb" style={{ marginRight: 10 }} />
         <Text style={styles.title}>{title}</Text>
       </View>
       <View style={styles.separator} />
@@ -38,6 +41,7 @@ function SectionCard({ iconName, title, emptyText }) {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { setProfileCompletion } = useProfileCompletion();
   const [fullname, setFullname] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
@@ -50,6 +54,8 @@ export default function ProfileScreen() {
   const [error, setError] = useState('');
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [personalLink, setPersonalLink] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [aboutMe, setAboutMe] = useState(null);
   const [aboutMeLoading, setAboutMeLoading] = useState(true);
@@ -82,20 +88,22 @@ export default function ProfileScreen() {
           setImage(profile.image || '');
           setProvince(profile.province || '');
           setCity(profile.city || '');
+          setJobTitle(profile.jobTitle || '');
+          setPersonalLink(profile.personalLink || '');
           
           // Lấy About Me
           setAboutMeLoading(true);
           try {
             const token = await getToken();
             const about = await profileService.getAboutMe(token);
-            console.log('AboutMe data from API:', about);
+    
             if (about && (about.aboutMeId || about.id)) {
               setAboutMe(about);
             } else {
               setAboutMe(null);
             }
           } catch (e) {
-            console.log('Error fetching AboutMe:', e);
+    
             setAboutMe(null);
           }
           setAboutMeLoading(false);
@@ -191,14 +199,34 @@ export default function ProfileScreen() {
         try {
           const strength = await profileService.getProfileStrength(token);
           setProfileStrength(strength);
+          // Cập nhật profile completion cho tab bar
+          const percentage = strength.percentage || 0;
+
+          setProfileCompletion(percentage);
         } catch (e) {
-          console.log('Error fetching profile strength:', e);
           setProfileStrength({ percentage: 0, missingFields: [] });
+          setProfileCompletion(0);
         }
       };
       fetchProfileStrength();
-    }, [])
+    }, [setProfileCompletion])
   );
+
+  // Thêm useEffect để đảm bảo cập nhật khi component mount
+  useEffect(() => {
+    const updateProfileCompletion = async () => {
+      const token = await AsyncStorage.getItem('token');
+      try {
+        const strength = await profileService.getProfileStrength(token);
+        const percentage = strength.percentage || 0;
+
+        setProfileCompletion(percentage);
+      } catch (e) {
+        setProfileCompletion(0);
+      }
+    };
+    updateProfileCompletion();
+  }, [setProfileCompletion]);
 
   const handleAddEducation = () => {
     navigation.navigate('EducationEdit', { mode: 'add' });
@@ -212,6 +240,10 @@ export default function ProfileScreen() {
     // Reload list
     const list = await profileService.getEducationList(token);
     setEducations(list);
+    // Cập nhật profile completion
+    const strength = await profileService.getProfileStrength(token);
+    setProfileStrength(strength);
+    setProfileCompletion(strength.percentage || 0);
   };
 
   const handleAddWorkExperience = () => {
@@ -226,6 +258,10 @@ export default function ProfileScreen() {
     // Reload list
     const list = await profileService.getWorkExperienceList(token);
     setWorkExperiences(list);
+    // Cập nhật profile completion
+    const strength = await profileService.getProfileStrength(token);
+    setProfileStrength(strength);
+    setProfileCompletion(strength.percentage || 0);
   };
 
   // Hàm edit About Me
@@ -239,13 +275,16 @@ export default function ProfileScreen() {
         const about = await profileService.createAboutMe(desc, token);
         setAboutMe(about);
       }
+      // Cập nhật profile completion
+      const strength = await profileService.getProfileStrength(token);
+      setProfileStrength(strength);
+      setProfileCompletion(strength.percentage || 0);
     } catch (e) {
-      console.log('Failed to update About Me:', e);
+      // Handle error silently
     }
   };
 
   const handleAddAward = () => {
-    console.log('handleAddAward called');
     navigation.navigate('AwardEdit', { mode: 'add' });
   };
   const handleEditAward = (item) => {
@@ -257,6 +296,10 @@ export default function ProfileScreen() {
     // Reload list
     const list = await profileService.getAwardList(token);
     setAwards(list);
+    // Cập nhật profile completion
+    const strength = await profileService.getProfileStrength(token);
+    setProfileStrength(strength);
+    setProfileCompletion(strength.percentage || 0);
   };
 
   const handleAddCertificate = () => {
@@ -271,6 +314,10 @@ export default function ProfileScreen() {
     // Reload list
     const list = await profileService.getCertificateList(token);
     setCertificates(list);
+    // Cập nhật profile completion
+    const strength = await profileService.getProfileStrength(token);
+    setProfileStrength(strength);
+    setProfileCompletion(strength.percentage || 0);
   };
 
   const handleAddHighlightProject = () => {
@@ -285,6 +332,10 @@ export default function ProfileScreen() {
     // Reload list
     const list = await profileService.getHighlightProjectList(token);
     setHighlightProjects(list);
+    // Cập nhật profile completion
+    const strength = await profileService.getProfileStrength(token);
+    setProfileStrength(strength);
+    setProfileCompletion(strength.percentage || 0);
   };
 
   // Validate function
@@ -329,20 +380,68 @@ export default function ProfileScreen() {
   };
 
   // Thêm hàm chọn ảnh đại diện
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedImageData, setSelectedImageData] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const handlePickImage = async () => {
-    const result = await launchImageLibrary({mediaType: 'photo', quality: 0.8},);
-    if (result.didCancel) return;
-    if (result.errorCode) {
-      Alert.alert('Error', 'Unable to select image: ' + result.errorMessage);
-      return;
-    }
-    if (result.assets && result.assets.length > 0) {
-      setImage(result.assets[0].uri);
-      // Nếu muốn upload ngay, có thể gọi handleSave ở đây hoặc lưu file vào formData khi nhấn SAVE
+    try {
+      const result = await launchImageLibrary({mediaType: 'photo', quality: 0.8},);
+      if (result.didCancel) return;
+      if (result.errorCode) {
+        Alert.alert('Error', 'Unable to select image: ' + result.errorMessage);
+        return;
+      }
+      if (result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+        setSelectedImageData(selectedImage);
+        setShowImagePreview(true);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Unable to select image');
     }
   };
 
-  const locationText = [address, city, province].filter(Boolean).join(', ');
+  const handleConfirmImageUpload = async () => {
+    if (!selectedImageData) return;
+    
+    setUploadingImage(true);
+    try {
+      // Hiển thị preview ngay lập tức
+      setImage(selectedImageData.uri);
+      
+      // Upload avatar
+      const formData = new FormData();
+      formData.append('imageFile', {
+        uri: selectedImageData.uri,
+        type: selectedImageData.type || 'image/jpeg',
+        name: selectedImageData.fileName || 'avatar.jpg'
+      });
+      
+      await profileService.updateCandidateProfile(formData);
+      
+      // Đóng modal và reset state
+      setShowImagePreview(false);
+      setSelectedImageData(null);
+      
+      Alert.alert('Success', 'Avatar updated successfully!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      Alert.alert('Error', 'Failed to upload avatar. Please try again.');
+      // Revert image nếu upload thất bại
+      setImage(image);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleCancelImageUpload = () => {
+    setShowImagePreview(false);
+    setSelectedImageData(null);
+  };
+
+  const locationText = [city, province].filter(Boolean).join(', ');
 
   // Helper function to map field names to navigation handlers
   const getFieldHandler = (field) => {
@@ -404,57 +503,47 @@ export default function ProfileScreen() {
   // Use profile strength from API, fallback to local calculation
   const profileCompletion = profileStrength.percentage || calculateProfileCompletion();
 
-  const ProfileCompletionCard = () => (
-    <View style={styles.completionCard}>
-      <View style={styles.completionHeader}>
-        <Icon name="account-check" size={20} color="#ff9228" />
-        <Text style={styles.completionTitle}>Profile Completion</Text>
-        <Text style={styles.completionPercentage}>{profileCompletion}%</Text>
-      </View>
-      <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${profileCompletion}%` }]} />
-      </View>
-      <Text style={styles.completionText}>
-        {profileCompletion < 70 
-          ? "Complete your profile to increase your chances of getting hired!"
-          : "Excellent! Your profile is well-rounded and attractive to recruiters."
-        }
-      </Text>
-      
-      {/* Missing Fields List */}
-      {profileStrength.missingFields && profileStrength.missingFields.length > 0 && (
-        <View style={styles.missingFieldsContainer}>
-          <Text style={styles.missingFieldsTitle}>Missing Information:</Text>
-          {profileStrength.missingFields.slice(0, 3).map((field, index) => {
-            const handler = getFieldHandler(field);
-            return (
-              <TouchableOpacity 
-                key={index} 
-                style={styles.missingFieldItem}
-                onPress={handler}
-                disabled={!handler}
-              >
-                <Text style={styles.missingFieldBullet}>•</Text>
-                <Text style={[
-                  styles.missingFieldText,
-                  handler && styles.missingFieldTextClickable
-                ]}>
-                  {field}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-          {profileStrength.missingFields.length > 3 && (
-            <Text style={styles.missingFieldsMore}>
-              +{profileStrength.missingFields.length - 3} more items
-            </Text>
-          )}
-        </View>
-      )}
-      
+  const ProfileCompletionCard = () => {
+    
+    // Determine colors based on completion percentage
+    let iconColor, percentageColor, progressColor, borderColor, message;
+    
+    if (profileCompletion < 30) {
+      iconColor = "#dc2626"; // Red
+      percentageColor = "#dc2626";
+      progressColor = "#dc2626";
+      borderColor = "#dc2626";
+      message = "Your profile needs significant improvement. Complete more sections to increase your chances!";
+    } else if (profileCompletion < 70) {
+      iconColor = "#eab308"; // Yellow
+      percentageColor = "#eab308";
+      progressColor = "#eab308";
+      borderColor = "#eab308";
+      message = "Good progress! Complete your profile to increase your chances of getting hired!";
+    } else {
+      iconColor = "#16a34a"; // Green
+      percentageColor = "#16a34a";
+      progressColor = "#16a34a";
+      borderColor = "#16a34a";
+      message = "Excellent! Your profile is well-rounded and attractive to recruiters.";
+    }
 
-    </View>
-  );
+    return (
+      <View style={[styles.completionCard, { borderLeftColor: borderColor }]}>
+        <View style={styles.completionHeader}>
+          <Icon name="account-check" size={20} color={iconColor} />
+          <Text style={styles.completionTitle}>Profile Completion</Text>
+          <Text style={[styles.completionPercentage, { color: percentageColor }]}>{profileCompletion}%</Text>
+        </View>
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${profileCompletion}%`, backgroundColor: progressColor }]} />
+        </View>
+        <Text style={styles.completionText}>
+          {message}
+        </Text>
+      </View>
+    );
+  };
 
   // Create sections data for FlatList
   const sections = [
@@ -484,7 +573,9 @@ export default function ProfileScreen() {
           phone,
           address,
           city,
-          province
+          province,
+          jobTitle,
+          personalLink
         }} />
         );
       case 'about':
@@ -559,7 +650,7 @@ export default function ProfileScreen() {
       >
       {/* Gradient overlay for better text readability */}
       <LinearGradient
-        colors={['rgba(19, 1, 96, 0.3)', 'rgba(19, 1, 96, 0.7)', 'rgba(19, 1, 96, 0.9)']}
+        colors={['rgba(37, 99, 235, 0.3)', 'rgba(37, 99, 235, 0.7)', 'rgba(37, 99, 235, 0.9)']}
         style={styles.gradientOverlay}
       />
       
@@ -570,31 +661,26 @@ export default function ProfileScreen() {
           style={styles.avatar}
         />
         <View style={styles.onlineIndicator} />
-        <TouchableOpacity style={styles.cameraIcon} onPress={handlePickImage}>
-          <MaterialIcons name="camera-alt" size={16} color="#fff" />
-        </TouchableOpacity>
       </View>
+      <TouchableOpacity style={[styles.cameraIcon, { top: (insets.top || 0) + 24 + 58, left: 16 + 58 }]} onPress={handlePickImage}>
+        <MaterialIcons name="camera-alt" size={16} color="#fff" />
+      </TouchableOpacity>
       
               {/* Name & Location & Change image */}
         <View style={[styles.nameLocationWrapper, { top: (insets.top || 0) + 110, left: 16 }]}>  
         <Text style={styles.name}>{fullname}</Text>
-        <View style={styles.locationContainer}>
-          <MaterialIcons name="location-on" size={16} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.location}>{locationText}</Text>
-        </View>
+        {locationText && (
+          <View style={styles.locationContainer}>
+            <MaterialIcons name="location-on" size={16} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.location}>{locationText}</Text>
+          </View>
+        )}
         <TouchableOpacity style={styles.changeImageBtn} onPress={handlePickImage}>
           <MaterialIcons name="edit" size={14} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.changeImageText}>Change image</Text>
         </TouchableOpacity>
       </View>
       
-              {/* Settings & Share icons */}
-        <TouchableOpacity style={[styles.iconSetting, { right: 16 }]}>
-          <MaterialIcons name="settings" size={26} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.iconShare, { right: 16 + 56 }]}>
-          <MaterialIcons name="share" size={26} color="#fff" />
-        </TouchableOpacity>
       </ImageBackground>
     </View>
   );
@@ -611,6 +697,7 @@ export default function ProfileScreen() {
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      {/* <HeaderCandidate /> */}
       <ScrollView 
         style={styles.container}
         contentContainerStyle={{ 
@@ -628,8 +715,51 @@ export default function ProfileScreen() {
           ))}
       </View>
     </ScrollView>
-      
 
+    {/* Image Preview Modal */}
+    <Modal
+      isVisible={showImagePreview}
+      onBackdropPress={handleCancelImageUpload}
+      style={styles.modal}
+      backdropOpacity={0.8}
+    >
+      <View style={styles.imagePreviewSheet}>
+        <View style={styles.sheetHandle} />
+        <Text style={styles.imagePreviewTitle}>Preview Avatar</Text>
+        
+        {selectedImageData && (
+          <View style={styles.imagePreviewContainer}>
+            <Image 
+              source={{ uri: selectedImageData.uri }} 
+              style={styles.imagePreview}
+              resizeMode="cover"
+            />
+          </View>
+        )}
+        
+        <View style={styles.imagePreviewActions}>
+          <TouchableOpacity 
+            style={[styles.imagePreviewBtn, styles.cancelBtn]} 
+            onPress={handleCancelImageUpload}
+            disabled={uploadingImage}
+          >
+            <Text style={styles.cancelBtnText}>CANCEL</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.imagePreviewBtn, styles.confirmBtn, uploadingImage && styles.disabledBtn]} 
+            onPress={handleConfirmImageUpload}
+            disabled={uploadingImage}
+          >
+            {uploadingImage ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.confirmBtnText}>CONFIRM</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
     </>
   );
 }
@@ -696,14 +826,20 @@ const styles = StyleSheet.create({
   },
   cameraIcon: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+    zIndex: 10,
   },
   nameLocationWrapper: {
     position: 'absolute',
@@ -726,14 +862,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginLeft: 4,
   },
-  iconSetting: {
-    position: 'absolute',
-    top: 28,
-  },
-  iconShare: {
-    position: 'absolute',
-    top: 28,
-  },
+
   changeImageBtn: {
     marginTop: 14,
     paddingHorizontal: 16,
@@ -815,8 +944,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   genderOptionActive: {
-    borderColor: '#ff9228',
-    backgroundColor: '#fff7ed',
+    borderColor: '#2563eb',
+    backgroundColor: '#f0f7ff',
   },
   genderText: {
     color: '#514a6b',
@@ -835,7 +964,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   radioOuterActive: {
-    borderColor: '#ff9228',
+    borderColor: '#2563eb',
   },
   radioInnerActive: {
     width: 12,
@@ -868,7 +997,7 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     height: 54,
-    backgroundColor: '#130160',
+    backgroundColor: '#2563eb',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -927,7 +1056,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.10,
     shadowRadius: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#ff9228',
+    borderLeftColor: '#2563eb',
   },
   completionHeader: {
     flexDirection: 'row',
@@ -944,7 +1073,7 @@ const styles = StyleSheet.create({
   completionPercentage: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff9228',
+    color: '#2563eb',
   },
   progressBar: {
     height: 8,
@@ -955,7 +1084,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#ff9228',
+    backgroundColor: '#2563eb',
     borderRadius: 4,
   },
   completionText: {
@@ -963,44 +1092,6 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 18,
     fontStyle: 'italic',
-  },
-  missingFieldsContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  missingFieldsTitle: {
-    fontSize: 14,
-    color: '#e60023',
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  missingFieldItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 4,
-  },
-  missingFieldBullet: {
-    color: '#e60023',
-    marginRight: 6,
-    fontSize: 13,
-  },
-  missingFieldText: {
-    fontSize: 13,
-    color: '#888',
-    flex: 1,
-  },
-  missingFieldTextClickable: {
-    textDecorationLine: 'underline',
-    color: '#7367F0',
-  },
-  missingFieldsMore: {
-    fontSize: 13,
-    color: '#7367F0',
-    fontWeight: '500',
-    marginTop: 4,
-    textDecorationLine: 'underline',
   },
 
   sectionContainer: {
@@ -1013,5 +1104,76 @@ const styles = StyleSheet.create({
   headerContainer: {
     width: '100%',
     marginBottom: -80, // Điều chỉnh overlap phù hợp với marginTop âm của completionCard
+  },
+
+  // Image Preview Modal Styles
+  modal: {
+    justifyContent: 'flex-end',
+    margin: 0,
+  },
+  imagePreviewSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    maxHeight: '80%',
+  },
+  sheetHandle: {
+    width: 34,
+    height: 4,
+    backgroundColor: '#ccc',
+    borderRadius: 2,
+    marginBottom: 16,
+  },
+  imagePreviewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#150b3d',
+    marginBottom: 20,
+  },
+  imagePreviewContainer: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    overflow: 'hidden',
+    marginBottom: 24,
+    borderWidth: 3,
+    borderColor: '#eee',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePreviewActions: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  imagePreviewBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    backgroundColor: '#f0f0f0',
+  },
+  confirmBtn: {
+    backgroundColor: '#2563eb',
+  },
+  disabledBtn: {
+    backgroundColor: '#ccc',
+  },
+  cancelBtnText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 }); 

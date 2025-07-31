@@ -13,18 +13,18 @@ export async function getToken() {
 
 // About Me API
 const getAboutMe = async (token) => {
-  console.log('Token when calling getAboutMe:', token);
+  
   const res = await fetch(`${BASE_URL}/api/AboutMe/me`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error('Failed to fetch About Me');
   const data = await res.json();
-  console.log('getAboutMe response:', data);
+  
   return data;
 };
 
 const createAboutMe = async (description, token) => {
-  console.log('Token when calling createAboutMe:', token);
+  
   const res = await fetch(`${BASE_URL}/api/AboutMe/me`, {
     method: 'POST',
     headers: {
@@ -44,7 +44,7 @@ const createAboutMe = async (description, token) => {
 };
 
 const updateAboutMe = async (id, description, token) => {
-  console.log('Token when calling updateAboutMe:', token);
+  
   const res = await fetch(`${BASE_URL}/api/AboutMe/me/${id}`, {
     method: 'PUT',
     headers: {
@@ -111,7 +111,10 @@ const getWorkExperienceList = async (token) => {
   return res.json();
 };
 
-const createWorkExperience = async (data, token) => {
+const createWorkExperience = async (data) => {
+  const token = await getToken();
+  if (!token) throw new Error('No token found');
+  
   const res = await fetch(`${BASE_URL}/api/WorkExperience/me`, {
     method: 'POST',
     headers: {
@@ -128,8 +131,11 @@ const createWorkExperience = async (data, token) => {
   return res.json();
 };
 
-const updateWorkExperience = async (id, data, token) => {
-  const res = await fetch(`${BASE_URL}/api/WorkExperience/me/${id}`, {
+const updateWorkExperience = async (data) => {
+  const token = await getToken();
+  if (!token) throw new Error('No token found');
+  
+  const res = await fetch(`${BASE_URL}/api/WorkExperience/me/${data.workExperienceId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -137,10 +143,19 @@ const updateWorkExperience = async (id, data, token) => {
     },
     body: JSON.stringify(data)
   });
-  if (!res.ok) throw new Error('Failed to update work experience');
+  if (!res.ok) {
+    const text = await res.text();
+    console.log('Update Work Experience error:', res.status, text);
+    throw new Error('Failed to update work experience: ' + text);
+  }
+  if (res.status === 204) return;
+  return await res.json();
 };
 
-const deleteWorkExperience = async (id, token) => {
+const deleteWorkExperience = async (id) => {
+  const token = await getToken();
+  if (!token) throw new Error('No token found');
+  
   const res = await fetch(`${BASE_URL}/api/WorkExperience/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` }
@@ -258,7 +273,7 @@ const getAwardList = async (token) => {
 const createAward = async (data, token) => {
   console.log('createAward - URL:', `${BASE_URL}/api/Award/me`);
   console.log('createAward - Data:', data);
-  console.log('createAward - Token:', token);
+  
 
   const res = await fetch(`${BASE_URL}/api/Award/me`, {
     method: 'POST',
@@ -315,7 +330,7 @@ const getCertificateList = async (token) => {
 const createCertificate = async (data, token) => {
   console.log('createCertificate - URL:', `${BASE_URL}/api/Certificate/me`);
   console.log('createCertificate - Data:', data);
-  console.log('createCertificate - Token:', token);
+  
 
   const res = await fetch(`${BASE_URL}/api/Certificate/me`, {
     method: 'POST',
@@ -372,7 +387,7 @@ const getHighlightProjectList = async (token) => {
 const createHighlightProject = async (data, token) => {
   console.log('createHighlightProject - URL:', `${BASE_URL}/api/HighlightProject/me`);
   console.log('createHighlightProject - Data:', data);
-  console.log('createHighlightProject - Token:', token);
+  
 
   const res = await fetch(`${BASE_URL}/api/HighlightProject/me`, {
     method: 'POST',
