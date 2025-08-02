@@ -45,7 +45,11 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
     const duration = calcDuration(item.monthStart, item.monthEnd);
 
     return (
-      <View style={styles.eduItem}>
+      <TouchableOpacity 
+        style={styles.eduItem}
+        onPress={() => onEdit(item)}
+        activeOpacity={0.7}
+      >
         <View style={styles.eduIconContainer}>
           <Icon name="school" size={20} color="#2563eb" />
         </View>
@@ -93,16 +97,19 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
           )}
         </View>
         <View style={styles.eduActions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#2563eb" />
-          </TouchableOpacity>
           {onDelete && (
-            <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteEducation(item)}>
+            <TouchableOpacity 
+              style={[styles.actionBtn, styles.deleteBtn]} 
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDeleteEducation(item);
+              }}
+            >
               <Icon name="delete" size={16} color="#ff4757" />
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -146,7 +153,7 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
             Delete Education ?
           </Text>
           <Text style={styles.sheetDesc}>
-            Are you sure you want to delete this education "{selectedEducation?.level}" at "{selectedEducation?.school}"?
+            Are you sure you want to delete this education at "{selectedEducation?.school}"?
           </Text>
           <TouchableOpacity 
             style={styles.sheetBtn} 
@@ -236,6 +243,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#e8eaff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   eduIconContainer: {
     width: 40,

@@ -52,7 +52,11 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
   };
 
   const ProjectItem = ({ item, index }) => (
-    <View style={styles.projectItem}>
+    <TouchableOpacity 
+      style={styles.projectItem}
+      onPress={() => onEdit(item)}
+      activeOpacity={0.7}
+    >
       <View style={styles.projectIconContainer}>
         <Icon name="lightbulb-on" size={20} color="#2563eb" />
       </View>
@@ -124,7 +128,10 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
           <View style={styles.projectSection}>
             <TouchableOpacity 
               style={styles.projectLink}
-              onPress={() => handleOpenUrl(item.projectLink)}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleOpenUrl(item.projectLink);
+              }}
             >
               <Icon name="link" size={14} color="#2563eb" style={{ marginRight: 6 }} />
               <Text style={styles.projectLinkText}>View project</Text>
@@ -133,18 +140,19 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
         )}
       </View>
       <View style={styles.projectActions}>
-        {onEdit && (
-          <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#2563eb" />
-          </TouchableOpacity>
-        )}
         {onDelete && (
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteProject(item)}>
+          <TouchableOpacity 
+            style={[styles.actionBtn, styles.deleteBtn]} 
+            onPress={(e) => {
+              e.stopPropagation();
+              handleDeleteProject(item);
+            }}
+          >
             <Icon name="delete" size={16} color="#ff4757" />
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

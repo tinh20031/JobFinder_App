@@ -31,7 +31,11 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
   };
 
   const AwardItem = ({ item, index }) => (
-    <View style={styles.awardItem}>
+    <TouchableOpacity 
+      style={styles.awardItem}
+      onPress={() => onEdit(item)}
+      activeOpacity={0.7}
+    >
       <View style={styles.awardIconContainer}>
         <Icon name="trophy" size={20} color="#2563eb" />
       </View>
@@ -58,18 +62,19 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
         )}
       </View>
       <View style={styles.awardActions}>
-        {onEdit && (
-          <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#2563eb" />
-          </TouchableOpacity>
-        )}
         {onDelete && (
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteAward(item)}>
+          <TouchableOpacity 
+            style={[styles.actionBtn, styles.deleteBtn]} 
+            onPress={(e) => {
+              e.stopPropagation();
+              handleDeleteAward(item);
+            }}
+          >
             <Icon name="delete" size={16} color="#ff4757" />
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

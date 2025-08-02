@@ -1,29 +1,200 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ImageBackground, Dimensions, TextInput, ActivityIndicator, Alert, StatusBar } from 'react-native';
-import Modal from 'react-native-modal';
-import LinearGradient from 'react-native-linear-gradient';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ImageBackground,
+  Alert,
+  ActivityIndicator,
+  FlatList,
+  Dimensions,
+  Animated,
+  Easing,
+  ScrollView,
+  StatusBar
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import profileService, { getToken } from '../../services/profileService';
-import {launchImageLibrary} from 'react-native-image-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Modal from 'react-native-modal';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { useProfileCompletion } from '../../navigation/AppNavigator';
+import profileService from '../../services/profileService';
+import PersonalInfoSection from './PersonalInfoSection';
 import AboutMeSection from './AboutMeSection';
 import EducationSection from './EducationSection';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import WorkExperienceSection from './WorkExperienceSection';
 import SkillsSection from './SkillsSection';
 import ForeignLanguageSection from './ForeignLanguageSection';
 import HighlightProjectSection from './HighlightProjectSection';
 import CertificateSection from './CertificateSection';
 import AwardsSection from './AwardsSection';
-import PersonalInfoSection from './PersonalInfoSection';
-import { useProfileCompletion } from '../../navigation/AppNavigator';
-// import HeaderCandidate from '../../components/HeaderCandidate';
-
+import ProfileVideoSection from './ProfileVideoSection';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Skeleton Loading Components
+const SkeletonItem = ({ width, height, style }) => {
+  const animatedValue = useMemo(() => new Animated.Value(0), []);
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(animatedValue, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.ease,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animatedValue, {
+          toValue: 0,
+          duration: 1000,
+          easing: Easing.ease,
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [animatedValue]);
+
+  const opacity = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.7],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width,
+          height,
+          backgroundColor: '#e1e5e9',
+          borderRadius: 4,
+        },
+        { opacity },
+        style,
+      ]}
+    />
+  );
+};
+
+const ProfileSkeleton = () => {
+  return (
+    <View style={styles.skeletonContainer}>
+      {/* Header Skeleton */}
+      <View style={styles.skeletonHeader}>
+        <SkeletonItem width={80} height={80} style={{ borderRadius: 40 }} />
+        <View style={{ marginLeft: 16, flex: 1 }}>
+          <SkeletonItem width="60%" height={24} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="40%" height={16} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="50%" height={16} />
+        </View>
+      </View>
+
+      {/* Profile Completion Skeleton */}
+      <View style={styles.skeletonCard}>
+        <View style={styles.skeletonCardHeader}>
+          <SkeletonItem width={20} height={20} style={{ marginRight: 8 }} />
+          <SkeletonItem width="40%" height={18} style={{ flex: 1 }} />
+          <SkeletonItem width={40} height={18} />
+        </View>
+        <SkeletonItem width="100%" height={8} style={{ marginVertical: 12, borderRadius: 4 }} />
+        <SkeletonItem width="80%" height={14} />
+      </View>
+
+      {/* Personal Info Skeleton */}
+      <View style={styles.skeletonCard}>
+        <View style={styles.skeletonCardHeader}>
+          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
+          <SkeletonItem width="30%" height={18} />
+        </View>
+        <View style={styles.skeletonSeparator} />
+        <View style={styles.skeletonFields}>
+          <SkeletonItem width="100%" height={20} style={{ marginBottom: 12 }} />
+          <SkeletonItem width="90%" height={20} style={{ marginBottom: 12 }} />
+          <SkeletonItem width="95%" height={20} style={{ marginBottom: 12 }} />
+          <SkeletonItem width="85%" height={20} />
+        </View>
+      </View>
+
+      {/* Video Section Skeleton */}
+      <View style={styles.skeletonCard}>
+        <View style={styles.skeletonCardHeader}>
+          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
+          <SkeletonItem width="40%" height={18} />
+        </View>
+        <View style={styles.skeletonSeparator} />
+        <View style={styles.skeletonVideoContainer}>
+          <SkeletonItem width={48} height={48} style={{ borderRadius: 24 }} />
+          <View style={{ marginLeft: 16, flex: 1 }}>
+            <SkeletonItem width="50%" height={16} style={{ marginBottom: 4 }} />
+            <SkeletonItem width="60%" height={14} />
+          </View>
+        </View>
+        <SkeletonItem width="100%" height={44} style={{ marginTop: 16, borderRadius: 8 }} />
+      </View>
+
+      {/* About Me Skeleton */}
+      <View style={styles.skeletonCard}>
+        <View style={styles.skeletonCardHeader}>
+          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
+          <SkeletonItem width="25%" height={18} />
+        </View>
+        <View style={styles.skeletonSeparator} />
+        <View style={styles.skeletonFields}>
+          <SkeletonItem width="100%" height={16} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="95%" height={16} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="90%" height={16} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="85%" height={16} />
+        </View>
+      </View>
+
+      {/* Education Skeleton */}
+      <View style={styles.skeletonCard}>
+        <View style={styles.skeletonCardHeader}>
+          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
+          <SkeletonItem width="25%" height={18} style={{ flex: 1 }} />
+          <SkeletonItem width={32} height={32} style={{ borderRadius: 16 }} />
+        </View>
+        <View style={styles.skeletonSeparator} />
+        <View style={styles.skeletonItem}>
+          <SkeletonItem width={40} height={40} style={{ borderRadius: 20 }} />
+          <View style={{ marginLeft: 12, flex: 1 }}>
+            <SkeletonItem width="60%" height={16} style={{ marginBottom: 4 }} />
+            <SkeletonItem width="40%" height={14} style={{ marginBottom: 4 }} />
+            <SkeletonItem width="50%" height={14} style={{ marginBottom: 4 }} />
+            <SkeletonItem width="30%" height={14} />
+          </View>
+        </View>
+      </View>
+
+      {/* Work Experience Skeleton */}
+      <View style={styles.skeletonCard}>
+        <View style={styles.skeletonCardHeader}>
+          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
+          <SkeletonItem width="35%" height={18} style={{ flex: 1 }} />
+          <SkeletonItem width={32} height={32} style={{ borderRadius: 16 }} />
+        </View>
+        <View style={styles.skeletonSeparator} />
+        <View style={styles.skeletonItem}>
+          <SkeletonItem width={40} height={40} style={{ borderRadius: 20 }} />
+          <View style={{ marginLeft: 12, flex: 1 }}>
+            <SkeletonItem width="70%" height={16} style={{ marginBottom: 4 }} />
+            <SkeletonItem width="50%" height={14} style={{ marginBottom: 4 }} />
+            <SkeletonItem width="40%" height={14} style={{ marginBottom: 4 }} />
+            <SkeletonItem width="80%" height={14} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 // SectionCard: card section dùng cho các phần Work Experience, Skills, ...
 function SectionCard({ iconName, title, emptyText }) {
@@ -549,6 +720,7 @@ export default function ProfileScreen() {
   const sections = [
     { id: 'completion', type: 'completion' },
     { id: 'personal', type: 'personal' },
+    { id: 'video', type: 'video' },
     { id: 'about', type: 'about' },
     { id: 'education', type: 'education' },
     { id: 'work', type: 'work' },
@@ -587,6 +759,8 @@ export default function ProfileScreen() {
           onAdd={() => navigation.getParent()?.navigate('AboutMeEdit', { aboutMe: null })}
         />
         );
+      case 'video':
+        return <ProfileVideoSection navigation={navigation} />;
       case 'education':
         return (
         <EducationSection
@@ -687,10 +861,19 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#130160" />
-        <Text style={{ marginTop: 12 }}>Loading profile...</Text>
-      </View>
+      <>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <ScrollView 
+          style={styles.container}
+          contentContainerStyle={{ 
+            paddingBottom: (insets.bottom || 0) + 64,
+          }}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          <ProfileSkeleton />
+        </ScrollView>
+      </>
     );
   }
 
@@ -1175,5 +1358,52 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Skeleton Loading Styles
+  skeletonContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  skeletonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  skeletonCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#99aac5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  skeletonCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  skeletonSeparator: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
+    marginVertical: 12,
+  },
+  skeletonFields: {
+    marginTop: 12,
+  },
+  skeletonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  skeletonVideoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
   },
 }); 

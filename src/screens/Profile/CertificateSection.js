@@ -44,7 +44,11 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
   };
 
   const CertificateItem = ({ item, index }) => (
-    <View style={styles.certificateItem}>
+    <TouchableOpacity 
+      style={styles.certificateItem}
+      onPress={() => onEdit(item)}
+      activeOpacity={0.7}
+    >
       <View style={styles.certificateIconContainer}>
         <Icon name="certificate" size={20} color="#2563eb" />
       </View>
@@ -80,7 +84,10 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
         {item.certificateUrl && (
           <TouchableOpacity 
             style={styles.certificateUrl}
-            onPress={() => handleOpenUrl(item.certificateUrl)}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleOpenUrl(item.certificateUrl);
+            }}
           >
             <Icon name="link" size={14} color="#2563eb" style={{ marginRight: 6 }} />
             <Text style={styles.certificateUrlText}>View Certificate</Text>
@@ -88,18 +95,19 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
         )}
       </View>
       <View style={styles.certificateActions}>
-        {onEdit && (
-          <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#2563eb" />
-          </TouchableOpacity>
-        )}
         {onDelete && (
-          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteCertificate(item)}>
+          <TouchableOpacity 
+            style={[styles.actionBtn, styles.deleteBtn]} 
+            onPress={(e) => {
+              e.stopPropagation();
+              handleDeleteCertificate(item);
+            }}
+          >
             <Icon name="delete" size={16} color="#ff4757" />
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
