@@ -84,6 +84,11 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        
+        // Google Sign-In configuration
+        manifestPlaceholders = [
+            'appAuthRedirectScheme': 'com.jobfinderapp'
+        ]
     }
     signingConfigs {
         debug {

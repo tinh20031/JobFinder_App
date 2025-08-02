@@ -1,4 +1,4 @@
-import { BASE_URL } from '../constants/api';
+import { BASE_URL, getGoogleLoginUrl } from '../constants/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import jwtDecode from 'jwt-decode';
 
@@ -66,6 +66,57 @@ export const authService = {
       }
       throw error;
     }
+  },
+
+  // Thêm method Google login
+  async googleLogin(googleToken) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/login-google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ googleToken }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || 'Google login failed');
+        error.data = errorData;
+        throw error;
+      }
+      const data = await response.json();
+      let decodedToken = null;
+      if (data.token) {
+        decodedToken = jwtDecode(data.token);
+      }
+      // Lưu thông tin vào AsyncStorage (tương tự như login thường)
+      await AsyncStorage.setItem('token', data.token);
+      await AsyncStorage.setItem('role', data.role);
+      if (data.name) await AsyncStorage.setItem('name', data.name);
+      if (decodedToken && decodedToken.fullName) await AsyncStorage.setItem('fullName', decodedToken.fullName);
+      if (decodedToken && decodedToken.profileImage) await AsyncStorage.setItem('profileImage', decodedToken.profileImage);
+      if (decodedToken && decodedToken.sub) await AsyncStorage.setItem('UserId', decodedToken.sub);
+      if (data.companyId) await AsyncStorage.setItem('CompanyProfileId', String(data.companyId));
+      if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+      if (data.user && data.user.companyName) await AsyncStorage.setItem('fullNameCompany', data.user.companyName);
+      if (data.user && data.user.urlCompanyLogo) await AsyncStorage.setItem('profileImageCompany', data.user.urlCompanyLogo);
+      // Lưu userId chuẩn cho candidate
+      let userId = null;
+      if (data.user && (data.user.id || data.user.userId)) {
+        userId = data.user.id || data.user.userId;
+      } else if (decodedToken && (decodedToken.sub || decodedToken.userId || decodedToken.id)) {
+        userId = decodedToken.sub || decodedToken.userId || decodedToken.id;
+      }
+      if (userId) await AsyncStorage.setItem('UserId', String(userId));
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Helper function để lấy Google login URL
+  getGoogleLoginUrl() {
+    return getGoogleLoginUrl();
   },
 
   async register(fullName, email, phone, password) {
