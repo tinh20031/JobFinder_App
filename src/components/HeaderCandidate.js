@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Text, Modal, Pressable, FlatList } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,67 +8,85 @@ import useResumeData from '../services/useResumeData';
 import { authService } from '../services/authService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { startNotificationHub, stopNotificationHub } from '../services/notificationHub';
+import notificationService from '../services/notificationService';
+
+// Debug: Check if notificationService is properly imported
+console.log('NotificationService imported:', !!notificationService);
+console.log('NotificationService methods:', Object.keys(notificationService || {}));
 
 const HeaderCandidates = ({ onDashboard }) => {
-  const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showAll, setShowAll] = useState(false);
   const navigation = useNavigation();
   const { profile } = useResumeData();
 
-  // Lấy notification ban đầu (giả lập, cần thay bằng API thật nếu có)
+  // Subscribe to notification service
   useEffect(() => {
-    async function fetchNotifications(all = false) {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) return;
-      try {
-        // Lấy 5 notification mới nhất hoặc toàn bộ
-        const url = all ? `${BASE_URL}/api/notification` : `${BASE_URL}/api/notification?page=1&pageSize=5`;
-        const res = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setNotifications(Array.isArray(data) ? data : []);
+    // Initialize notification service
+    if (notificationService && typeof notificationService.initialize === 'function') {
+      notificationService.initialize();
+      
+      // Subscribe to notification count changes
+      const unsubscribe = notificationService.subscribe((count) => {
+        setUnreadCount(count);
+      });
+      
+      // Refresh unread count every 30 seconds to ensure sync
+      const interval = setInterval(() => {
+        if (notificationService && typeof notificationService.fetchUnreadCount === 'function') {
+          notificationService.fetchUnreadCount();
+        } else {
+          // Fallback to direct fetch
+          fetchUnreadCountDirectly();
         }
-      } catch (e) {}
+      }, 30000);
+      
+      return () => {
+        unsubscribe();
+        clearInterval(interval);
+      };
+    } else {
+      console.error('NotificationService not properly initialized');
     }
-    async function fetchUnreadCount() {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) return;
-      try {
-        const res = await fetch(`${BASE_URL}/api/notification/unread-count`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadCount(data?.count || 0);
-        }
-      } catch (e) {}
-    }
-    fetchNotifications(showAll);
-    fetchUnreadCount();
-  }, [showAll]);
+  }, []);
 
-  // Kết nối SignalR notification realtime
+  // Connect SignalR notification realtime
   useEffect(() => {
     let hubConnection;
     async function connectHub() {
-      // Lấy userId đúng key 'UserId' (chữ U hoa)
-      hubConnection = await startNotificationHub((notification) => {
-        setNotifications((prev) => [notification, ...prev]);
-        setUnreadCount((prev) => prev + 1);
-      });
+      try {
+        hubConnection = await startNotificationHub((notification) => {
+          console.log('Received real-time notification:', notification);
+          // Update notification count through service
+          try {
+            if (notificationService && typeof notificationService.handleNewNotification === 'function') {
+              notificationService.handleNewNotification();
+              console.log('Notification count updated via service');
+            } else {
+              // Fallback: fetch from server directly
+              fetchUnreadCountDirectly();
+              console.log('Notification count updated via direct fetch');
+            }
+          } catch (serviceError) {
+            console.error('Error updating notification count:', serviceError);
+            // Fallback: fetch from server
+            fetchUnreadCountDirectly();
+          }
+        });
+        console.log('SignalR connected successfully');
+      } catch (error) {
+        console.error('SignalR connection failed:', error);
+        // Fallback: continue with polling instead of real-time
+        console.log('Falling back to polling for notifications');
+      }
     }
-    connectHub();
+    
+    // Delay connection to ensure app is fully loaded
+    const timer = setTimeout(() => {
+      connectHub();
+    }, 2000);
+    
     return () => {
+      clearTimeout(timer);
       stopNotificationHub();
     };
   }, []);
@@ -85,34 +103,44 @@ const HeaderCandidates = ({ onDashboard }) => {
     }
   };
 
-  const handleBellPress = async () => {
-    setDropdownVisible((prev) => !prev);
-    if (unreadCount > 0) {
+  // Fallback function to fetch unread count directly
+  const fetchUnreadCountDirectly = async () => {
+    try {
       const token = await AsyncStorage.getItem('token');
-      try {
-        await fetch(`${BASE_URL}/api/notification/read-all`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        setUnreadCount(0);
-      } catch (e) {}
+      if (!token) return;
+
+      const response = await fetch(`${BASE_URL}/api/notification/unread-count`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data?.count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching unread count directly:', error);
     }
+  };
+
+  const handleBellPress = () => {
+    // Refresh unread count before navigating
+    if (notificationService && typeof notificationService.fetchUnreadCount === 'function') {
+      notificationService.fetchUnreadCount();
+    } else {
+      // Fallback to direct fetch
+      fetchUnreadCountDirectly();
+    }
+    navigation.navigate('NotificationScreen');
   };
 
   const handleMessagePress = () => {
     navigation.navigate('Listchat');
   };
 
-  const renderNotification = ({ item }) => (
-    <View style={[styles.notificationItem, !item.isRead && styles.unreadNotification]}>
-      <Text style={styles.notificationTitle}>{item.title || 'New notification'}</Text>
-      <Text style={styles.notificationMessage}>{item.message || ''}</Text>
-      <Text style={styles.notificationTime}>{item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}</Text>
-    </View>
-  );
+
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -133,35 +161,6 @@ const HeaderCandidates = ({ onDashboard }) => {
         <TouchableOpacity onPress={handleMessagePress} style={styles.messageWrapper}>
           <MaterialIcons name="message" size={32} color="#2563eb" />
         </TouchableOpacity>
-        <Modal
-          visible={dropdownVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setDropdownVisible(false)}
-        >
-          <Pressable style={styles.overlay} onPress={() => setDropdownVisible(false)}>
-            <View style={styles.dropdown}>
-              <Text style={styles.dropdownHeader}>Notifications</Text>
-              <FlatList
-                data={notifications}
-                keyExtractor={(item, index) => item.notificationId?.toString() || index.toString()}
-                renderItem={renderNotification}
-                ListEmptyComponent={<Text style={styles.emptyText}>No notifications</Text>}
-                style={{ maxHeight: 300 }}
-              />
-              {!showAll && notifications.length >= 5 && (
-                <TouchableOpacity style={styles.viewAllBtn} onPress={() => setShowAll(true)}>
-                  <Text style={styles.viewAllText}>View All Notifications</Text>
-                </TouchableOpacity>
-              )}
-              {showAll && notifications.length > 5 && (
-                <TouchableOpacity style={styles.viewAllBtn} onPress={() => setShowAll(false)}>
-                  <Text style={styles.viewAllText}>Show less</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </Pressable>
-        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -216,86 +215,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-  },
-  dropdown: {
-    position: 'absolute',
-    top: 55,
-    right: 10,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-    minWidth: 260,
-    maxWidth: 320,
-    width: '90%',
-    zIndex: 100,
-  },
-  dropdownHeader: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    marginBottom: 4,
-  },
-  notificationItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f3f3',
-  },
-  unreadNotification: {
-    backgroundColor: '#f1f6fd',
-  },
-  notificationTitle: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#222',
-  },
-  notificationMessage: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 2,
-  },
-  notificationTime: {
-    fontSize: 11,
-    color: '#aaa',
-    marginTop: 4,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#888',
-    padding: 16,
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: '#222',
-  },
-  viewAllBtn: {
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  viewAllText: {
-    color: '#2563eb',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
+
 });
 
 export default HeaderCandidates; 
