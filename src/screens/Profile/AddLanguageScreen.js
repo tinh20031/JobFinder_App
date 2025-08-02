@@ -61,16 +61,15 @@ export default function AddLanguageScreen({ navigation, route }) {
 
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
       const languageData = {
         languageName: selectedLanguage,
         languageLevel: languageLevel,
       };
 
-      if (mode === 'edit' && editLanguage?.foreignLanguageId) {
-        await profileService.updateForeignLanguage(editLanguage.foreignLanguageId, languageData, token);
+      if (mode === 'edit' && editLanguage?.id) {
+        await profileService.updateForeignLanguage(editLanguage.id, languageData);
       } else {
-        await profileService.createForeignLanguage(languageData, token);
+        await profileService.createForeignLanguage(languageData);
       }
       
       setShowSuccessModal(true);

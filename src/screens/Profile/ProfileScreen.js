@@ -79,6 +79,7 @@ export default function ProfileScreen() {
         setError('');
         try {
           const profile = await profileService.getCandidateProfile();
+          
           setFullname(profile.fullName || '');
           setEmail(profile.email || '');
           setPhone(profile.phone || '');
@@ -91,23 +92,18 @@ export default function ProfileScreen() {
           setJobTitle(profile.jobTitle || '');
           setPersonalLink(profile.personalLink || '');
           
-          // Lấy About Me
+          // Lấy About Me từ dedicated API
           setAboutMeLoading(true);
           try {
-            const token = await getToken();
-            const about = await profileService.getAboutMe(token);
-    
-            if (about && (about.aboutMeId || about.id)) {
-              setAboutMe(about);
-            } else {
-              setAboutMe(null);
-            }
+            const about = await profileService.getAboutMe();
+            setAboutMe(about);
           } catch (e) {
-    
+            console.error('ProfileScreen - AboutMe load error:', e);
             setAboutMe(null);
           }
           setAboutMeLoading(false);
         } catch (e) {
+          console.error('Error loading profile:', e);
           setError('Unable to load profile information.');
           setAboutMeLoading(false);
         }
@@ -120,11 +116,11 @@ export default function ProfileScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const fetchEducations = async () => {
-        const token = await AsyncStorage.getItem('token');
         try {
-          const list = await profileService.getEducationList(token);
+          const list = await profileService.getEducationList();
           setEducations(list);
         } catch (e) {
+          console.error('ProfileScreen - Education load error:', e);
           setEducations([]);
         }
       };
@@ -135,11 +131,11 @@ export default function ProfileScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const fetchWorks = async () => {
-        const token = await AsyncStorage.getItem('token');
         try {
-          const list = await profileService.getWorkExperienceList(token);
+          const list = await profileService.getWorkExperienceList();
           setWorkExperiences(list);
         } catch (e) {
+          console.error('ProfileScreen - Fetch work experiences error:', e);
           setWorkExperiences([]);
         }
       };
@@ -150,9 +146,8 @@ export default function ProfileScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const fetchAwards = async () => {
-        const token = await AsyncStorage.getItem('token');
         try {
-          const list = await profileService.getAwardList(token);
+          const list = await profileService.getAwardList();
           setAwards(list);
         } catch (e) {
           setAwards([]);
@@ -165,9 +160,8 @@ export default function ProfileScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const fetchCertificates = async () => {
-        const token = await AsyncStorage.getItem('token');
         try {
-          const list = await profileService.getCertificateList(token);
+          const list = await profileService.getCertificateList();
           setCertificates(list);
         } catch (e) {
           setCertificates([]);
@@ -180,9 +174,8 @@ export default function ProfileScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const fetchHighlightProjects = async () => {
-        const token = await AsyncStorage.getItem('token');
         try {
-          const list = await profileService.getHighlightProjectList(token);
+          const list = await profileService.getHighlightProjectList();
           setHighlightProjects(list);
         } catch (e) {
           setHighlightProjects([]);
@@ -195,9 +188,8 @@ export default function ProfileScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const fetchProfileStrength = async () => {
-        const token = await AsyncStorage.getItem('token');
         try {
-          const strength = await profileService.getProfileStrength(token);
+          const strength = await profileService.getProfileStrength();
           setProfileStrength(strength);
           // Cập nhật profile completion cho tab bar
           const percentage = strength.percentage || 0;
@@ -235,15 +227,20 @@ export default function ProfileScreen() {
     navigation.navigate('EducationEdit', { education: item, mode: 'edit' });
   };
   const handleDeleteEducation = async (item) => {
-    const token = await AsyncStorage.getItem('token');
-    await profileService.deleteEducation(item.educationId, token);
-    // Reload list
-    const list = await profileService.getEducationList(token);
-    setEducations(list);
-    // Cập nhật profile completion
-    const strength = await profileService.getProfileStrength(token);
-    setProfileStrength(strength);
-    setProfileCompletion(strength.percentage || 0);
+    try {
+      await profileService.deleteEducation(item.id);
+      
+      // Reload list
+      const list = await profileService.getEducationList();
+      setEducations(list);
+      
+      // Cập nhật profile completion
+      const strength = await profileService.getProfileStrength();
+      setProfileStrength(strength);
+      setProfileCompletion(strength.percentage || 0);
+    } catch (error) {
+      console.error('ProfileScreen - Delete education error:', error);
+    }
   };
 
   const handleAddWorkExperience = () => {
@@ -253,33 +250,39 @@ export default function ProfileScreen() {
     navigation.navigate('WorkExperienceEdit', { work: item, mode: 'edit' });
   };
   const handleDeleteWorkExperience = async (id) => {
-    const token = await AsyncStorage.getItem('token');
-    await profileService.deleteWorkExperience(id, token);
-    // Reload list
-    const list = await profileService.getWorkExperienceList(token);
-    setWorkExperiences(list);
-    // Cập nhật profile completion
-    const strength = await profileService.getProfileStrength(token);
-    setProfileStrength(strength);
-    setProfileCompletion(strength.percentage || 0);
+    try {
+      await profileService.deleteWorkExperience(id);
+      
+      // Reload list
+      const list = await profileService.getWorkExperienceList();
+      setWorkExperiences(list);
+      
+      // Cập nhật profile completion
+      const strength = await profileService.getProfileStrength();
+      setProfileStrength(strength);
+      setProfileCompletion(strength.percentage || 0);
+    } catch (error) {
+      console.error('ProfileScreen - Delete work experience error:', error);
+    }
   };
 
   // Hàm edit About Me
   const handleEditAboutMe = async (desc, id) => {
     try {
-      const token = await getToken();
-      if (id) {
-        await profileService.updateAboutMe(id, desc, token);
+      if (aboutMe && aboutMe.aboutMeDescription) {
+        await profileService.updateAboutMe(id, desc);
         setAboutMe({ ...aboutMe, aboutMeDescription: desc });
       } else {
-        const about = await profileService.createAboutMe(desc, token);
+        const about = await profileService.createAboutMe(desc);
         setAboutMe(about);
       }
+      
       // Cập nhật profile completion
-      const strength = await profileService.getProfileStrength(token);
+      const strength = await profileService.getProfileStrength();
       setProfileStrength(strength);
       setProfileCompletion(strength.percentage || 0);
     } catch (e) {
+      console.error('ProfileScreen - handleEditAboutMe error:', e);
       // Handle error silently
     }
   };
@@ -291,13 +294,12 @@ export default function ProfileScreen() {
     navigation.navigate('AwardEdit', { award: item, mode: 'edit' });
   };
   const handleDeleteAward = async (item) => {
-    const token = await AsyncStorage.getItem('token');
-    await profileService.deleteAward(item.awardId, token);
+    await profileService.deleteAward(item.id || item.awardId);
     // Reload list
-    const list = await profileService.getAwardList(token);
+    const list = await profileService.getAwardList();
     setAwards(list);
     // Cập nhật profile completion
-    const strength = await profileService.getProfileStrength(token);
+    const strength = await profileService.getProfileStrength();
     setProfileStrength(strength);
     setProfileCompletion(strength.percentage || 0);
   };
@@ -309,13 +311,12 @@ export default function ProfileScreen() {
     navigation.navigate('CertificateEdit', { certificate: item, mode: 'edit' });
   };
   const handleDeleteCertificate = async (item) => {
-    const token = await AsyncStorage.getItem('token');
-    await profileService.deleteCertificate(item.certificateId, token);
+    await profileService.deleteCertificate(item.id || item.certificateId);
     // Reload list
-    const list = await profileService.getCertificateList(token);
+    const list = await profileService.getCertificateList();
     setCertificates(list);
     // Cập nhật profile completion
-    const strength = await profileService.getProfileStrength(token);
+    const strength = await profileService.getProfileStrength();
     setProfileStrength(strength);
     setProfileCompletion(strength.percentage || 0);
   };
@@ -327,13 +328,12 @@ export default function ProfileScreen() {
     navigation.navigate('HighlightProjectEdit', { project: item, mode: 'edit' });
   };
   const handleDeleteHighlightProject = async (item) => {
-    const token = await AsyncStorage.getItem('token');
-    await profileService.deleteHighlightProject(item.highlightProjectId, token);
+    await profileService.deleteHighlightProject(item.id || item.highlightProjectId);
     // Reload list
-    const list = await profileService.getHighlightProjectList(token);
+    const list = await profileService.getHighlightProjectList();
     setHighlightProjects(list);
     // Cập nhật profile completion
-    const strength = await profileService.getProfileStrength(token);
+    const strength = await profileService.getProfileStrength();
     setProfileStrength(strength);
     setProfileCompletion(strength.percentage || 0);
   };

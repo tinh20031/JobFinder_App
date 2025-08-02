@@ -130,8 +130,6 @@ export default function HighlightProjectEditScreen({ route, navigation }) {
     }
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      
       // Format data theo BE expectation
       const toISO = (y, m) => (y && m ? `${y}-${m}-01T00:00:00.000Z` : null);
       
@@ -150,10 +148,10 @@ export default function HighlightProjectEditScreen({ route, navigation }) {
         ProjectLink: projectLink.trim() || null,
       };
       
-      if (mode === 'edit' && project?.highlightProjectId) {
-        await profileService.updateHighlightProject(project.highlightProjectId, data, token);
+      if (mode === 'edit' && project?.id) {
+        await profileService.updateHighlightProject(project.id, data);
       } else {
-        await profileService.createHighlightProject(data, token);
+        await profileService.createHighlightProject(data);
       }
       navigation.goBack();
     } catch (e) {
@@ -167,8 +165,7 @@ export default function HighlightProjectEditScreen({ route, navigation }) {
     setModalType(null);
     setRemoving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      await profileService.deleteHighlightProject(project.highlightProjectId, token);
+      await profileService.deleteHighlightProject(project.id);
       navigation.goBack();
     } catch (e) {
       Alert.alert('Error', 'Failed to remove project.');
@@ -435,7 +432,7 @@ export default function HighlightProjectEditScreen({ route, navigation }) {
           />
 
           <View style={styles.actionRow}>
-            {mode === 'edit' && project?.highlightProjectId && (
+            {mode === 'edit' && project?.id && (
               <TouchableOpacity style={styles.removeBtn} onPress={handleRemove} disabled={removing}>
                 {removing ? (
                   <ActivityIndicator size="small" color="#130160" />

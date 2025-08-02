@@ -47,19 +47,15 @@ export default function AboutMeEditScreen({ route, navigation }) {
       setModalType(null);
       setSaving(true);
       try {
-        const token = await AsyncStorage.getItem('token');
-        
-        
-        // Check if aboutMe exists and has an ID (could be aboutMeId or id)
-        const aboutMeId = aboutMe?.aboutMeId || aboutMe?.id;
-        
-        if (aboutMe && aboutMeId) {
-          await profileService.updateAboutMe(aboutMeId, value, token);
+        // Check if aboutMe exists and has content
+        if (aboutMe && aboutMe.aboutMeDescription) {
+          await profileService.updateAboutMe(null, value);
         } else {
-          const newAboutMe = await profileService.createAboutMe(value, token);
+          await profileService.createAboutMe(value);
         }
         navigation.goBack();
       } catch (e) {
+        console.error('AboutMeEditScreen - Save error:', e);
         Alert.alert('Error', 'Failed to save About Me' + (e && e.message ? ('\n' + e.message) : ''));
       }
       setSaving(false);

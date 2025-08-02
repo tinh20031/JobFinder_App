@@ -123,7 +123,7 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
       ) : (
         <View style={styles.certificateList}>
           {certificates.map((item, idx) => (
-            <CertificateItem key={item.certificateId || idx} item={item} index={idx} />
+            <CertificateItem key={item.id || item.certificateId || idx} item={item} index={idx} />
           ))}
         </View>
       )}

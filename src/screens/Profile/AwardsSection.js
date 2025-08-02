@@ -93,7 +93,7 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
       ) : (
         <View style={styles.awardList}>
           {awards.map((item, idx) => (
-            <AwardItem key={item.awardId || idx} item={item} index={idx} />
+            <AwardItem key={item.id || item.awardId || idx} item={item} index={idx} />
           ))}
         </View>
       )}

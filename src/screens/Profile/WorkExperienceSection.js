@@ -24,7 +24,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
 
   const confirmDeleteWork = () => {
     if (selectedWork && onDelete) {
-      onDelete(selectedWork.workExperienceId);
+      onDelete(selectedWork.id);
     }
     setShowDeleteModal(false);
     setSelectedWork(null);
@@ -146,7 +146,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
       ) : (
         <View style={styles.workList}>
           {works.map((item, idx) => (
-            <WorkExperienceItem key={item.workExperienceId || idx} item={item} index={idx} />
+            <WorkExperienceItem key={item.id || item.workExperienceId || idx} item={item} index={idx} />
           ))}
         </View>
       )}

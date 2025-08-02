@@ -168,7 +168,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
       ) : (
         <View style={styles.projectList}>
           {projects.map((item, idx) => (
-            <ProjectItem key={item.highlightProjectId || idx} item={item} index={idx} />
+            <ProjectItem key={item.id || item.highlightProjectId || idx} item={item} index={idx} />
           ))}
         </View>
       )}

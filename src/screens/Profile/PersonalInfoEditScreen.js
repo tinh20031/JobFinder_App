@@ -47,7 +47,8 @@ export default function PersonalInfoEditScreen({ route }) {
 
   const loadProfile = async () => {
     try {
-      const profile = await profileService.getCandidateProfile();
+          const profile = await profileService.getCandidateProfile();
+      
       setFullname(profile.fullName || '');
       setEmail(profile.email || '');
       setPhone(profile.phone || '');
@@ -71,6 +72,7 @@ export default function PersonalInfoEditScreen({ route }) {
         personalLink: profile.personalLink || '',
       });
     } catch (e) {
+      console.error('PersonalInfoEditScreen - Error loading profile:', e);
       setError('Unable to load profile information.');
     } finally {
       setLoading(false);
@@ -173,9 +175,11 @@ export default function PersonalInfoEditScreen({ route }) {
         formData.append('Email', email);
         formData.append('JobTitle', jobTitle);
         formData.append('PersonalLink', personalLink);
+        
         await profileService.updateCandidateProfile(formData);
         navigation.goBack();
       } catch (e) {
+        console.error('PersonalInfoEditScreen - Save error:', e);
         setError('Update failed.');
       }
       setSaving(false);

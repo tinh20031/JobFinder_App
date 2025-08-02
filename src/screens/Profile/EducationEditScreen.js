@@ -24,7 +24,7 @@ export default function EducationEditScreen({ route, navigation }) {
     if (isNaN(d)) return '';
     return d.getFullYear();
   }
-  const [level, setLevel] = useState(education?.degree || '');
+  const [level, setLevel] = useState(education?.degree || education?.level || '');
   const [school, setSchool] = useState(education?.school || '');
   const [major, setMajor] = useState(education?.major || '');
   const [monthStart, setMonthStart] = useState(getMonth(education?.monthStart));
@@ -32,7 +32,7 @@ export default function EducationEditScreen({ route, navigation }) {
   const [monthEnd, setMonthEnd] = useState(getMonth(education?.monthEnd));
   const [yearEnd, setYearEnd] = useState(getYear(education?.monthEnd));
   const [isStudying, setIsStudying] = useState(education?.isStudying || false);
-  const [description, setDescription] = useState(education?.detail || '');
+  const [description, setDescription] = useState(education?.detail || education?.description || '');
   const [saving, setSaving] = useState(false);
   const [modalType, setModalType] = useState(null); // 'back' | 'save' | 'remove' | null
   const [removing, setRemoving] = useState(false);
@@ -112,18 +112,11 @@ export default function EducationEditScreen({ route, navigation }) {
     }
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        Alert.alert('Error', 'Authentication required.');
-        return;
-      }
 
       // Format dates safely - similar to web version
       const toISO = (y, m) => (y && m ? `${y}-${m.toString().padStart(2, '0')}-01T00:00:00.000Z` : null);
 
       const educationData = {
-        educationId: education?.educationId || 0,
-        candidateProfileId: education?.candidateProfileId || 0,
         degree: level,
         school: school,
         major: major,
@@ -133,18 +126,16 @@ export default function EducationEditScreen({ route, navigation }) {
         monthEnd: isStudying ? null : toISO(yearEnd, monthEnd),
         yearEnd: isStudying ? null : toISO(yearEnd, monthEnd),
         detail: description,
-        createdAt: education?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
 
       if (mode === 'edit') {
-        await profileService.updateEducation(education.educationId, educationData, token);
+        await profileService.updateEducation(education.id, educationData);
       } else {
-        await profileService.createEducation(educationData, token);
+        await profileService.createEducation(educationData);
       }
       navigation.goBack();
     } catch (error) {
-      console.error('Error saving education:', error);
+      console.error('EducationEditScreen - Save error:', error);
       Alert.alert('Error', 'Failed to save education. Please try again.');
     } finally {
       setSaving(false);
@@ -158,15 +149,10 @@ export default function EducationEditScreen({ route, navigation }) {
   const handleRemoveConfirm = async () => {
     setRemoving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        Alert.alert('Error', 'Authentication required.');
-        return;
-      }
-      await profileService.deleteEducation(education.educationId, token);
+      await profileService.deleteEducation(education.id);
       navigation.goBack();
     } catch (error) {
-      console.error('Error removing education:', error);
+      console.error('EducationEditScreen - Delete error:', error);
       Alert.alert('Error', 'Failed to remove education. Please try again.');
     } finally {
       setRemoving(false);

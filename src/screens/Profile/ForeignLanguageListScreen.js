@@ -32,8 +32,7 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
 
   const loadLanguages = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const languagesData = await profileService.getForeignLanguageList(token);
+      const languagesData = await profileService.getForeignLanguageList();
       setLanguages(languagesData);
     } catch (error) {
       Alert.alert('Error', 'Failed to load languages.');
@@ -60,12 +59,11 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
     setLoading(true);
     
             try {
-              const token = await AsyncStorage.getItem('token');
-      await profileService.deleteForeignLanguage(languageToDelete.id, token);
+      await profileService.deleteForeignLanguage(languageToDelete.id);
               
               // Update local state
               setLanguages(prevLanguages => 
-        prevLanguages.filter(lang => lang.foreignLanguageId !== languageToDelete.id)
+        prevLanguages.filter(lang => lang.id !== languageToDelete.id)
               );
               
       setLanguageToDelete(null);
@@ -111,7 +109,7 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
       <View style={styles.actionButtons}>
         <TouchableOpacity 
           style={styles.deleteButton}
-          onPress={() => handleDeleteLanguage(item.foreignLanguageId, item.languageName)}
+          onPress={() => handleDeleteLanguage(item.id || item.foreignLanguageId, item.languageName)}
         >
           <Icon name="delete" size={20} color="#FF6B35" />
         </TouchableOpacity>
@@ -139,7 +137,7 @@ export default function ForeignLanguageListScreen({ navigation, route }) {
           <FlatList
             data={languages}
             renderItem={renderLanguageItem}
-            keyExtractor={(item) => item.foreignLanguageId.toString()}
+            keyExtractor={(item) => (item.id || item.foreignLanguageId).toString()}
             style={styles.languagesList}
             showsVerticalScrollIndicator={false}
           />

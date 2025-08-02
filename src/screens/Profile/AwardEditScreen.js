@@ -70,8 +70,6 @@ export default function AwardEditScreen({ route, navigation }) {
     }
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      
       // Format data theo BE expectation - tương tự web version
       const toISO = (y, m) => (y && m ? `${y}-${m}-01T00:00:00.000Z` : null);
       
@@ -83,10 +81,10 @@ export default function AwardEditScreen({ route, navigation }) {
         AwardDescription: awardDescription.trim() || null,
       };
       
-      if (mode === 'edit' && award?.awardId) {
-        await profileService.updateAward(award.awardId, data, token);
+      if (mode === 'edit' && award?.id) {
+        await profileService.updateAward(award.id, data);
       } else {
-        await profileService.createAward(data, token);
+        await profileService.createAward(data);
       }
       navigation.goBack();
     } catch (e) {
@@ -100,8 +98,7 @@ export default function AwardEditScreen({ route, navigation }) {
     setModalType(null);
     setRemoving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      await profileService.deleteAward(award.awardId, token);
+      await profileService.deleteAward(award.id);
       navigation.goBack();
     } catch (e) {
       Alert.alert('Error', 'Failed to remove award.');
@@ -223,7 +220,7 @@ export default function AwardEditScreen({ route, navigation }) {
           </Text>
 
           <View style={styles.actionRow}>
-            {mode === 'edit' && award?.awardId && (
+            {mode === 'edit' && award?.id && (
               <TouchableOpacity style={styles.removeBtn} onPress={handleRemove} disabled={removing}>
                 {removing ? (
                   <ActivityIndicator size="small" color="#130160" />
