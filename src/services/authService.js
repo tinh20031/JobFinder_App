@@ -71,24 +71,39 @@ export const authService = {
   // Thêm method Google login
   async googleLogin(googleToken) {
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/login-google`, {
+      // Tách token thành idToken và serverAuthCode nếu cần
+      let requestBody = { googleToken };
+      
+      // Nếu googleToken là object chứa cả idToken và serverAuthCode
+      if (typeof googleToken === 'object' && googleToken.idToken) {
+        requestBody = {
+          idToken: googleToken.idToken,
+          serverAuthCode: googleToken.serverAuthCode
+        };
+      }
+      
+      const response = await fetch(`${BASE_URL}/api/auth/mobile-google-login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ googleToken }),
+        body: JSON.stringify(requestBody),
       });
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const error = new Error(errorData.message || 'Google login failed');
         error.data = errorData;
         throw error;
       }
+      
       const data = await response.json();
+      
       let decodedToken = null;
       if (data.token) {
         decodedToken = jwtDecode(data.token);
       }
+      
       // Lưu thông tin vào AsyncStorage (tương tự như login thường)
       await AsyncStorage.setItem('token', data.token);
       await AsyncStorage.setItem('role', data.role);
@@ -100,6 +115,7 @@ export const authService = {
       if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
       if (data.user && data.user.companyName) await AsyncStorage.setItem('fullNameCompany', data.user.companyName);
       if (data.user && data.user.urlCompanyLogo) await AsyncStorage.setItem('profileImageCompany', data.user.urlCompanyLogo);
+      
       // Lưu userId chuẩn cho candidate
       let userId = null;
       if (data.user && (data.user.id || data.user.userId)) {
@@ -108,6 +124,7 @@ export const authService = {
         userId = decodedToken.sub || decodedToken.userId || decodedToken.id;
       }
       if (userId) await AsyncStorage.setItem('UserId', String(userId));
+      
       return data;
     } catch (error) {
       throw error;

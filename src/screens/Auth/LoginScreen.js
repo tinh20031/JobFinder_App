@@ -71,7 +71,6 @@ const LoginScreen = ({ navigation }) => {
         routes: [{ name: 'MainTab' }],
       });
     } catch (error) {
-      console.error('Google Sign-In Error:', error);
       if (error.code === 'SIGN_IN_CANCELLED') {
         setError('Google sign-in was cancelled.');
       } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
