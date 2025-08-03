@@ -4103,7 +4103,7 @@ internal-slot@^1.1.0:
     hasown "^2.0.2"
     side-channel "^1.1.0"
 
-invariant@^2.2.4:
+invariant@2.2.4, invariant@^2.2.4:
   version "2.2.4"
   resolved "https://registry.npmjs.org/invariant/-/invariant-2.2.4.tgz"
   integrity sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==
@@ -5929,6 +5929,14 @@ react-native-websockets@^1.0.8:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/react-native-websockets/-/react-native-websockets-1.0.8.tgz#7aa26c77df8af78eac9b37172fd8928d98f92afc"
   integrity sha512-HcmkOvpmaUr9mBBg6ba7cPhr5rfSmwPlVjSigxOSrk7m+y1NJWpJ8ek4dOkPBI6IaUHtCJ1O9HH6bPVRzmF2Zw==
+
+react-native-webview@^13.15.0:
+  version "13.15.0"
+  resolved "https://registry.yarnpkg.com/react-native-webview/-/react-native-webview-13.15.0.tgz#b6d2f8d8dd65897db76659ddd8198d2c74ec5a79"
+  integrity sha512-Vzjgy8mmxa/JO6l5KZrsTC7YemSdq+qB01diA0FqjUTaWGAGwuykpJ73MDj3+mzBSlaDxAEugHzTtkUQkQEQeQ==
+  dependencies:
+    escape-string-regexp "^4.0.0"
+    invariant "2.2.4"
 
 react-native@0.80.1:
   version "0.80.1"
