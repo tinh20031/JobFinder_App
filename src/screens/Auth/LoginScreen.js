@@ -4,6 +4,8 @@ import { authService } from '../../services/authService';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Header from '../../components/Header';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { googleAuthService } from '../../services/googleAuthService';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -11,6 +13,12 @@ const LoginScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Khởi tạo Google Sign-In
+  React.useEffect(() => {
+    googleAuthService.configure();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -43,9 +51,36 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  const handleGmailLogin = () => {
-    // Xử lý đăng nhập bằng Gmail ở đây
-    Alert.alert('Chức năng đang phát triển');
+  const handleGmailLogin = async () => {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      // Sử dụng service để xử lý đăng nhập Google
+      const data = await googleAuthService.handleGoogleLogin();
+      const token = await AsyncStorage.getItem('token');
+
+      if (!token) {
+        Alert.alert('Error', 'Token not saved! Please try again.');
+        setGoogleLoading(false);
+        return;
+      }
+
+      // Chuyển hướng đến màn hình chính
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainTab' }],
+      });
+    } catch (error) {
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        setError('Google sign-in was cancelled.');
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+        setError('Google Play Services not available.');
+      } else {
+        setError('Google sign-in failed. Please try again.');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -97,10 +132,11 @@ const LoginScreen = ({ navigation }) => {
           Don’t have an account?{' '}
           <Text style={styles.signupLink} onPress={() => navigation.navigate('Register')}>Signup</Text>
         </Text>
-        <TouchableOpacity style={styles.gmailBtn} onPress={handleGmailLogin}>
-          <MaterialIcons name="mail" size={20} color="#e94235" style={{ marginRight: 8 }} />
-          <Text style={styles.gmailBtnText}>Log In via Gmail</Text>
-        </TouchableOpacity>
+        <GoogleSignInButton
+          onPress={handleGmailLogin}
+          loading={googleLoading}
+          style={styles.gmailBtn}
+        />
       </View>
     </View>
   );
@@ -200,19 +236,7 @@ const styles = StyleSheet.create({
     // không in đậm
   },
   gmailBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e94235',
-    borderRadius: 8,
-    paddingVertical: 12,
-    justifyContent: 'center',
     marginTop: 20,
-  },
-  gmailBtnText: {
-    color: '#e94235',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 });
 

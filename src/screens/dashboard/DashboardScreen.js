@@ -42,12 +42,12 @@ const DashboardScreen = () => {
 
   const handleAppliedJobsPress = () => {
     // Xử lý khi nhấn vào Applied Jobs
-    console.log('Applied Jobs pressed');
+    navigation.navigate('ApplyCV');
   };
 
   const handleMyFavoritePress = () => {
     // Xử lý khi nhấn vào My Favorite
-    console.log('My Favorite pressed');
+    navigation.navigate('FavoriteJobDetail');
   };
 
   const handleCvMatchHistoryPress = () => {

@@ -60,5 +60,17 @@
 		<string>Poppins-Regular.ttf</string>
 		<string>Poppins-SemiBold.ttf</string>
 	</array>
+	<!-- Google Sign-In Configuration -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.jobfinderapp</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.jobfinderapp</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

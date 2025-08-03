@@ -14,13 +14,16 @@ export async function startNotificationHub(onReceiveNotification) {
   
 
   if (!token || !userId) {
-
-    
-    
+    console.warn('Missing token or userId for SignalR connection');
     throw new Error('Missing token or userId');
   }
 
-  
+  if (!SIGNALR_HUB_URL) {
+    console.error('SIGNALR_HUB_URL is not defined');
+    throw new Error('SIGNALR_HUB_URL is not defined');
+  }
+
+  console.log('Connecting to SignalR hub:', SIGNALR_HUB_URL);
 
   connection = new HubConnectionBuilder()
     .withUrl(SIGNALR_HUB_URL, {
@@ -50,11 +53,15 @@ export async function startNotificationHub(onReceiveNotification) {
 
   try {
     await connection.start();
+    console.log('SignalR connection started successfully');
     
     await connection.invoke('JoinUserGroup', String(userId));
+    console.log('Joined user group:', userId);
     
   } catch (err) {
-    
+    console.error('SignalR connection error:', err);
+    connection = null;
+    throw err;
   }
 
   return connection;

@@ -3,6 +3,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import companyService from './companyService';
 
 export const JobService = {
+  async getJobById(jobId) {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(`${BASE_URL}/api/Job/${jobId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Không thể lấy chi tiết việc làm');
+      }
+      const job = await response.json();
+      return job;
+    } catch (error) {
+      console.error('Lỗi khi lấy chi tiết việc làm:', error);
+      throw error;
+    }
+  },
+
   async getJobs() {
     try {
       const token = await AsyncStorage.getItem('token');

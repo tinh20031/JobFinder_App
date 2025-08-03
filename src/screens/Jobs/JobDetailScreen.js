@@ -11,6 +11,7 @@ import CvMatchingModal from '../../components/CvMatchingModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService } from '../../services/authService';
 import chatService from '../../services/chatService';
+import * as favoriteJobService from '../../services/favoriteJobService';
 
 const JobDetailScreen = ({ route }) => {
   const { jobId } = route?.params || {};
@@ -25,6 +26,8 @@ const JobDetailScreen = ({ route }) => {
   const [isSubmitting, setIsSubmitting] = useState(false); // Thêm state này
   const [showMessageModal, setShowMessageModal] = useState(false); // Thêm state cho message modal
   const [message, setMessage] = useState(''); // Thêm state cho nội dung tin nhắn
+  const [isFavorite, setIsFavorite] = useState(false); // State cho favorite status
+  const [favoriteLoading, setFavoriteLoading] = useState(false); // Loading state cho favorite action
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -43,6 +46,42 @@ const JobDetailScreen = ({ route }) => {
     };
     fetchJob();
   }, [jobId]);
+
+  // Check if job is favorited
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!job || !job.id) return;
+      
+      try {
+        const userId = await authService.getUserId();
+        if (!userId) {
+          console.log('No user ID found, skipping favorite check');
+          return;
+        }
+        
+        console.log('Checking favorite status for job:', job.id, 'user:', userId);
+        const response = await favoriteJobService.isJobFavorite(userId, job.id);
+        console.log('Favorite status response:', response);
+        
+        // Handle different response types
+        if (typeof response === 'boolean') {
+          setIsFavorite(response);
+        } else if (response && typeof response === 'object') {
+          // If response is an object, check for a boolean property
+          setIsFavorite(response.isFavorite || response.favorited || false);
+        } else {
+          setIsFavorite(false);
+        }
+      } catch (error) {
+        console.log('Error checking favorite status:', error);
+        setIsFavorite(false);
+      }
+    };
+
+    if (job) {
+      checkFavoriteStatus();
+    }
+  }, [job]);
 
   if (loading) {
     return (
@@ -126,6 +165,41 @@ const JobDetailScreen = ({ route }) => {
     } catch (err) {
       console.error('Failed to send message:', err);
       Alert.alert('Error', 'Failed to send message. Please try again.');
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!job || !job.id) return;
+    
+    try {
+      setFavoriteLoading(true);
+      const userId = await authService.getUserId();
+      
+      if (!userId) {
+        Alert.alert('Error', 'You must be logged in to favorite jobs.');
+        return;
+      }
+
+      console.log('Toggling favorite for job:', job.id, 'user:', userId, 'current status:', isFavorite);
+
+      if (isFavorite) {
+        // Remove from favorites
+        console.log('Removing from favorites...');
+        await favoriteJobService.removeFavoriteJob(userId, job.id);
+        setIsFavorite(false);
+        console.log('Successfully removed from favorites');
+      } else {
+        // Add to favorites
+        console.log('Adding to favorites...');
+        await favoriteJobService.addFavoriteJob(userId, job.id);
+        setIsFavorite(true);
+        console.log('Successfully added to favorites');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert('Error', 'Failed to update favorite status. Please try again.');
+    } finally {
+      setFavoriteLoading(false);
     }
   };
 
@@ -314,8 +388,20 @@ const JobDetailScreen = ({ route }) => {
       <Animatable.View animation="fadeInUp" duration={600} delay={600} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 100 }}>
         {/* Menu bar dưới cùng */}
         <View style={[styles.bottomMenuBar, { paddingBottom: 10 + insets.bottom }]}>
-          <TouchableOpacity style={styles.bookmarkBtn}>
-            <MaterialIcons name="bookmark-border" size={22} color="#1967D2" />
+          <TouchableOpacity 
+            style={[styles.bookmarkBtn, isFavorite && styles.bookmarkBtnActive]} 
+            onPress={handleToggleFavorite}
+            disabled={favoriteLoading}
+          >
+            {favoriteLoading ? (
+              <ActivityIndicator size="small" color={isFavorite ? "#fff" : "#1967D2"} />
+            ) : (
+              <MaterialIcons 
+                name={isFavorite ? "bookmark" : "bookmark-border"} 
+                size={22} 
+                color={isFavorite ? "#fff" : "#1967D2"} 
+              />
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.applyBtn, isSubmitting && { backgroundColor: '#90caf9' }]}
@@ -695,6 +781,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
     marginRight: 12,
+  },
+  bookmarkBtnActive: {
+    backgroundColor: '#1967D2',
   },
   applyBtn: {
     flex: 1,
