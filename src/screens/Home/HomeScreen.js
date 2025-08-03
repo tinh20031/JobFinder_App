@@ -1,143 +1,305 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, FlatList } from 'react-native';
 import Header from '../../components/HeaderCandidate';
-import BannerImg from '../../images/banner-img-3.png';
-import WorkImg from '../../images/work-1.png';
+import SearchBar from './components/SearchBar';
+import Banner from './components/Banner';
+import CompanyCard from './components/CompanyCard';
+import JobCard from './components/JobCard';
+import FilterButtons from './components/FilterButtons';
+import ViewMoreButton from './components/ViewMoreButton';
 
 const HomeScreen = () => {
+  const [isViewMorePressed, setIsViewMorePressed] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Data cho recommendation companies carousel
+  const recommendationCompanies = [
+    {
+      id: '1',
+      name: 'Google LLC',
+      industry: 'Technology',
+      location: 'California, United States',
+      jobCount: '2,500+',
+      tags: ['Top Rated', 'Remote Friendly'],
+      logoColor: '#fff',
+      logoText: 'G'
+    },
+    {
+      id: '2',
+      name: 'Facebook Inc.',
+      industry: 'Social Media',
+      location: 'San Francisco, United States',
+      jobCount: '1,800+',
+      tags: ['Innovative', 'Great Benefits'],
+      logoColor: '#1877F2',
+      logoText: 'F'
+    },
+    {
+      id: '3',
+      name: 'Microsoft',
+      industry: 'Software',
+      location: 'Seattle, United States',
+      jobCount: '3,200+',
+      tags: ['Stable', 'Growth'],
+      logoColor: '#00A4EF',
+      logoText: 'M'
+    }
+  ];
+
+  // Data cho job cards
+  const jobData = [
+    {
+      id: '1',
+      title: 'Sales & Marketing',
+      company: 'Paypal',
+      location: 'New York, United States',
+      salary: '$8,000 - $20,000 /month',
+      tags: ['Full Time', 'Remote'],
+      logoColor: '#0070BA',
+      logoText: 'P'
+    },
+    {
+      id: '2',
+      title: 'Writing & Content',
+      company: 'Pinterest',
+      location: 'Paris, France',
+      salary: '$5,000 - $15,000 /month',
+      tags: ['Part Time', 'Onsite'],
+      logoColor: '#E60023',
+      logoText: 'P'
+    },
+    {
+      id: '3',
+      title: 'Business Analyst',
+      company: 'Apple Inc.',
+      location: 'Chicago, United States',
+      salary: '$5,000 - $12,000 /month',
+      tags: ['Freelance', 'Remote'],
+      logoColor: '#000',
+      logoText: 'A'
+    },
+    {
+      id: '4',
+      title: 'Quality Assurance',
+      company: 'Spotify',
+      location: 'Canberra, Australia',
+      salary: '$12,000 - $25,000 /month',
+      tags: ['Full Time', 'Onsite'],
+      logoColor: '#1DB954',
+      logoText: 'S'
+    },
+    {
+      id: '5',
+      title: 'Community Officer',
+      company: 'Reddit Company',
+      location: 'San Francisco, United States',
+      salary: '$8,000 - $18,000 /month',
+      tags: ['Full Time', 'Hybrid'],
+      logoColor: '#FF4500',
+      logoText: 'R'
+    }
+  ];
+
+  const handleSearch = (text) => {
+    // Handle search logic
+    console.log('Search:', text);
+  };
+
+  const handleFilter = () => {
+    // Handle filter logic
+    console.log('Filter pressed');
+  };
+
+  const handleReadMore = () => {
+    // Handle read more logic
+    console.log('Read more pressed');
+  };
+
+  const handleCompanyBookmark = (companyId) => {
+    // Handle company bookmark logic
+    console.log('Company bookmarked:', companyId);
+  };
+
+  const handleJobBookmark = (jobId) => {
+    // Handle job bookmark logic
+    console.log('Job bookmarked:', jobId);
+  };
+
+  const handleFilterChange = (filterId) => {
+    setActiveFilter(filterId);
+    // Handle filter change logic
+    console.log('Filter changed:', filterId);
+  };
+
+  const handleViewMore = () => {
+    // Handle view more logic
+    console.log('View more pressed');
+  };
+
+  const renderCompanyCard = ({ item }) => (
+    <CompanyCard 
+      company={item} 
+      onBookmark={handleCompanyBookmark}
+    />
+  );
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
+    <View style={styles.container}>
+      {/* Fixed Header */}
       <Header />
 
-      {/* Banner */}
-      <View style={styles.banner}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.bannerText}>50% off{`\n`}take any courses</Text>
-          <View style={styles.bannerButton}><Text style={styles.bannerButtonText}>Join Now</Text></View>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Custom Header with Profile */}
+        <View style={styles.header}>
+          <View style={styles.profileSection}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }} 
+              style={styles.profileImage} 
+            />
+            <View style={styles.greetingSection}>
+              <Text style={styles.greeting}>Good Morning 👋</Text>
+              <Text style={styles.userName}>Andrew Ainsley</Text>
+            </View>
+          </View>
         </View>
-        <Image source={BannerImg} style={styles.bannerImage} resizeMode="contain" />
-      </View>
 
-      {/* Find Your Job */}
-      <Text style={styles.sectionTitle}>Find Your Job</Text>
-      <View style={styles.findJobContainer}>
-        {/* Box lớn bên trái */}
-        <View style={styles.findJobBoxLarge}>
-          <Image source={WorkImg} style={styles.findJobIcon} resizeMode="contain" />
-          <Text style={styles.findJobNumberLarge}>44.5k</Text>
-          <Text style={styles.findJobLabelLarge}>Remote Job</Text>
-        </View>
-        {/* Hai box nhỏ bên phải */}
-        <View style={styles.findJobColSmall}>
-          <View style={[styles.findJobBoxSmall, {backgroundColor: '#D6C7FF'}]}>
-            <Text style={styles.findJobNumberSmall}>66.8k</Text>
-            <Text style={styles.findJobLabelSmall}>Full Time</Text>
-          </View>
-          <View style={[styles.findJobBoxSmall, {backgroundColor: '#FFE2B6'}]}>
-            <Text style={styles.findJobNumberSmall}>38.9k</Text>
-            <Text style={styles.findJobLabelSmall}>Part Time</Text>
-          </View>
-        </View>
-      </View>
+        {/* Search Bar */}
+        <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
 
-      {/* Recent Job List */}
-      <Text style={styles.sectionTitle}>Recent Job List</Text>
-      <View style={styles.jobList}>
-        {/* Placeholder cho danh sách job */}
-        <View style={styles.jobCard}>
-          <Text style={styles.jobTitle}>Product Designer</Text>
-          <Text style={styles.jobCompany}>Google inc · California, USA</Text>
-          <Text style={styles.jobSalary}>$15K/Mo</Text>
-          <View style={styles.jobTagsRow}>
-            <View style={styles.jobTag}><Text>Senior designer</Text></View>
-            <View style={styles.jobTag}><Text>Full time</Text></View>
-            <View style={styles.jobApply}><Text style={{color:'#fff'}}>Apply</Text></View>
-          </View>
+        {/* Banner */}
+        <Banner onReadMore={handleReadMore} />
+
+        {/* Recommendation Companies Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Top Companies</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Recommendation Companies Carousel */}
+        <FlatList
+          data={recommendationCompanies}
+          renderItem={renderCompanyCard}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContainer}
+          snapToInterval={376}
+          decelerationRate="fast"
+          pagingEnabled={false}
+        />
+
+        {/* Recent Jobs Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Jobs</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Filter Buttons */}
+        <FilterButtons 
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
+        />
+
+        {/* Job Cards List */}
+        <View style={styles.jobCardsContainer}>
+          {jobData.map((job) => (
+            <JobCard 
+              key={job.id}
+              job={job} 
+              onBookmark={handleJobBookmark}
+            />
+          ))}
+
+          {/* View More Button */}
+          <ViewMoreButton 
+            isPressed={isViewMorePressed}
+            onPressIn={() => setIsViewMorePressed(true)}
+            onPressOut={() => setIsViewMorePressed(false)}
+            onPress={handleViewMore}
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F8FF' },
-  banner: {
-    margin: 16,
-    borderRadius: 16,
-    backgroundColor: '#2B3990',
-    height: 200, // tăng chiều cao
-    padding: 24, // tăng padding cho thoáng
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  bannerText: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
-  bannerButton: { backgroundColor: '#FF9900', borderRadius: 8, alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, marginBottom: 16 },
-  bannerButtonText: { color: '#fff', fontWeight: 'bold' },
-  bannerImage: { width: 170, height: 170, marginLeft: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginHorizontal: 16, marginTop: 24, marginBottom: 8 },
-  findJobContainer: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    marginTop: 8,
-    height: 140,
-  },
-  findJobBoxLarge: {
-    flex: 1.2,
-    backgroundColor: '#B6E6FB',
-    borderRadius: 12,
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-  },
-  findJobIcon: {
-    width: 48,
-    height: 48,
-    marginBottom: 8,
-  },
-  findJobNumberLarge: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 2,
-  },
-  findJobLabelLarge: {
-    fontSize: 15,
-    color: '#222',
-  },
-  findJobColSmall: {
+  container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100,
+  },
+  header: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  findJobBoxSmall: {
-    borderRadius: 12,
-    marginBottom: 8,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    height: 62,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
-  findJobNumberSmall: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#222',
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  greetingSection: {
+    flex: 1,
+  },
+  greeting: {
+    fontSize: 16,
+    color: '#666',
     marginBottom: 2,
+    fontFamily: 'Poppins-Regular',
   },
-  findJobLabelSmall: {
-    fontSize: 13,
-    color: '#222',
+  userName: {
+    fontSize: 20,
+    color: '#333',
+    fontFamily: 'Poppins-Bold',
   },
-  jobList: { margin: 16 },
-  jobCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  jobTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
-  jobCompany: { fontSize: 13, color: '#888', marginBottom: 8 },
-  jobSalary: { fontSize: 15, fontWeight: 'bold', color: '#2B3990', marginBottom: 8 },
-  jobTagsRow: { flexDirection: 'row', alignItems: 'center' },
-  jobTag: { backgroundColor: '#F2F2F2', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginRight: 8 },
-  jobApply: { backgroundColor: '#FF9900', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 6 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: '#333',
+    fontFamily: 'Poppins-Bold',
+  },
+  seeAllText: {
+    fontSize: 16,
+    color: '#2563eb',
+    fontFamily: 'Poppins-Bold',
+  },
+  carouselContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingRight: 36,
+  },
+  jobCardsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
 });
 
 export default HomeScreen;
