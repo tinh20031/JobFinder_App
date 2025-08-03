@@ -1,104 +1,52 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Header from '../../components/HeaderCandidate';
 import SearchBar from './components/SearchBar';
 import Banner from './components/Banner';
 import CompanyCard from './components/CompanyCard';
 import JobCard from './components/JobCard';
-import FilterButtons from './components/FilterButtons';
-import ViewMoreButton from './components/ViewMoreButton';
+import { ProfileSkeleton } from '../../components/SkeletonLoading';
+
+import profileService from '../../services/profileService';
 
 const HomeScreen = () => {
-  const [isViewMorePressed, setIsViewMorePressed] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('all');
+  const navigation = useNavigation();
 
-  // Data cho recommendation companies carousel
-  const recommendationCompanies = [
-    {
-      id: '1',
-      name: 'Google LLC',
-      industry: 'Technology',
-      location: 'California, United States',
-      jobCount: '2,500+',
-      tags: ['Top Rated', 'Remote Friendly'],
-      logoColor: '#fff',
-      logoText: 'G'
-    },
-    {
-      id: '2',
-      name: 'Facebook Inc.',
-      industry: 'Social Media',
-      location: 'San Francisco, United States',
-      jobCount: '1,800+',
-      tags: ['Innovative', 'Great Benefits'],
-      logoColor: '#1877F2',
-      logoText: 'F'
-    },
-    {
-      id: '3',
-      name: 'Microsoft',
-      industry: 'Software',
-      location: 'Seattle, United States',
-      jobCount: '3,200+',
-      tags: ['Stable', 'Growth'],
-      logoColor: '#00A4EF',
-      logoText: 'M'
-    }
-  ];
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Data cho job cards
-  const jobData = [
-    {
-      id: '1',
-      title: 'Sales & Marketing',
-      company: 'Paypal',
-      location: 'New York, United States',
-      salary: '$8,000 - $20,000 /month',
-      tags: ['Full Time', 'Remote'],
-      logoColor: '#0070BA',
-      logoText: 'P'
-    },
-    {
-      id: '2',
-      title: 'Writing & Content',
-      company: 'Pinterest',
-      location: 'Paris, France',
-      salary: '$5,000 - $15,000 /month',
-      tags: ['Part Time', 'Onsite'],
-      logoColor: '#E60023',
-      logoText: 'P'
-    },
-    {
-      id: '3',
-      title: 'Business Analyst',
-      company: 'Apple Inc.',
-      location: 'Chicago, United States',
-      salary: '$5,000 - $12,000 /month',
-      tags: ['Freelance', 'Remote'],
-      logoColor: '#000',
-      logoText: 'A'
-    },
-    {
-      id: '4',
-      title: 'Quality Assurance',
-      company: 'Spotify',
-      location: 'Canberra, Australia',
-      salary: '$12,000 - $25,000 /month',
-      tags: ['Full Time', 'Onsite'],
-      logoColor: '#1DB954',
-      logoText: 'S'
-    },
-    {
-      id: '5',
-      title: 'Community Officer',
-      company: 'Reddit Company',
-      location: 'San Francisco, United States',
-      salary: '$8,000 - $18,000 /month',
-      tags: ['Full Time', 'Hybrid'],
-      logoColor: '#FF4500',
-      logoText: 'R'
-    }
-  ];
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      // Show fallback data immediately for better UX
+      setUserProfile({
+        fullName: 'Andrew Ainsley',
+        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+      });
+      setLoading(false);
+      
+      // Then try to fetch real data in background
+      try {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 2000)
+        );
+        
+        const profilePromise = profileService.getCandidateProfile();
+        const profile = await Promise.race([profilePromise, timeoutPromise]);
+        
+        // Update with real data if successful
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        // Keep fallback data, no need to update loading state
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+
 
   const handleSearch = (text) => {
     // Handle search logic
@@ -115,33 +63,11 @@ const HomeScreen = () => {
     console.log('Read more pressed');
   };
 
-  const handleCompanyBookmark = (companyId) => {
-    // Handle company bookmark logic
-    console.log('Company bookmarked:', companyId);
-  };
 
-  const handleJobBookmark = (jobId) => {
-    // Handle job bookmark logic
-    console.log('Job bookmarked:', jobId);
-  };
 
-  const handleFilterChange = (filterId) => {
-    setActiveFilter(filterId);
-    // Handle filter change logic
-    console.log('Filter changed:', filterId);
-  };
 
-  const handleViewMore = () => {
-    // Handle view more logic
-    console.log('View more pressed');
-  };
 
-  const renderCompanyCard = ({ item }) => (
-    <CompanyCard 
-      company={item} 
-      onBookmark={handleCompanyBookmark}
-    />
-  );
+
 
   return (
     <View style={styles.container}>
@@ -155,16 +81,24 @@ const HomeScreen = () => {
       >
         {/* Custom Header with Profile */}
         <View style={styles.header}>
-          <View style={styles.profileSection}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }} 
-              style={styles.profileImage} 
-            />
-            <View style={styles.greetingSection}>
-              <Text style={styles.greeting}>Good Morning 👋</Text>
-              <Text style={styles.userName}>Andrew Ainsley</Text>
+          {loading ? (
+            <ProfileSkeleton />
+          ) : (
+            <View style={styles.profileSection}>
+              <Image 
+                source={{ 
+                  uri: userProfile?.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' 
+                }} 
+                style={styles.profileImage} 
+              />
+              <View style={styles.greetingSection}>
+                <Text style={styles.greeting}>Welcome back 👋</Text>
+                <Text style={styles.userName}>
+                  {userProfile?.fullName || 'Andrew Ainsley'}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
         </View>
 
         {/* Search Bar */}
@@ -174,58 +108,19 @@ const HomeScreen = () => {
         <Banner onReadMore={handleReadMore} />
 
         {/* Recommendation Companies Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Top Companies</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recommendation Companies Carousel */}
-        <FlatList
-          data={recommendationCompanies}
-          renderItem={renderCompanyCard}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContainer}
-          snapToInterval={376}
-          decelerationRate="fast"
-          pagingEnabled={false}
+        <CompanyCard 
+          title="List Companies"
+          showSeeAll={true}
+          horizontal={true}
+          limit={5}
         />
 
         {/* Recent Jobs Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Jobs</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Filter Buttons */}
-        <FilterButtons 
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
+        <JobCard 
+          title="Recent Jobs"
+          showSeeAll={true}
+          limit={5}
         />
-
-        {/* Job Cards List */}
-        <View style={styles.jobCardsContainer}>
-          {jobData.map((job) => (
-            <JobCard 
-              key={job.id}
-              job={job} 
-              onBookmark={handleJobBookmark}
-            />
-          ))}
-
-          {/* View More Button */}
-          <ViewMoreButton 
-            isPressed={isViewMorePressed}
-            onPressIn={() => setIsViewMorePressed(true)}
-            onPressOut={() => setIsViewMorePressed(false)}
-            onPress={handleViewMore}
-          />
-        </View>
       </ScrollView>
     </View>
   );
@@ -255,9 +150,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     marginRight: 12,
   },
   greetingSection: {
@@ -267,7 +162,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginBottom: 2,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
   },
   userName: {
     fontSize: 20,
@@ -290,11 +185,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2563eb',
     fontFamily: 'Poppins-Bold',
-  },
-  carouselContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingRight: 36,
   },
   jobCardsContainer: {
     paddingHorizontal: 20,

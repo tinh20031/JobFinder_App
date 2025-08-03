@@ -1,22 +1,140 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { BASE_URL } from '../../../../constants/api';
+import companyService from '../../../../services/companyService';
+import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
 
-const CompanyCard = ({ company, onBookmark }) => {
-  return (
-    <View style={styles.carouselJobCard}>
+const CompanyCard = ({ 
+  title = "List Companies", 
+  showSeeAll = true, 
+  horizontal = true, 
+  limit = null,
+  showHeader = true 
+}) => {
+  const navigation = useNavigation();
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef(null);
+
+  // Fetch companies data from API
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        setLoading(true);
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 5000) // Increased to 5 seconds
+        );
+        
+        const companiesPromise = companyService.filterCompanies();
+        const companiesData = await Promise.race([companiesPromise, timeoutPromise]);
+        
+        // Map API data to match component structure
+        const mappedCompanies = companiesData.map((company, index) => ({
+          id: company.userId?.toString() || index.toString(),
+          name: company.companyName || company.name || 'Unknown Company',
+          industry: company.industryName || 'Unknown Industry',
+          location: company.location || 'Unknown Location',
+          jobCount: company.teamSize ? `${company.teamSize} employees` : 'Unknown size',
+          tags: company.teamSize ? [`${company.teamSize} employees`] : ['Top Rated'],
+          logoColor: getLogoColor(company.companyName || company.name),
+          logoText: getLogoText(company.companyName || company.name),
+          logoUrl: company.urlCompanyLogo || null
+        }));
+        
+        // Apply limit if specified
+        const limitedCompanies = limit ? mappedCompanies.slice(0, limit) : mappedCompanies;
+        setCompanies(limitedCompanies);
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+        // Set empty array if API fails - no hardcode data
+        setCompanies([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanies();
+  }, [limit]);
+
+  // Helper function to generate logo color based on company name
+  const getLogoColor = (companyName) => {
+    const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be185d', '#65a30d'];
+    const index = companyName.length % colors.length;
+    return colors[index];
+  };
+
+  // Helper function to generate logo text (first letter of company name)
+  const getLogoText = (companyName) => {
+    return companyName.charAt(0).toUpperCase();
+  };
+
+  // Handle logo display - use image if available, otherwise use text
+  const renderLogo = (company) => {
+    if (company.logoUrl) {
+      const logoUrl = company.logoUrl.startsWith('http') 
+        ? company.logoUrl 
+        : `${BASE_URL}${company.logoUrl}`;
+      
+      return (
+        <Image
+          source={{ uri: logoUrl }}
+          style={[styles.companyLogo, { backgroundColor: '#fff' }]}
+          resizeMode="cover"
+          onError={() => {
+            // Fallback to text logo if image fails to load
+            console.log('Failed to load company logo:', logoUrl);
+          }}
+        />
+      );
+    }
+    
+    return (
+      <View style={[styles.companyLogo, { backgroundColor: company.logoColor }]}>
+        <Text style={styles.companyLogoText}>{company.logoText}</Text>
+      </View>
+    );
+  };
+
+  const handleCompanyBookmark = (companyId) => {
+    // Handle company bookmark logic
+    console.log('Company bookmarked:', companyId);
+  };
+
+  const handleScroll = (event) => {
+    const contentOffset = event.nativeEvent.contentOffset.x;
+    const cardWidth = 376; // width + marginRight
+    const index = Math.round(contentOffset / cardWidth);
+    setCurrentIndex(Math.max(0, Math.min(index, companies.length - 1)));
+  };
+
+
+
+  const renderCompanyItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.carouselJobCard} 
+      onPress={() => navigation.navigate('CompanyDetail', { companyId: item.id })}
+      activeOpacity={0.8}
+    >
       {/* Header với logo, tên công ty, ngành nghề và bookmark */}
       <View style={styles.jobCardHeader}>
         <View style={styles.companyInfoSection}>
-          <View style={[styles.companyLogo, { backgroundColor: company.logoColor }]}>
-            <Text style={styles.companyLogoText}>{company.logoText}</Text>
-          </View>
+          {renderLogo(item)}
           <View style={styles.companyTextSection}>
-            <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">{company.name}</Text>
-            <Text style={styles.jobCompany}>{company.industry}</Text>
+            <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+            <Text style={styles.jobCompany}>{item.industry}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.bookmarkButton} onPress={() => onBookmark(company.id)}>
+        <TouchableOpacity 
+          style={styles.bookmarkButton} 
+          onPress={(e) => {
+            e.stopPropagation(); // Prevent card press when bookmark is pressed
+            handleCompanyBookmark(item.id);
+          }}
+        >
           <Icon name="bookmark-border" size={28} color="#0070BA" />
         </TouchableOpacity>
       </View>
@@ -26,25 +144,149 @@ const CompanyCard = ({ company, onBookmark }) => {
       
       {/* Địa điểm */}
       <View style={styles.jobLocation}>
-        <Text style={styles.locationText}>{company.location}</Text>
+        <Text style={styles.locationText}>{item.location}</Text>
       </View>
       
-      {/* Số lượng job */}
-      <Text style={styles.jobSalary}> {company.jobCount} jobs</Text>
+
       
       {/* Tags */}
       <View style={styles.jobTags}>
-        {company.tags.map((tag, index) => (
+        {item.tags.map((tag, index) => (
           <View key={index} style={styles.jobTag}>
             <Text style={styles.jobTagText}>{tag}</Text>
           </View>
         ))}
       </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* Section Header - Always show */}
+      {showHeader && (
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {showSeeAll && (
+            <Text 
+              style={styles.seeAllText}
+              onPress={() => navigation.navigate('CompanyList')}
+            >
+              See All
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Content based on state */}
+      {loading ? (
+        <View style={styles.skeletonContainer}>
+          <CompanyCardSkeleton />
+          <CompanyCardSkeleton />
+          <CompanyCardSkeleton />
+        </View>
+      ) : companies.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>No companies available</Text>
+        </View>
+      ) : (
+        <View>
+          <FlatList
+            ref={flatListRef}
+            data={companies}
+            renderItem={renderCompanyItem}
+            keyExtractor={(item) => item.id}
+            horizontal={horizontal}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={horizontal ? styles.carouselContainer : styles.listContainer}
+            snapToInterval={horizontal ? 376 : undefined}
+            decelerationRate={horizontal ? "fast" : undefined}
+            pagingEnabled={horizontal ? false : undefined}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          />
+          
+          {/* Simple Scroll Indicator Dots */}
+          {horizontal && companies.length > 1 && (
+            <View style={styles.scrollIndicatorContainer}>
+              {companies.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.scrollIndicatorDot,
+                    index === currentIndex && styles.scrollIndicatorDotActive
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: '#333',
+    fontFamily: 'Poppins-Bold',
+  },
+  seeAllText: {
+    fontSize: 16,
+    color: '#2563eb',
+    fontFamily: 'Poppins-Bold',
+  },
+  carouselContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingRight: 36,
+  },
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  scrollIndicatorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
+  },
+  scrollIndicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 4,
+  },
+  scrollIndicatorDotActive: {
+    backgroundColor: '#2563eb',
+    width: 24,
+  },
+  loadingContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  skeletonContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Poppins-Regular',
+  },
   carouselJobCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -135,6 +377,7 @@ const styles = StyleSheet.create({
   jobTags: {
     flexDirection: 'row',
     marginLeft: 68,
+    marginTop: 8,
   },
   jobTag: {
     backgroundColor: '#F0F0F0',

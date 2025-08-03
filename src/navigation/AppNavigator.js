@@ -336,6 +336,8 @@ export default function AppNavigator() {
           <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
           <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
           <Stack.Screen name="CompanyDetail" component={CompanyDetailScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CompanyList" component={CompanyListScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="JobList" component={JobListScreen} options={{ headerShown: false }} />
           <Stack.Screen name="JobDetail" component={JobDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Listchat" component={Listchat} options={{ headerShown: false }} />
           <Stack.Screen name="ChatDetail" component={ChatDetail} options={{ headerShown: false }} />

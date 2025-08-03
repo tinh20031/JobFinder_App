@@ -106,7 +106,7 @@ export const cvMatchingService = {
       console.log('Fetching try match detail for ID:', tryMatchId);
       // Sử dụng endpoint giống như web
       const url = `${BASE_URL}/api/application/try-match-details/${tryMatchId}`;
-      console.log('API URL:', url);
+
 
       const response = await fetch(url, {
         method: 'GET',

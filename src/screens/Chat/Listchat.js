@@ -26,7 +26,7 @@ const Listchat = () => {
       if (!url.includes('/api/')) {
         console.warn('API URL missing /api:', url);
       } else {
-        console.log('API URL:', url);
+    
       }
       const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       const status = res.status;

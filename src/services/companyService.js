@@ -62,7 +62,7 @@ const companyService = {
           'Accept': 'application/json',
         },
       });
-      console.log('Company API URL:', url, 'Status:', res.status);
+
       if (!res.ok) throw new Error('Network response was not ok');
       return await res.json();
     } catch (error) {
