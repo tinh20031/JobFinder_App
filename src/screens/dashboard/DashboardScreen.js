@@ -57,7 +57,7 @@ const DashboardScreen = () => {
 
   const handlePackagesPress = () => {
     // Xử lý khi nhấn vào Packages
-    console.log('Packages pressed');
+    navigation.navigate('Package');
   };
 
   return (

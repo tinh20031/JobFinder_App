@@ -37,6 +37,9 @@ import ApplyCVScreen from '../screens/dashboard/ApplyCVScreen';
 import ApplyCVDetailScreen from '../screens/dashboard/ApplyCVDetailScreen';
 import FavoriteJobDetailScreen from '../screens/dashboard/FavoriteJobDetailScreen';
 import NotificationScreen from '../components/header/notification/NotificationScreen';
+import { PackageScreen, BuyPackageScreen, PaymentSuccessScreen } from '../screens/dashboard/package';
+import PaymentWebView from '../screens/dashboard/package/PaymentWebView';
+import PaymentSuccessSimple from '../screens/dashboard/package/PaymentSuccessSimple';
 import FilterScreen from '../screens/Jobs/FilterScreen';
 
 // Custom tab bar button cho nút giữa (Profile)
@@ -366,6 +369,13 @@ export default function AppNavigator() {
           <Stack.Screen name="FavoriteJobDetail" component={FavoriteJobDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="NotificationScreen" component={NotificationScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Filter" component={FilterScreen} options={{ headerShown: false }} />
+          
+          {/* Package System Screens */}
+          <Stack.Screen name="Package" component={PackageScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="BuyPackage" component={BuyPackageScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="PaymentWebView" component={PaymentWebView} options={{ headerShown: false }} />
+          <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="PaymentSuccessSimple" component={PaymentSuccessSimple} options={{ headerShown: false }} />
           
         </Stack.Navigator>
       </NavigationContainer>

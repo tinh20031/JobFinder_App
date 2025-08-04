@@ -167,72 +167,23 @@ const NotificationScreen = () => {
     }
   };
 
-  const formatDate = (dateString) => {
+  const timeAgo = (dateString) => {
     if (!dateString) return '';
     
-    // Parse date string properly
-    let date;
-    try {
-      // Handle different date formats from server
-      if (dateString.includes('T') || dateString.includes('Z')) {
-        // ISO format: "2024-01-15T10:30:00Z" or "2024-01-15T10:30:00.000Z"
-        date = new Date(dateString);
-      } else if (dateString.includes('-')) {
-        // Date format: "2024-01-15 10:30:00"
-        date = new Date(dateString.replace(' ', 'T'));
-      } else {
-        // Unix timestamp or other format
-        date = new Date(dateString);
-      }
-    } catch (error) {
-      console.error('Error parsing date:', dateString, error);
-      return 'Invalid date';
-    }
-    
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      console.error('Invalid date:', dateString);
-      return 'Invalid date';
-    }
-    
     const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
+    const date = new Date(dateString);
     
-    // Debug logging
-    console.log('Date parsing:', {
-      original: dateString,
-      parsed: date.toISOString(),
-      now: now.toISOString(),
-      diffInMs: diffInMs
-    });
+    // Luôn cộng 7 tiếng để chuyển sang giờ Việt Nam
+    date.setHours(date.getHours() + 7);
     
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const diffInWeeks = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 7));
-    const diffInMonths = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
+    const diff = Math.floor((now - date) / 1000);
     
-    if (diffInMinutes < 1) {
-      return 'Just now';
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes} minutes ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours} hours ago`;
-    } else if (diffInDays === 1) {
-      return '1 day ago';
-    } else if (diffInDays < 7) {
-      return `${diffInDays} days ago`;
-    } else if (diffInWeeks < 4) {
-      return `${diffInWeeks} weeks ago`;
-    } else if (diffInMonths < 12) {
-      return `${diffInMonths} months ago`;
-    } else {
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    }
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+    if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
+    return date.toLocaleDateString("en-US");
   };
 
   const getNotificationIcon = (type) => {
@@ -303,7 +254,7 @@ const NotificationScreen = () => {
             {item.message || ''}
           </Text>
           <Text style={styles.notificationTime}>
-            {formatDate(item.createdAt)}
+            {timeAgo(item.createdAt)}
           </Text>
         </View>
         

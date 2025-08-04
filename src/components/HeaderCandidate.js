@@ -146,7 +146,7 @@ const HeaderCandidates = ({ onDashboard }) => {
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
         <Image
-          source={require('../images/jobfinder-logo.png')}
+          source={require('../images/jobfinder-logohead.png')}
           style={styles.logo}
           resizeMode="contain"
         />
