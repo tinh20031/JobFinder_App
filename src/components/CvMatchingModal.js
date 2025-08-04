@@ -14,6 +14,7 @@ import {
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import DocumentPicker from 'react-native-document-picker';
 import { cvMatchingService } from '../services/cvMatchingService';
+import { subscriptionService } from '../services/subscriptionService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -26,10 +27,9 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const navigation = useNavigation();
-
-
 
   // Fetch try match remaining when modal opens
   useEffect(() => {
@@ -54,20 +54,14 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
     }
   };
 
-
-
   const fetchTryMatchRemaining = async () => {
     try {
-      // TODO: Implement subscription check
-      // const res = await cvMatchingService.getMySubscription();
-      // if (res?.isSubscribed && res?.subscription?.remainingTryMatches !== undefined) {
-      //   setTryMatchRemaining(res.subscription.remainingTryMatches);
-      // } else if (res?.freePackage?.remainingFreeMatches !== undefined) {
-      //   setTryMatchRemaining(res.freePackage.remainingFreeMatches);
-      // } else {
-      //   setTryMatchRemaining(null);
-      // }
-    } catch {
+      console.log('🔄 Fetching try match remaining...');
+      const remaining = await subscriptionService.getTryMatchRemaining();
+      console.log('✅ Try match remaining:', remaining);
+      setTryMatchRemaining(remaining);
+    } catch (error) {
+      console.error('❌ Error fetching try match remaining:', error);
       setTryMatchRemaining(null);
     }
   };
@@ -79,50 +73,47 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
         presentationStyle: 'fullScreen',
       });
       
-             if (result.size && result.size > 5 * 1024 * 1024) {
-         setErrorMessage('File size must be less than 5MB.');
-         setShowErrorModal(true);
-         return;
-       }
+      if (result.size && result.size > 5 * 1024 * 1024) {
+        setErrorMessage('File size must be less than 5MB.');
+        setShowErrorModal(true);
+        return;
+      }
       
       setSelectedFile(result);
-         } catch (err) {
-       if (!DocumentPicker.isCancel(err)) {
-         setErrorMessage('Failed to pick file. Please try again.');
-         setShowErrorModal(true);
-       }
-     }
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        setErrorMessage('Failed to pick file. Please try again.');
+        setShowErrorModal(true);
+      }
+    }
   };
 
   const handleTryMatch = async () => {
-    // Check remaining attempts
+    console.log('🚀 Starting try-match process...');
+    console.log('📊 Current state:', { tryMatchRemaining, isAuthenticated, selectedFile: !!selectedFile });
+    
+    // Check remaining attempts first
     if (tryMatchRemaining !== null && tryMatchRemaining <= 0) {
-      Alert.alert(
-        'Out of Try-match Attempts',
-        'You have used up all your try-match attempts. Would you like to upgrade your package to continue using try-match?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Buy Package', onPress: () => {
-            // TODO: Navigate to packages page
-            onClose();
-          }}
-        ]
-      );
+      console.log('⚠️ No try-match attempts remaining, showing upgrade modal');
+      setShowUpgradeModal(true);
       return;
     }
 
-         if (!isAuthenticated) {
-       setErrorMessage('Please login to use this feature');
-       setShowErrorModal(true);
-       return;
-     }
+    if (!isAuthenticated) {
+      console.log('❌ User not authenticated');
+      setErrorMessage('Please login to use this feature');
+      setShowErrorModal(true);
+      return;
+    }
 
-     if (!selectedFile) {
-       setErrorMessage('Please upload a PDF CV file.');
-       setShowErrorModal(true);
-       return;
-     }
+    if (!selectedFile) {
+      console.log('❌ No file selected');
+      setErrorMessage('Please upload a PDF CV file.');
+      setShowErrorModal(true);
+      return;
+    }
 
+    console.log('✅ All validations passed, starting try-match...');
     setIsLoading(true);
 
     try {
@@ -134,23 +125,32 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
         name: selectedFile.name || 'cv.pdf',
       });
 
+      console.log('📤 Sending try-match request...');
       const response = await cvMatchingService.tryMatch(formData);
       
-                           if (response.success) {
-         setShowSuccessModal(true);
-       } else {
-         setErrorMessage(response.errorMessage || 'An error occurred, please try again.');
-         setShowErrorModal(true);
-       }
-     } catch (error) {
-       setErrorMessage(error.message || 'An error occurred, please try again.');
-       setShowErrorModal(true);
-     } finally {
+      if (response.success) {
+        console.log('✅ Try-match successful');
+        setShowSuccessModal(true);
+      } else {
+        console.log('❌ Try-match failed:', response.errorMessage);
+        setErrorMessage(response.errorMessage || 'An error occurred, please try again.');
+        setShowErrorModal(true);
+      }
+    } catch (error) {
+      console.error('❌ Try-match error:', error);
+      setErrorMessage(error.message || 'An error occurred, please try again.');
+      setShowErrorModal(true);
+    } finally {
       setIsLoading(false);
     }
   };
 
-
+  const handleUpgradePackage = () => {
+    setShowUpgradeModal(false);
+    onClose();
+    // Navigate to packages page
+    navigation.navigate('BuyPackage');
+  };
 
   const renderModalContent = () => {
     if (!isAuthenticated) {
@@ -176,53 +176,76 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
           <Text style={styles.introDesc}>
             Upload a PDF to check how well it matches this job.
           </Text>
+          
+          {/* Display remaining attempts if available */}
+          {tryMatchRemaining !== null && (
+            <View style={[
+              styles.remainingContainer,
+              tryMatchRemaining <= 0 && styles.remainingContainerWarning
+            ]}>
+              <MaterialIcons 
+                name={tryMatchRemaining > 0 ? "info" : "warning"} 
+                size={16} 
+                color={tryMatchRemaining > 0 ? "#2563eb" : "#F59E0B"} 
+              />
+              <Text style={[
+                styles.remainingText,
+                tryMatchRemaining <= 0 && styles.remainingTextWarning
+              ]}>
+                {tryMatchRemaining > 0 
+                  ? `${tryMatchRemaining} try-match attempts remaining`
+                  : 'No try-match attempts remaining'
+                }
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Upload your CV</Text>
           
-                     <TouchableOpacity style={styles.uploadArea} onPress={handleFilePick}>
-             <MaterialIcons name="cloud-upload" size={32} color="#2563eb" />
-             <Text style={styles.uploadText}>Click to select PDF file</Text>
-             <Text style={styles.uploadSubtext}>Or tap here to browse</Text>
-             
-             {selectedFile && (
-               <View style={styles.selectedFileContainer}>
-                 <MaterialIcons name="description" size={16} color="#28a745" />
-                 <Text style={styles.selectedFileName}>{selectedFile.name}</Text>
-                 <TouchableOpacity 
-                   style={styles.removeBtn}
-                   onPress={() => setSelectedFile(null)}
-                 >
-                   <MaterialIcons name="close" size={16} color="#dc3545" />
-                 </TouchableOpacity>
-               </View>
-             )}
-           </TouchableOpacity>
+          <TouchableOpacity style={styles.uploadArea} onPress={handleFilePick}>
+            <MaterialIcons name="cloud-upload" size={32} color="#2563eb" />
+            <Text style={styles.uploadText}>Click to select PDF file</Text>
+            <Text style={styles.uploadSubtext}>Or tap here to browse</Text>
+            
+            {selectedFile && (
+              <View style={styles.selectedFileContainer}>
+                <MaterialIcons name="description" size={16} color="#28a745" />
+                <Text style={styles.selectedFileName}>{selectedFile.name}</Text>
+                <TouchableOpacity 
+                  style={styles.removeBtn}
+                  onPress={() => setSelectedFile(null)}
+                >
+                  <MaterialIcons name="close" size={16} color="#dc3545" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </TouchableOpacity>
 
-           <View style={styles.buttonContainer}>
-             <TouchableOpacity
-            style={[
-              styles.analyzeBtn,
-              (isLoading || !selectedFile) && styles.analyzeBtnDisabled
-            ]}
-            onPress={handleTryMatch}
-            disabled={isLoading || !selectedFile}
-          >
-                         {isLoading ? (
-               <View style={styles.btnContent}>
-                 <ActivityIndicator size="small" color="#fff" />
-                 <Text style={styles.analyzeBtnText}>Analyzing...</Text>
-               </View>
-             ) : (
-               <View style={styles.btnContent}>
-                 <MaterialIcons name="search" size={20} color="#fff" />
-                 <Text style={styles.analyzeBtnText}>Analyze</Text>
-               </View>
-             )}
-           </TouchableOpacity>
-           </View>
-         </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.analyzeBtn,
+                (isLoading || !selectedFile || (tryMatchRemaining !== null && tryMatchRemaining <= 0)) && styles.analyzeBtnDisabled
+              ]}
+              onPress={handleTryMatch}
+              disabled={isLoading || !selectedFile || (tryMatchRemaining !== null && tryMatchRemaining <= 0)}
+            >
+              {isLoading ? (
+                <View style={styles.btnContent}>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={styles.analyzeBtnText}>Analyzing...</Text>
+                </View>
+              ) : (
+                <View style={styles.btnContent}>
+                  <MaterialIcons name="search" size={20} color="#fff" />
+                  <Text style={styles.analyzeBtnText}>Analyze</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     );
   };
@@ -278,37 +301,72 @@ const CvMatchingModal = ({ visible, onClose, jobId, jobTitle }) => {
               <Text style={styles.successButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
-                 </View>
-       </Modal>
+        </View>
+      </Modal>
 
-       {/* Error Modal */}
-       <Modal
-         visible={showErrorModal}
-         animationType="fade"
-         transparent={true}
-         statusBarTranslucent={true}
-         onRequestClose={() => setShowErrorModal(false)}
-       >
-         <View style={styles.errorModalOverlay}>
-           <View style={styles.errorModalContainer}>
-             <View style={styles.errorIconContainer}>
-               <MaterialIcons name="error" size={64} color="#EF4444" />
-             </View>
-             <Text style={styles.errorTitle}>Error!</Text>
-             <Text style={styles.errorMessage}>
-               {errorMessage}
-             </Text>
-             <TouchableOpacity 
-               style={styles.errorButton}
-               onPress={() => setShowErrorModal(false)}
-             >
-               <Text style={styles.errorButtonText}>OK</Text>
-             </TouchableOpacity>
-           </View>
-         </View>
-       </Modal>
-     </>
-   );
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        animationType="fade"
+        transparent={true}
+        statusBarTranslucent={true}
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.errorModalOverlay}>
+          <View style={styles.errorModalContainer}>
+            <View style={styles.errorIconContainer}>
+              <MaterialIcons name="error" size={64} color="#EF4444" />
+            </View>
+            <Text style={styles.errorTitle}>Error!</Text>
+            <Text style={styles.errorMessage}>
+              {errorMessage}
+            </Text>
+            <TouchableOpacity 
+              style={styles.errorButton}
+              onPress={() => setShowErrorModal(false)}
+            >
+              <Text style={styles.errorButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Upgrade Modal */}
+      <Modal
+        visible={showUpgradeModal}
+        animationType="fade"
+        transparent={true}
+        statusBarTranslucent={true}
+        onRequestClose={() => setShowUpgradeModal(false)}
+      >
+        <View style={styles.upgradeModalOverlay}>
+          <View style={styles.upgradeModalContainer}>
+            <View style={styles.upgradeIconContainer}>
+              <MaterialIcons name="upgrade" size={64} color="#F59E0B" />
+            </View>
+            <Text style={styles.upgradeTitle}>Out of Try-match Attempts</Text>
+            <Text style={styles.upgradeMessage}>
+              You have used up all your try-match attempts. Would you like to upgrade your package to continue using try-match?
+            </Text>
+            <View style={styles.upgradeButtonContainer}>
+              <TouchableOpacity 
+                style={styles.upgradeCancelButton}
+                onPress={() => setShowUpgradeModal(false)}
+              >
+                <Text style={styles.upgradeCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.upgradeConfirmButton}
+                onPress={handleUpgradePackage}
+              >
+                <Text style={styles.upgradeConfirmButtonText}>Buy Package</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -399,6 +457,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  remainingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f9ff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  remainingText: {
+    fontSize: 14,
+    color: '#2563eb',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  remainingContainerWarning: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+    borderWidth: 1,
+  },
+  remainingTextWarning: {
+    color: '#92400e',
+  },
   section: {
     marginTop: 24,
   },
@@ -411,7 +492,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 32,
   },
-
   uploadArea: {
     borderWidth: 2,
     borderColor: '#b3b8d0',
@@ -467,7 +547,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-    analyzeBtnText: {
+  analyzeBtnText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
@@ -587,6 +667,79 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
- });
+  // Upgrade Modal Styles
+  upgradeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  upgradeModalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    marginHorizontal: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    zIndex: 1000,
+  },
+  upgradeIconContainer: {
+    marginBottom: 16,
+  },
+  upgradeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  upgradeMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  upgradeButtonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  upgradeCancelButton: {
+    backgroundColor: '#6B7280',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  upgradeCancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  upgradeConfirmButton: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  upgradeConfirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
 
 export default CvMatchingModal; 

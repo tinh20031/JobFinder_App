@@ -108,6 +108,12 @@ const BuyPackageScreen = ({ navigation }) => {
   };
 
   const handlePackageSelect = (pkg) => {
+    // Không cho phép chọn gói free
+    if (pkg.name?.toLowerCase().includes('free')) {
+      Alert.alert('Info', 'This is your current free plan. Please select a paid package to upgrade.');
+      return;
+    }
+    
     setSelectedPackage(pkg);
     // Add selection animation
     Animated.sequence([
@@ -177,16 +183,17 @@ const BuyPackageScreen = ({ navigation }) => {
             }
           ]}
         >
-          <TouchableOpacity
-            style={[
-              styles.packageCard,
-              isSelected && styles.selectedPackage,
-              isPopular && styles.popularPackage,
-              isFree && styles.freePackage,
-            ]}
-            onPress={() => handlePackageSelect(pkg)}
-            activeOpacity={0.9}
-          >
+                      <TouchableOpacity
+              style={[
+                styles.packageCard,
+                isSelected && styles.selectedPackage,
+                isPopular && styles.popularPackage,
+                isFree && styles.freePackage,
+              ]}
+              onPress={() => handlePackageSelect(pkg)}
+              activeOpacity={isFree ? 1 : 0.9}
+              disabled={isFree}
+            >
             {isPopular && (
               <Animated.View 
                 style={[
@@ -199,6 +206,21 @@ const BuyPackageScreen = ({ navigation }) => {
               >
                 <Icon name="star" size={12} color="white" />
                 <Text style={styles.popularText}>Most Popular</Text>
+              </Animated.View>
+            )}
+            
+            {isFree && (
+              <Animated.View 
+                style={[
+                  styles.currentPlanBadge,
+                  {
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }],
+                  }
+                ]}
+              >
+                <Icon name="check" size={12} color="white" />
+                <Text style={styles.currentPlanText}>Current Plan</Text>
               </Animated.View>
             )}
             
@@ -540,6 +562,8 @@ const styles = StyleSheet.create({
   },
   freePackage: {
     borderColor: '#e5e7eb',
+    opacity: 0.7,
+    backgroundColor: '#f9fafb',
   },
   popularBadge: {
     position: 'absolute',
@@ -559,6 +583,29 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   popularText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 3,
+  },
+  currentPlanBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 15,
+    backgroundColor: '#6b7280',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#6b7280',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 10,
+  },
+  currentPlanText: {
     color: 'white',
     fontSize: 10,
     fontWeight: '600',
