@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const SearchBar = ({ onSearch, onFilter }) => {
+  const [searchText, setSearchText] = useState('');
+
+  const handleSearch = (text) => {
+    setSearchText(text);
+  };
+
+  const handleSubmit = () => {
+    if (searchText.trim()) {
+      onSearch(searchText);
+    }
+  };
+
   return (
     <View style={styles.searchContainer}>
       <View style={styles.searchBar}>
@@ -11,7 +23,10 @@ const SearchBar = ({ onSearch, onFilter }) => {
           placeholder="Search for a job or company"
           style={styles.searchInput}
           placeholderTextColor="#666"
-          onChangeText={onSearch}
+          value={searchText}
+          onChangeText={handleSearch}
+          onSubmitEditing={handleSubmit}
+          returnKeyType="search"
         />
         <TouchableOpacity onPress={onFilter}>
           <Icon name="tune" size={20} color="#666" />

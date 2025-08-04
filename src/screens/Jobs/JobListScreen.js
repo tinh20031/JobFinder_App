@@ -1,17 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput } from 'react-native';
 import { JobService } from '../../services/JobService';
 import HeaderCandidates from '../../components/HeaderCandidate';
+import NotFoundScreen from '../../components/NotFoundScreen';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { LinearGradient } from 'expo-linear-gradient'; // Nếu muốn dùng gradient thực sự, cần cài expo-linear-gradient
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
 
-const JobListScreen = () => {
+const JobListScreen = ({ route }) => {
   const [jobs, setJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState('');
   const [sort, setSort] = useState('default');
+  const [searchText, setSearchText] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({});
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -21,6 +26,7 @@ const JobListScreen = () => {
       try {
         const data = await JobService.getJobs();
         setJobs(data);
+        setFilteredJobs(data);
       } catch (err) {
         setError('Failed to load job list.');
       } finally {
@@ -30,48 +36,219 @@ const JobListScreen = () => {
     fetchJobs();
   }, []);
 
-  const renderJobCard = ({ item, index }) => {
-    let salaryText = '';
-    if (item.minSalary && item.maxSalary) {
-      salaryText = `$${item.minSalary} - $${item.maxSalary}`;
-    } else if (item.minSalary) {
-      salaryText = `$${item.minSalary}`;
-    } else if (item.maxSalary) {
-      salaryText = `$${item.maxSalary}`;
-    } else {
-      salaryText = 'Negotiable Salary';
+  // Handle filters from FilterScreen
+  useEffect(() => {
+    if (route.params?.filters) {
+      setAppliedFilters(route.params.filters);
     }
+  }, [route.params?.filters]);
+
+  // Handle search query from HomeScreen
+  useEffect(() => {
+    if (route.params?.searchQuery) {
+      setSearchText(route.params.searchQuery);
+    }
+  }, [route.params?.searchQuery]);
+
+  // Filter function with useCallback
+  const applyFilters = useCallback((jobList, filters) => {
+    if (!filters || Object.keys(filters).every(key => !filters[key])) {
+      return jobList;
+    }
+
+    return jobList.filter(job => {
+      // Location filter
+      if (filters.location && job.provinceName !== filters.location) {
+        return false;
+      }
+
+      // Salary filter
+      if (filters.salary) {
+        const jobSalary = formatSalary(job.minSalary, job.maxSalary, job.isSalaryNegotiable);
+        if (jobSalary !== filters.salary) {
+          return false;
+        }
+      }
+
+      // Work type filter
+      if (filters.workType && job.jobType?.jobTypeName !== filters.workType) {
+        return false;
+      }
+
+      // Job level filter
+      if (filters.jobLevel && job.jobLevel !== filters.jobLevel) {
+        return false;
+      }
+
+      // Employment type filter
+      if (filters.employmentType && job.employmentType !== filters.employmentType) {
+        return false;
+      }
+
+      // Experience filter
+      if (filters.experience && job.experience !== filters.experience) {
+        return false;
+      }
+
+      // Education filter
+      if (filters.education && job.education !== filters.education) {
+        return false;
+      }
+
+      // Job function filter
+      if (filters.jobFunction && job.industry?.industryName !== filters.jobFunction) {
+        return false;
+      }
+
+      return true;
+    });
+  }, []);
+
+  // Search function with useCallback
+  const performSearch = useCallback((text, jobList) => {
+    if (text.trim() === '') {
+      return jobList;
+    }
+    
+    const lowercasedSearchText = text.toLowerCase();
+    return jobList.filter(job =>
+      job.jobTitle?.toLowerCase().includes(lowercasedSearchText) ||
+      (job.company && job.company.companyName && job.company.companyName.toLowerCase().includes(lowercasedSearchText))
+    );
+  }, []);
+
+  // Search and filter effect with loading
+  useEffect(() => {
+    let timeoutId;
+
+    if (searchText.trim() === '') {
+      // Apply only filters when search is empty
+      const filtered = applyFilters(jobs, appliedFilters);
+      setFilteredJobs(filtered);
+      setSearchLoading(false);
+    } else {
+      // Show loading and debounce search + filter
+      setSearchLoading(true);
+      
+      timeoutId = setTimeout(() => {
+        const searchFiltered = performSearch(searchText, jobs);
+        const finalFiltered = applyFilters(searchFiltered, appliedFilters);
+        setFilteredJobs(finalFiltered);
+        setSearchLoading(false);
+      }, 300);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [searchText, jobs, performSearch, appliedFilters, applyFilters]);
+
+  // Helper function to format salary
+  const formatSalary = (minSalary, maxSalary, isNegotiable) => {
+    if (isNegotiable) {
+      return 'Negotiable Salary';
+    }
+    if (minSalary && maxSalary) {
+      return `$${minSalary} - $${maxSalary}`;
+    } else if (minSalary) {
+      return `$${minSalary}`;
+    } else if (maxSalary) {
+      return `$${maxSalary}`;
+    }
+    return 'Negotiable Salary';
+  };
+
+  // Helper function to get job tags
+  const getJobTags = (job) => {
+    const tags = [];
+    if (job.jobType?.jobTypeName) {
+      tags.push(job.jobType.jobTypeName);
+    }
+    if (job.industry?.industryName) {
+      tags.push(job.industry.industryName);
+    }
+    return tags;
+  };
+
+  // Helper function to generate logo color based on company name
+  const getLogoColor = (companyName) => {
+    const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be185d', '#65a30d'];
+    const index = companyName.length % colors.length;
+    return colors[index];
+  };
+
+  // Helper function to generate logo text (first letter of company name)
+  const getLogoText = (companyName) => {
+    return companyName.charAt(0).toUpperCase();
+  };
+
+  const handleJobBookmark = (jobId) => {
+    // Handle job bookmark logic
+    console.log('Job bookmarked:', jobId);
+  };
+
+  const renderJobCard = ({ item, index }) => {
+    const salaryText = formatSalary(item.minSalary, item.maxSalary, item.isSalaryNegotiable);
+    const tags = getJobTags(item);
+    const logoColor = getLogoColor(item.company?.companyName || 'Unknown');
+    const logoText = getLogoText(item.company?.companyName || 'Unknown');
+
     return (
-      <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('JobDetail', { jobId: item.id })}>
+      <TouchableOpacity 
+        activeOpacity={0.8} 
+        onPress={() => navigation.navigate('JobDetail', { jobId: item.id })}
+      >
         <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
-          <View style={styles.jobCard}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {/* Logo */}
-              {item.logo && (
-                <Image source={{ uri: item.logo }} style={styles.logoCircle} />
-              )}
-              {/* Thông tin bên phải logo */}
-              <View style={{ flex: 1, marginLeft: 5 }}>
-                <Text style={styles.jobTitle}>{item.jobTitle || 'Job Title'}</Text>
-                <Text style={styles.jobCompany}>{item.company?.companyName || 'Unknown Company'}</Text>
+          <View style={styles.newJobCard}>
+            <View style={styles.jobCardHeader}>
+              <View style={styles.companyInfoSection}>
+                {item.logo ? (
+                  <Image 
+                    source={{ uri: item.logo }}
+                    style={[styles.companyLogo, { backgroundColor: '#fff' }]}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.companyLogo, { backgroundColor: logoColor }]}>
+                    <Text style={styles.companyLogoText}>{logoText}</Text>
+                  </View>
+                )}
+                <View style={styles.companyTextSection}>
+                  <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
+                    {item.jobTitle || 'Unknown Job'}
+                  </Text>
+                  <Text style={styles.jobCompany}>
+                    {item.company?.companyName || 'Unknown Company'}
+                  </Text>
+                </View>
               </View>
+              <TouchableOpacity 
+                style={styles.bookmarkButton} 
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleJobBookmark(item.id);
+                }}
+              >
+                <MaterialIcons name="bookmark-border" size={28} color="#0070BA" />
+              </TouchableOpacity>
             </View>
-            {/* Salary dưới logo */}
-            <Text style={[styles.jobSalary, { marginTop: 12, marginLeft: item.logo ? 5 : 0 }]}> {/* 56 = logo width (44) + marginRight (12) */}
-              <Text style={{ color: '#2563eb', fontWeight: 'bold' }}>{salaryText}</Text>
-            </Text>
-            {/* Tags Row */}
-            <View style={styles.jobTagsRow}>
-              {item.jobType && (
-                <View style={styles.jobTag}>
-                  <Text style={styles.jobTagText}>{typeof item.jobType === 'object' ? item.jobType.jobTypeName : item.jobType}</Text>
+            
+            <View style={styles.divider} />
+            
+            <View style={styles.jobLocation}>
+              <Text style={styles.locationText}>
+                {item.provinceName || item.location || 'Unknown Location'}
+              </Text>
+            </View>
+            <Text style={styles.jobSalary}>{salaryText}</Text>
+            <View style={styles.jobTags}>
+              {tags.map((tag, tagIndex) => (
+                <View key={tagIndex} style={styles.jobTag}>
+                  <Text style={styles.jobTagText}>{tag}</Text>
                 </View>
-              )}
-              {item.industry && (
-                <View style={styles.jobTag}>
-                  <Text style={styles.jobTagText}>{typeof item.industry === 'object' ? item.industry.industryName : item.industry}</Text>
-                </View>
-              )}
+              ))}
             </View>
           </View>
         </Animatable.View>
@@ -81,11 +258,11 @@ const JobListScreen = () => {
 
   if (loading) {
     return (
-      <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
+      <View style={{flex: 1, backgroundColor: '#fff'}}>
         <HeaderCandidates />
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#007bff" />
-          <Text>Loading job list...</Text>
+          <Text style={styles.loadingText}>Loading job list...</Text>
         </View>
       </View>
     );
@@ -93,7 +270,7 @@ const JobListScreen = () => {
 
   if (error) {
     return (
-      <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
+      <View style={{flex: 1, backgroundColor: '#fff'}}>
         <HeaderCandidates />
         <View style={styles.center}>
           <Text style={styles.error}>{error}</Text>
@@ -103,32 +280,78 @@ const JobListScreen = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f3f7fd' }}>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <HeaderCandidates />
-      {/* Banner */}
-      <View style={styles.banner}>
-        <Text style={styles.bannerTitle}>Find Jobs</Text>
+      
+      {/* Header Title */}
+      <View style={styles.headerTitleContainer}>
+        <Text style={{
+          fontSize: 28,
+          color: '#333',
+          includeFontPadding: false,
+          textAlignVertical: 'center',
+          fontFamily: 'Poppins-Bold',
+          fontStyle: 'normal',
+          letterSpacing: 0,
+          textAlign: 'center'
+        }}>Find Jobs</Text>
       </View>
-      {/* Filter & Sort */}
-      <View style={styles.filterRow}>
-        <TouchableOpacity style={styles.filterBtn}>
-          <MaterialIcons name="filter-list" size={22} color="#2563eb" />
-          <Text style={styles.filterBtnText}>Filter</Text>
-        </TouchableOpacity>
-        <Text style={styles.totalJobText}>Show <Text style={{ fontWeight: 'bold' }}>{jobs.length}</Text> jobs</Text>
-      </View>
-      <View style={styles.sortRow}>
-        <View style={styles.sortDropdown}>
-          {/* Có thể thêm sort text ở đây nếu muốn */}
+      
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            placeholderTextColor="#666"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+          {searchLoading ? (
+            <ActivityIndicator size="small" color="#666" style={styles.searchLoading} />
+          ) : (
+            <TouchableOpacity onPress={() => navigation.navigate('Filter')}>
+              <MaterialIcons name="tune" size={20} color="#666" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
-      {/* Job List - only this part scrolls */}
+
+      {/* Search Results Count and Filter Indicator */}
+      {(searchText.trim() !== '' || Object.keys(appliedFilters).some(key => appliedFilters[key])) && (
+        <View style={styles.searchResultsHeader}>
+          <View style={styles.resultsInfo}>
+            <Text style={styles.searchResultsCount}>
+              {filteredJobs.length} found
+            </Text>
+            {Object.keys(appliedFilters).some(key => appliedFilters[key]) && (
+              <View style={styles.filterIndicator}>
+                <MaterialIcons name="filter-list" size={16} color="#2563eb" />
+                <Text style={styles.filterIndicatorText}>Filters applied</Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity style={styles.sortButton}>
+            <MaterialIcons name="sort" size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Job List or Not Found */}
       <View style={{ flex: 1 }}>
-        {jobs.length === 0 ? (
-          <Text style={{ textAlign: 'center', color: '#888', marginTop: 32 }}>No jobs found.</Text>
+        {searchText.trim() !== '' && filteredJobs.length === 0 ? (
+          <NotFoundScreen 
+            useImage={true}
+            imageResizeMode="contain"
+            imageWidth={280}
+            imageHeight={200}
+          />
+        ) : filteredJobs.length === 0 ? (
+          <Text style={styles.noJobsText}>No jobs found.</Text>
         ) : (
           <FlatList
-            data={jobs}
+            data={filteredJobs}
             keyExtractor={(item, idx) => item.id?.toString() || idx.toString()}
             renderItem={renderJobCard}
             contentContainerStyle={styles.jobListWrap}
@@ -141,37 +364,191 @@ const JobListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  list: {
-    padding: 16,
+  // Header Title Styles
+  headerTitleContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
     backgroundColor: '#fff',
   },
-  jobItem: {
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
+
+
+  // Search Bar Styles
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Regular',
+  },
+  searchLoading: {
+    marginLeft: 8,
+  },
+
+  // Search Results Header
+  searchResultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+  },
+  resultsInfo: {
+    flex: 1,
+  },
+  searchResultsCount: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Poppins-Bold',
+  },
+  filterIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  filterIndicatorText: {
+    fontSize: 12,
+    color: '#2563eb',
+    fontFamily: 'Poppins-Regular',
+    marginLeft: 4,
+  },
+  sortButton: {
+    padding: 4,
+  },
+
+
+
+  // Job List Styles
+  jobListWrap: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+
+  // Existing Job Card Styles (keeping as is)
+  newJobCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    backgroundColor: '#f9f9f9',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  jobCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
   },
-  company: {
-    fontSize: 16,
-    color: '#007bff',
-    marginBottom: 4,
+  companyInfoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  location: {
+  companyTextSection: {
+    marginLeft: 12,
+    flex: 1,
+    paddingLeft: 0,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  companyLogo: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  companyLogoText: {
+    color: '#fff',
+    fontSize: 24,
+    fontFamily: 'Poppins-Bold',
+  },
+  bookmarkButton: {
+    padding: 4,
+  },
+  jobTitle: {
+    fontSize: 20,
+    color: '#000',
+    marginBottom: 2,
+    fontFamily: 'Poppins-Bold',
+  },
+  jobCompany: {
     fontSize: 15,
-    color: '#555',
+    color: '#666',
+    marginBottom: 0,
+    fontFamily: 'Poppins-Regular',
+  },
+  jobLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginLeft: 68,
+  },
+  locationText: {
+    fontSize: 16, 
+    color: '#666',
+    marginLeft: 0,
+    fontFamily: 'Poppins-Regular',
+  },
+  jobSalary: {
+    fontSize: 17,
+    color: '#2563eb',
+    marginBottom: 16,
+    marginLeft: 68,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  jobTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginLeft: 68,
+    marginTop: 8,
+  },
+  jobTag: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginRight: 8,
     marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
-  salary: {
-    fontSize: 15,
-    color: '#28a745',
+  jobTagText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+    fontFamily: 'Poppins-Regular',
   },
+
+  // Utility Styles
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -183,353 +560,20 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 16,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
-  banner: {
-    backgroundColor: '#f3f7fd',
-    paddingTop: 32,
-    paddingBottom: 24,
-    alignItems: 'center',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    marginBottom: 8,
-  },
-  bannerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 6,
-  },
-  breadcrumb: {
-    color: '#888',
-    fontSize: 15,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    marginTop: 18,
-    marginBottom: 8,
-  },
-  filterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e7f0fe',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-  },
-  filterBtnText: {
-    color: '#2563eb',
-    fontWeight: 'bold',
-    marginLeft: 8,
+  loadingText: {
     fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 12,
   },
-  totalJobText: {
-    color: '#444',
-    fontSize: 15,
-  },
-  sortRow: {
-    paddingHorizontal: 24,
-    marginBottom: 8,
-  },
-  sortDropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f7fd',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  sortText: {
-    color: '#444',
-    fontSize: 15,
-    marginRight: 8,
-  },
-  jobListWrap: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-  },
-  jobCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24, // tăng khoảng cách giữa các card
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    borderWidth: 2, // thêm viền
-    borderColor: '#e6edfa', // màu xanh nhạt
-  },
-  badgeNew: {
-    position: 'absolute',
-    top: 10,
-    right: 16,
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    zIndex: 10,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  badgeNewText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
-  jobLogo: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#f3f7fd',
-  },
-  jobTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#222',
-  },
-  jobCompany: {
-    fontSize: 14,
-    color: '#222', // màu chữ bình thường
-    marginLeft: 4,
-    marginRight: 8,
-  },
-  jobLocation: {
-    fontSize: 14,
+  noJobsText: {
+    textAlign: 'center',
     color: '#888',
-    marginLeft: 2,
-  },
-  tag: {
-    backgroundColor: '#e7f0fe',
-    borderRadius: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    marginRight: 8,
-    marginBottom: 6,
-  },
-  tagText: {
-    color: '#2563eb',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  companyTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e6f7ec',
-    borderRadius: 10,
-    paddingVertical: 0,
-    paddingHorizontal: 6,
-    marginRight: 8, // tăng khoảng cách giữa các tag
-    minHeight: 18,
-    maxWidth: '70%',
-  },
-  companyTagText: {
-    color: '#1ca97c',
-    fontSize: 11, // nhỏ hơn
-    fontWeight: '600',
-  },
-  provinceTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e6edfa',
-    borderRadius: 10,
-    paddingVertical: 0,
-    paddingHorizontal: 6,
-    marginRight: 8, // tăng khoảng cách giữa các tag
-    minHeight: 18,
-    maxWidth: '70%',
-  },
-  provinceTagText: {
-    color: '#2563eb',
-    fontSize: 11, // nhỏ hơn
-    fontWeight: '600',
-  },
-  // Figma card styles
-  figmaCardWrap: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 18,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 16,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#e6edfa',
-  },
-  figmaCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  figmaLogoWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#ede7fe',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  figmaLogoImg: {
-    width: 32,
-    height: 32,
-    resizeMode: 'contain',
-    borderRadius: 16,
-  },
-  figmaBookmarkBtn: {
-    padding: 4,
-  },
-  figmaJobTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 2,
-  },
-  figmaCompanyLocation: {
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 10,
-  },
-  figmaSalaryRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginBottom: 14,
-  },
-  figmaSalary: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#222',
-    marginRight: 2,
-  },
-  figmaSalaryUnit: {
-    fontSize: 15,
-    color: '#bbb',
-    marginBottom: 2,
-  },
-  figmaTagRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  figmaTag: {
-    backgroundColor: '#f3f7fd',
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginRight: 8,
-  },
-  figmaTagText: {
-    color: '#222',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  figmaApplyBtn: {
-    backgroundColor: '#ffe6df',
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 22,
-    marginLeft: 8,
-  },
-  figmaApplyText: {
-    color: '#ff855d',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  logoCompanyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  logoCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginRight: 12,
-  },
-  companyName: {
+    marginTop: 32,
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#222',
-  },
-  salaryRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginBottom: 12,
-  },
-  salaryText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#222',
-    marginRight: 2,
-  },
-  salaryUnit: {
-    fontSize: 14,
-    color: '#bbb',
-    marginBottom: 2,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  tag: {
-    backgroundColor: '#f3f7fd',
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginRight: 8,
-  },
-  tagText: {
-    color: '#222',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  jobSalary: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#2563eb', // màu xanh đậm
-    marginLeft: 8,
-  },
-  jobTagsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  jobTag: {
-    backgroundColor: '#F2F2F2', // màu xám nhạt
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginRight: 8,
-  },
-  jobTagText: {
-    color: '#222',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  jobApply: {
-    backgroundColor: '#FF9900', // màu cam
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginLeft: 70,
-  },
-  jobApplyText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
+    fontFamily: 'Poppins-Regular',
   },
 });
 

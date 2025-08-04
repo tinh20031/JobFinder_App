@@ -19,55 +19,45 @@ const HomeScreen = () => {
   // Fetch user profile data
   useEffect(() => {
     const fetchUserProfile = async () => {
-      // Show fallback data immediately for better UX
-      setUserProfile({
-        fullName: 'Andrew Ainsley',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
-      });
-      setLoading(false);
-      
-      // Then try to fetch real data in background
       try {
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 2000)
+          setTimeout(() => reject(new Error('Timeout')), 5000)
         );
         
         const profilePromise = profileService.getCandidateProfile();
         const profile = await Promise.race([profilePromise, timeoutPromise]);
         
-        // Update with real data if successful
         setUserProfile(profile);
       } catch (error) {
         console.error('Error fetching user profile:', error);
-        // Keep fallback data, no need to update loading state
+        // Don't set fallback data, let the UI handle empty state
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUserProfile();
   }, []);
 
-
-
   const handleSearch = (text) => {
-    // Handle search logic
-    console.log('Search:', text);
+    // Navigate to JobListScreen with search query
+    if (text && text.trim()) {
+      navigation.navigate('JobList', { 
+        searchQuery: text.trim(),
+        fromHome: true 
+      });
+    }
   };
 
   const handleFilter = () => {
-    // Handle filter logic
-    console.log('Filter pressed');
+    // Navigate to FilterScreen
+    navigation.navigate('Filter');
   };
 
   const handleReadMore = () => {
     // Handle read more logic
     console.log('Read more pressed');
   };
-
-
-
-
-
-
 
   return (
     <View style={styles.container}>
@@ -83,19 +73,25 @@ const HomeScreen = () => {
         <View style={styles.header}>
           {loading ? (
             <ProfileSkeleton />
-          ) : (
+          ) : userProfile ? (
             <View style={styles.profileSection}>
               <Image 
-                source={{ 
-                  uri: userProfile?.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' 
-                }} 
+                source={{ uri: userProfile.image }} 
                 style={styles.profileImage} 
               />
               <View style={styles.greetingSection}>
                 <Text style={styles.greeting}>Welcome back 👋</Text>
                 <Text style={styles.userName}>
-                  {userProfile?.fullName || 'Andrew Ainsley'}
+                  {userProfile.fullName}
                 </Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.profileSection}>
+              <View style={[styles.profileImage, styles.placeholderImage]} />
+              <View style={styles.greetingSection}>
+                <Text style={styles.greeting}>Welcome back 👋</Text>
+                <Text style={styles.userName}>Guest User</Text>
               </View>
             </View>
           )}
@@ -154,6 +150,9 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginRight: 12,
+  },
+  placeholderImage: {
+    backgroundColor: '#e5e7eb',
   },
   greetingSection: {
     flex: 1,

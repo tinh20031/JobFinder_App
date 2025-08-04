@@ -29,52 +29,99 @@ const CompanyListScreen = () => {
     fetchCompanies();
   }, []);
 
+  // Helper function to generate logo color based on company name
+  const getLogoColor = (companyName) => {
+    const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be185d', '#65a30d'];
+    const index = companyName.length % colors.length;
+    return colors[index];
+  };
+
+  // Helper function to generate logo text (first letter of company name)
+  const getLogoText = (companyName) => {
+    return companyName.charAt(0).toUpperCase();
+  };
+
+  // Helper function to get company tags
+  const getCompanyTags = (company) => {
+    const tags = [];
+    if (company.industryName) {
+      tags.push(company.industryName);
+    }
+    if (company.teamSize) {
+      tags.push(`${company.teamSize} employees`);
+    }
+    return tags;
+  };
+
+  const handleCompanyBookmark = (companyId) => {
+    // Handle company bookmark logic
+    console.log('Company bookmarked:', companyId);
+  };
+
   const renderCompanyCard = ({ item, index }) => {
     const logoUrl = item.urlCompanyLogo
       ? (item.urlCompanyLogo.startsWith('http') ? item.urlCompanyLogo : `${BASE_URL}${item.urlCompanyLogo}`)
       : null;
+    const tags = getCompanyTags(item);
+    const logoColor = getLogoColor(item.companyName || item.name || 'Unknown');
+    const logoText = getLogoText(item.companyName || item.name || 'Unknown');
+
     return (
       <TouchableOpacity
-        activeOpacity={0.85}
-        style={{ marginBottom: 24 }}
+        activeOpacity={0.8}
         onPress={() => navigation.navigate('CompanyDetail', { companyId: item.userId })}
       >
         <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
-        <View style={styles.companyCard}>
-          {/* Hàng trên: logo + company name + location (location dưới company name) */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image
-              source={logoUrl ? { uri: logoUrl } : require('../../images/jobfinder-logo.png')}
-              style={styles.companyLogo}
-            />
-            <View style={{ marginLeft: 10, justifyContent: 'center' }}>
-              <Text style={styles.companyTitle}>{item.companyName || item.name}</Text>
-              {item.location ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                  <MaterialIcons name="place" size={16} color="#222" style={{ marginRight: 2 }} />
-                  <Text style={styles.locationTagText}>{item.location}</Text>
+          <View style={styles.newCompanyCard}>
+            <View style={styles.companyCardHeader}>
+              <View style={styles.companyInfoSection}>
+                {logoUrl ? (
+                  <Image 
+                    source={{ uri: logoUrl }}
+                    style={[styles.companyLogo, { backgroundColor: '#fff' }]}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.companyLogo, { backgroundColor: logoColor }]}>
+                    <Text style={styles.companyLogoText}>{logoText}</Text>
+                  </View>
+                )}
+                <View style={styles.companyTextSection}>
+                  <Text style={styles.companyTitle} numberOfLines={1} ellipsizeMode="tail">
+                    {item.companyName || item.name || 'Unknown Company'}
+                  </Text>
+                  <Text style={styles.companyIndustry}>
+                    {item.industryName || 'Unknown Industry'}
+                  </Text>
                 </View>
-              ) : null}
+              </View>
+              <TouchableOpacity 
+                style={styles.bookmarkButton} 
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleCompanyBookmark(item.userId);
+                }}
+              >
+                <MaterialIcons name="bookmark-border" size={28} color="#0070BA" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.divider} />
+            
+            <View style={styles.companyLocation}>
+              <Text style={styles.locationText}>
+                {item.location || 'Unknown Location'}
+              </Text>
+            </View>
+            
+            <View style={styles.companyTags}>
+              {tags.map((tag, tagIndex) => (
+                <View key={tagIndex} style={styles.companyTag}>
+                  <Text style={styles.companyTagText}>{tag}</Text>
+                </View>
+              ))}
             </View>
           </View>
-          {/* Hàng dưới: industry + team size, thẳng hàng với logo */}
-          {(item.industryName || item.teamSize) && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, marginLeft: 0 }}>
-              {item.industryName && (
-                <View style={styles.industryTagLarge}>
-                  <MaterialIcons name="business-center" size={14} color="#1ca97c" style={{ marginRight: 6 }} />
-                  <Text style={styles.industryTagTextLarge}>{item.industryName}</Text>
-                </View>
-              )}
-              {item.teamSize && (
-                <View style={styles.sizeTagLarge}>
-                  <MaterialIcons name="group" size={14} color="#888" style={{ marginRight: 6 }} />
-                  <Text style={styles.sizeTagTextLarge}>{item.teamSize}</Text>
-                </View>
-              )}
-            </View>
-          )}
-        </View>
         </Animatable.View>
       </TouchableOpacity>
     );
@@ -207,8 +254,106 @@ const styles = StyleSheet.create({
   },
   companyListWrap: {
     paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingBottom: 100, // Tăng padding để tránh bottom navigation
   },
+  // New Company Card Styles (from HomeScreen)
+  newCompanyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  companyCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  companyInfoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  companyTextSection: {
+    marginLeft: 12,
+    flex: 1,
+    paddingLeft: 0,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  companyLogo: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  companyLogoText: {
+    color: '#2563eb',
+    fontSize: 24,
+    fontFamily: 'Poppins-Bold',
+  },
+  bookmarkButton: {
+    padding: 4,
+  },
+  companyTitle: {
+    fontSize: 20,
+    color: '#000',
+    marginBottom: 2,
+    fontFamily: 'Poppins-Bold',
+  },
+  companyIndustry: {
+    fontSize: 15,
+    color: '#666',
+    marginBottom: 0,
+    fontFamily: 'Poppins-Regular',
+  },
+  companyLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginLeft: 68,
+  },
+  locationText: {
+    fontSize: 16, 
+    color: '#666',
+    marginLeft: 0,
+    fontFamily: 'Poppins-Regular',
+  },
+  companyTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginLeft: 68,
+    marginTop: 8,
+  },
+  companyTag: {
+    backgroundColor: '#F0F0F0',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  companyTagText: {
+    fontSize: 12,
+    color: '#000',
+    fontWeight: '500',
+    fontFamily: 'Poppins-Regular',
+  },
+  // Old Company Card Styles (keeping for reference)
   companyCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -223,20 +368,21 @@ const styles = StyleSheet.create({
     borderColor: '#e6edfa', // màu xanh nhạt
     position: 'relative',
   },
-  companyLogo: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginRight: 12,
-  },
-  companyTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#222',
-  },
+  // Old company logo and title styles (removed to avoid conflicts)
+  // companyLogo: {
+  //   width: 44,
+  //   height: 44,
+  //   borderRadius: 22,
+  //   backgroundColor: '#fff',
+  //   borderWidth: 1,
+  //   borderColor: '#eee',
+  //   marginRight: 12,
+  // },
+  // companyTitle: {
+  //   fontSize: 17,
+  //   fontWeight: 'bold',
+  //   color: '#222',
+  // },
   industryTag: {
     flexDirection: 'row',
     alignItems: 'center',

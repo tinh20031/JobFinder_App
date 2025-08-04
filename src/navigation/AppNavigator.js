@@ -37,6 +37,7 @@ import ApplyCVScreen from '../screens/dashboard/ApplyCVScreen';
 import ApplyCVDetailScreen from '../screens/dashboard/ApplyCVDetailScreen';
 import FavoriteJobDetailScreen from '../screens/dashboard/FavoriteJobDetailScreen';
 import NotificationScreen from '../components/header/notification/NotificationScreen';
+import FilterScreen from '../screens/Jobs/FilterScreen';
 
 // Custom tab bar button cho nút giữa (Profile)
 function CustomTabBarButton({ children, onPress, profileCompletion = 0 }) {
@@ -364,6 +365,7 @@ export default function AppNavigator() {
           <Stack.Screen name="ApplyCVDetail" component={ApplyCVDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="FavoriteJobDetail" component={FavoriteJobDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="NotificationScreen" component={NotificationScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Filter" component={FilterScreen} options={{ headerShown: false }} />
           
         </Stack.Navigator>
       </NavigationContainer>
