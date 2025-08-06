@@ -116,7 +116,7 @@ const LoginScreen = ({ navigation }) => {
             </View>
             <Text style={styles.checkboxLabel}>Remember me</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => Alert.alert('Quên mật khẩu?', 'Chức năng đang phát triển')}>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
             <Text style={styles.forgot}>Forgot password?</Text>
           </TouchableOpacity>
         </View>

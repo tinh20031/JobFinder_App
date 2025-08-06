@@ -7,6 +7,8 @@ import LoginScreen from '../screens/Auth/LoginScreen';
 import JobListScreen from '../screens/Jobs/JobListScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 import EmailVerificationScreen from '../screens/Auth/EmailVerificationScreen';
+import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
+import ForgotPasswordResetScreen from '../screens/Auth/ForgotPasswordResetScreen';
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CompanyListScreen from '../screens/Company/CompanyListScreen';
@@ -343,6 +345,8 @@ export default function AppNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
           <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ForgotPasswordReset" component={ForgotPasswordResetScreen} options={{ headerShown: false }} />
           <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
           <Stack.Screen name="CompanyDetail" component={CompanyDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CompanyList" component={CompanyListScreen} options={{ headerShown: false }} />

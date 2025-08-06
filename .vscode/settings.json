@@ -1,0 +1,12 @@
+{
+  "typescript.validate.enable": false,
+  "javascript.validate.enable": false,
+  "typescript.preferences.includePackageJsonAutoImports": "off",
+  "files.exclude": {
+    "**/node_modules": true
+  },
+  "search.exclude": {
+    "**/node_modules": true
+  },
+  "typescript.suggest.autoImports": false
+} 

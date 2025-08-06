@@ -188,7 +188,6 @@ const BuyPackageScreen = ({ navigation }) => {
                 styles.packageCard,
                 isSelected && styles.selectedPackage,
                 isPopular && styles.popularPackage,
-                isFree && styles.freePackage,
               ]}
               onPress={() => handlePackageSelect(pkg)}
               activeOpacity={isFree ? 1 : 0.9}
@@ -229,7 +228,7 @@ const BuyPackageScreen = ({ navigation }) => {
                 <Icon 
                   name={isFree ? "gift" : isPopular ? "diamond" : "star"} 
                   size={24} 
-                  color={isFree ? colors.gray : isPopular ? "#f59e0b" : colors.primary} 
+                  color={isPopular ? "#f59e0b" : colors.primary} 
                 />
               </View>
               <Text style={styles.packageName}>{pkg.name}</Text>
@@ -238,7 +237,7 @@ const BuyPackageScreen = ({ navigation }) => {
               </Text>
               <View style={styles.priceContainer}>
                 <Text style={styles.packagePrice}>
-                  {pkg.price ? `${pkg.price.toLocaleString()} VND` : 'Free VND'}
+                  {pkg.price ? `${pkg.price.toLocaleString()} VND` : 'Free'}
                 </Text>
                 {pkg.originalPrice && pkg.originalPrice > pkg.price && (
                   <Text style={styles.originalPrice}>
@@ -303,22 +302,20 @@ const BuyPackageScreen = ({ navigation }) => {
               </Animated.View>
             )}
 
-            <View
-              style={[
-                styles.updateButton,
-                isSelected && styles.updateButtonSelected,
-                isFree && styles.freeButton
-              ]}
-            >
-              <Icon 
-                name={isFree ? "check" : "arrow-up"} 
-                size={14} 
-                color={isFree ? "#6b7280" : "white"} 
-              />
+                          <View
+                style={[
+                  styles.updateButton,
+                  isSelected && styles.updateButtonSelected,
+                ]}
+              >
+                             <Icon 
+                 name={isFree ? "check" : "arrow-up"} 
+                 size={14} 
+                 color={isFree ? "#6b7280" : "white"} 
+               />
               <Text style={[
                 styles.updateButtonText,
                 isSelected && styles.updateButtonTextSelected,
-                isFree && styles.freeButtonText
               ]}>
                 {isFree ? 'Current Plan' : `Update to ${pkg.name}`}
               </Text>
@@ -488,7 +485,7 @@ const BuyPackageScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     flex: 1,
@@ -499,13 +496,13 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: '#000000',
     marginBottom: 8,
     textAlign: 'center',
   },
   pageSubtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#374151',
     textAlign: 'center',
     marginBottom: 40,
     lineHeight: 24,
@@ -518,7 +515,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 20,
     fontSize: 16,
-    color: '#6b7280',
+    color: '#374151',
   },
   carouselContainer: {
     marginBottom: 20,
@@ -560,11 +557,7 @@ const styles = StyleSheet.create({
     shadowColor: '#f59e0b',
     shadowOpacity: 0.15,
   },
-  freePackage: {
-    borderColor: '#e5e7eb',
-    opacity: 0.7,
-    backgroundColor: '#f9fafb',
-  },
+
   popularBadge: {
     position: 'absolute',
     top: 4,
@@ -628,11 +621,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 6,
-    color: colors.primary,
+    color: '#000000',
   },
   packageSubtitle: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#000000',
     fontStyle: 'italic',
     textAlign: 'center',
     marginBottom: 15,
@@ -644,11 +637,11 @@ const styles = StyleSheet.create({
   packagePrice: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: '#000000',
   },
   originalPrice: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#000000',
     textDecorationLine: 'line-through',
     marginTop: 2,
   },
@@ -665,29 +658,29 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#e5e7eb',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   disabledIcon: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#e5e7eb',
   },
   featureContent: {
     flex: 1,
   },
   featureLabel: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#000000',
     marginBottom: 1,
   },
   featureValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#000000',
   },
   disabledFeature: {
-    color: '#9ca3af',
+    color: '#000000',
   },
   selectedIndicator: {
     position: 'absolute',
@@ -706,7 +699,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#e5e7eb',
+    backgroundColor: '#f3f4f6',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -721,13 +714,9 @@ const styles = StyleSheet.create({
     shadowColor: colors.primary,
     shadowOpacity: 0.25,
   },
-  freeButton: {
-    backgroundColor: '#f9fafb',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
+
   updateButtonText: {
-    color: '#4b5563',
+    color: '#6b7280',
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 6,
@@ -735,9 +724,8 @@ const styles = StyleSheet.create({
   updateButtonTextSelected: {
     color: 'white',
   },
-  freeButtonText: {
-    color: '#6b7280',
-  },
+
+
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -779,7 +767,7 @@ const styles = StyleSheet.create({
   selectedPackageTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#000000',
     marginLeft: 8,
     flex: 1,
   },

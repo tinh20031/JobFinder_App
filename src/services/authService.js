@@ -307,4 +307,157 @@ export const authService = {
       throw error;
     }
   },
+
+  // Forgot Password APIs
+  async forgotPasswordRequest(email) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        const error = new Error(errorData.message || 'Forgot password request failed');
+        error.data = errorData;
+        throw error;
+      }
+      
+      // Try to parse as JSON first, if fails, treat as text
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        // If not JSON, treat as success message
+        data = { message: responseText || 'Verification code sent successfully' };
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async forgotPasswordVerify(email, code) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, code }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        const error = new Error(errorData.message || 'Verification code is invalid');
+        error.data = errorData;
+        throw error;
+      }
+      
+      // Try to parse as JSON first, if fails, treat as text
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        // If not JSON, treat as success message
+        data = { message: responseText || 'Code verified successfully' };
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async forgotPasswordReset(email, code, newPassword) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password/reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, code, newPassword }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        const error = new Error(errorData.message || 'Password reset failed');
+        error.data = errorData;
+        throw error;
+      }
+      
+      // Try to parse as JSON first, if fails, treat as text
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        // If not JSON, treat as success message
+        data = { message: responseText || 'Password reset successfully' };
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async forgotPasswordResendVerification(email) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        const error = new Error(errorData.message || 'Resend verification failed');
+        error.data = errorData;
+        throw error;
+      }
+      
+      // Try to parse as JSON first, if fails, treat as text
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        // If not JSON, treat as success message
+        data = { message: responseText || 'Verification code resent successfully' };
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
 }; 

@@ -157,11 +157,7 @@ const ApplyCVScreen = () => {
     const companyName = job.Company?.CompanyName || detail?.company?.companyName || job.company?.companyName || '';
     const location = [job.addressDetail, job.provinceName].filter(Boolean).join(', ') || 'N/A';
 
-    // Get the latest application status
-    const latestApplication = item.applications[item.applications.length - 1];
-    const status = latestApplication?.status || 0;
-    const statusText = ['Pending', 'Interview', 'Rejected', 'Accepted'][status] || 'Pending';
-    const statusColor = ['#f59e0b', '#3b82f6', '#ef4444', '#10b981'][status] || '#f59e0b';
+
 
     return (
       <Animatable.View animation="fadeInUp" duration={600} style={styles.jobCard}>
@@ -174,9 +170,6 @@ const ApplyCVScreen = () => {
               {job.title}
             </Text>
             <View style={styles.headerRight}>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusText}>{statusText}</Text>
-              </View>
               <TouchableOpacity
                 style={styles.viewApplicationsButton}
                 onPress={() => handleViewApplications(job.jobId)}
@@ -395,30 +388,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
+
   viewApplicationsButton: {
     backgroundColor: '#1967d2',
     paddingHorizontal: 12,
