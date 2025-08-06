@@ -498,10 +498,10 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 8,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   pageSubtitle: {
     fontSize: 16,
@@ -509,6 +509,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 40,
     lineHeight: 24,
+    fontFamily: 'Poppins-Regular',
   },
   loadingContainer: {
     flex: 1,
@@ -519,6 +520,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#6b7280',
+    fontFamily: 'Poppins-Regular',
   },
   carouselContainer: {
     marginBottom: 20,
@@ -585,8 +587,8 @@ const styles = StyleSheet.create({
   popularText: {
     color: 'white',
     fontSize: 10,
-    fontWeight: '600',
     marginLeft: 3,
+    fontFamily: 'Poppins-SemiBold',
   },
   currentPlanBadge: {
     position: 'absolute',
@@ -608,8 +610,8 @@ const styles = StyleSheet.create({
   currentPlanText: {
     color: 'white',
     fontSize: 10,
-    fontWeight: '600',
     marginLeft: 3,
+    fontFamily: 'Poppins-SemiBold',
   },
   packageHeader: {
     alignItems: 'center',
@@ -626,9 +628,9 @@ const styles = StyleSheet.create({
   },
   packageName: {
     fontSize: 22,
-    fontWeight: 'bold',
     marginBottom: 6,
     color: colors.primary,
+    fontFamily: 'Poppins-Bold',
   },
   packageSubtitle: {
     fontSize: 12,
@@ -637,20 +639,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 15,
     lineHeight: 16,
+    fontFamily: 'Poppins-Regular',
   },
   priceContainer: {
     alignItems: 'center',
   },
   packagePrice: {
     fontSize: 26,
-    fontWeight: 'bold',
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   originalPrice: {
     fontSize: 14,
     color: '#6b7280',
     textDecorationLine: 'line-through',
     marginTop: 2,
+    fontFamily: 'Poppins-Regular',
   },
   packageFeatures: {
     marginBottom: 20,
@@ -680,14 +684,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
     marginBottom: 1,
+    fontFamily: 'Poppins-Regular',
   },
   featureValue: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#1f2937',
+    fontFamily: 'Poppins-SemiBold',
   },
   disabledFeature: {
     color: '#9ca3af',
+    fontFamily: 'Poppins-SemiBold',
   },
   selectedIndicator: {
     position: 'absolute',
@@ -729,14 +735,16 @@ const styles = StyleSheet.create({
   updateButtonText: {
     color: '#4b5563',
     fontSize: 14,
-    fontWeight: '600',
     marginLeft: 6,
+    fontFamily: 'Poppins-SemiBold',
   },
   updateButtonTextSelected: {
     color: 'white',
+    fontFamily: 'Poppins-SemiBold',
   },
   freeButtonText: {
     color: '#6b7280',
+    fontFamily: 'Poppins-SemiBold',
   },
   paginationContainer: {
     flexDirection: 'row',
@@ -778,15 +786,15 @@ const styles = StyleSheet.create({
   },
   selectedPackageTitle: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#1f2937',
     marginLeft: 8,
     flex: 1,
+    fontFamily: 'Poppins-SemiBold',
   },
   selectedPackagePrice: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: colors.primary,
+    fontFamily: 'Poppins-Bold',
   },
   purchaseButton: {
     flexDirection: 'row',
@@ -810,8 +818,8 @@ const styles = StyleSheet.create({
   purchaseButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

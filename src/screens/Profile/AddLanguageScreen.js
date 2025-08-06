@@ -281,10 +281,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerTitle: {
-    fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
 
 
@@ -303,6 +303,7 @@ const styles = StyleSheet.create({
     color: '#150b3d',
     marginBottom: 8,
     marginTop: 16,
+    fontFamily: 'Poppins-SemiBold',
   },
   languageInputContainer: {
     flexDirection: 'row',
@@ -318,6 +319,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#150b3d',
     paddingVertical: 12,
+    fontFamily: 'Poppins-Regular',
   },
   searchButton: {
     padding: 8,
@@ -336,12 +338,14 @@ const styles = StyleSheet.create({
   levelInputText: {
     fontSize: 16,
     color: '#150b3d',
+    fontFamily: 'Poppins-Regular',
   },
   hintText: {
     fontSize: 12,
     color: '#514a6b',
     marginTop: 8,
     fontStyle: 'italic',
+    fontFamily: 'Poppins-Regular',
   },
   saveBtn: {
     backgroundColor: '#2563eb',
@@ -356,9 +360,9 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
+    fontFamily: 'Poppins-Bold',
   },
   suggestionsContainer: {
     width: '100%',
@@ -391,6 +395,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#150b3d',
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   modal: {
     justifyContent: 'flex-end',
@@ -412,10 +417,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sheetTitle: {
-    fontWeight: 'bold',
     fontSize: 18,
     color: '#150b3d',
     marginBottom: 12,
+    fontFamily: 'Poppins-Bold',
   },
   levelOptions: {
     width: '100%',
@@ -433,10 +438,11 @@ const styles = StyleSheet.create({
   levelOptionText: {
     fontSize: 16,
     color: '#150b3d',
+    fontFamily: 'Poppins-Regular',
   },
   selectedLevelText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -456,12 +462,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#150b3d',
     paddingVertical: 12,
+    fontFamily: 'Poppins-Regular',
   },
   sheetDesc: {
     color: '#514a6b',
     fontSize: 14,
     marginBottom: 24,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   sheetBtn: {
     width: '100%',
@@ -474,8 +482,8 @@ const styles = StyleSheet.create({
   },
   sheetBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   sheetBtnUndo: {
     width: '100%',
@@ -488,7 +496,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndoText: {
     color: '#2563eb',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
 }); 

@@ -228,19 +228,19 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
     color: '#333',
     marginBottom: 30,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#333',
     marginBottom: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#333',
+    fontFamily: 'Poppins-Regular',
   },
   eyeIcon: {
     paddingHorizontal: 15,
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   messageContainer: {
     marginTop: 15,
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontSize: 14,
     textAlign: 'center',
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   modalOverlay: {
     flex: 1,
@@ -313,10 +314,10 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   modalMessage: {
     fontSize: 16,
@@ -324,6 +325,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 22,
+    fontFamily: 'Poppins-Regular',
   },
   modalButton: {
     backgroundColor: '#1967d2',
@@ -336,7 +338,7 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

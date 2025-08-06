@@ -113,12 +113,12 @@ const CompanyDetailScreen = ({ route }) => {
                 ul: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                 ol: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                 li: { marginBottom: 10, lineHeight: 25 },
-                h1: { marginBottom: 20, fontSize: 22, fontWeight: 'bold' },
-                h2: { marginBottom: 18, fontSize: 20, fontWeight: 'bold' },
-                h3: { marginBottom: 16, fontSize: 18, fontWeight: 'bold' },
+                h1: { marginBottom: 20, fontSize: 22, fontFamily: 'Poppins-Bold' },
+                h2: { marginBottom: 18, fontSize: 20, fontFamily: 'Poppins-Bold' },
+                h3: { marginBottom: 16, fontSize: 18, fontFamily: 'Poppins-Bold' },
                 img: { marginVertical: 16, borderRadius: 10 },
-                strong: { fontWeight: 'bold' },
-                b: { fontWeight: 'bold' },
+                strong: { fontFamily: 'Poppins-Bold' },
+                b: { fontFamily: 'Poppins-Bold' },
               }}
             />
           </View>
@@ -195,9 +195,9 @@ const styles = StyleSheet.create({
   companyName: {
     marginTop: 10,
     fontSize: 24,
-    fontWeight: 'bold',
     textAlign: 'center', // Căn giữa tên công ty
     color: '#191970',
+    fontFamily: 'Poppins-Bold',
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -217,9 +217,9 @@ const styles = StyleSheet.create({
   },
   industryTagText: {
     color: '#1ca97c',
-    fontWeight: '600',
     fontSize: 14,
     marginLeft: 6,
+    fontFamily: 'Poppins-SemiBold',
   },
   tag: {
     backgroundColor: '#e0e7ff',
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     color: '#2563eb',
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   divider: {
     height: 1.5,
@@ -241,15 +241,16 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     marginLeft: 20,
     marginBottom: 8,
+    fontFamily: 'Poppins-Bold',
   },
   aboutText: {
     fontSize: 15,
     color: '#444',
     marginHorizontal: 20,
     marginBottom: 20, // Giảm margin bottom để gần hơn với phần dưới
+    fontFamily: 'Poppins-Regular',
   },
   additionalInfoSection: {
     paddingHorizontal: 20,
@@ -261,14 +262,15 @@ const styles = StyleSheet.create({
     marginTop: 12, // Tăng khoảng cách
   },
   infoLabel: {
-    fontWeight: 'bold',
     color: '#222',
     fontSize: 15,
+    fontFamily: 'Poppins-Bold',
   },
   infoValue: {
     color: '#2563eb',
     fontSize: 15,
     textDecorationLine: 'underline',
+    fontFamily: 'Poppins-Regular',
   },
   infoCard: {
     backgroundColor: '#F2F2F2',
@@ -301,8 +303,8 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: '#FF4D4F',
-    fontWeight: '600',
     fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
   },
   companyCard: {
     backgroundColor: '#F7FAFC',
@@ -325,16 +327,17 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   infoLabelCard: {
-    fontWeight: 'bold',
     color: '#222',
     fontSize: 15,
     flex: 1.2,
+    fontFamily: 'Poppins-Bold',
   },
   infoValueCard: {
     color: '#444',
     fontSize: 15,
     flex: 1.5,
     textAlign: 'right',
+    fontFamily: 'Poppins-Regular',
   },
   blackDivider: {
     height: 1.5,

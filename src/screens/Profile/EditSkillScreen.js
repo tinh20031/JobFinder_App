@@ -288,12 +288,12 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   header: {
-    fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
     marginTop: 8,
     marginBottom: 16,
     alignSelf: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   scrollView: {
     flex: 1,
@@ -309,6 +309,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#514a6b',
     marginBottom: 6,
+    fontFamily: 'Poppins-Medium',
   },
   textInput: {
     backgroundColor: '#f8f8f8',
@@ -319,6 +320,7 @@ const styles = StyleSheet.create({
     color: '#150b3d',
     borderWidth: 1,
     borderColor: '#e0e0e0',
+    fontFamily: 'Poppins-Regular',
   },
   skillAddRow: {
     flexDirection: 'row',
@@ -350,6 +352,7 @@ const styles = StyleSheet.create({
   suggestionText: {
     fontSize: 16,
     color: '#150b3d',
+    fontFamily: 'Poppins-Regular',
   },
   saveBtn: {
     flex: 1,
@@ -371,10 +374,10 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
     textTransform: 'uppercase',
+    fontFamily: 'Poppins-Bold',
   },
   coreBadge: {
     backgroundColor: '#2563eb',
@@ -419,6 +422,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginRight: 6,
+    fontFamily: 'Poppins-Medium',
   },
   deleteGroupBtn: {
     flex: 1,
@@ -431,10 +435,10 @@ const styles = StyleSheet.create({
   },
   deleteGroupBtnText: {
     color: '#2563eb',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
     textTransform: 'uppercase',
+    fontFamily: 'Poppins-Bold',
   },
   form: {
     width: SCREEN_WIDTH - 36,
@@ -454,8 +458,8 @@ const styles = StyleSheet.create({
   modal: { justifyContent: 'flex-end', margin: 0 },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
-  sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
-  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
+  sheetTitle: { fontSize: 18, color: '#150b3d', marginBottom: 12, fontFamily: 'Poppins-Bold' },
+  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center', fontFamily: 'Poppins-Regular' },
   sheetBtn: {
     width: '100%',
     backgroundColor: '#2563eb',
@@ -467,8 +471,8 @@ const styles = StyleSheet.create({
   },
   sheetBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   sheetBtnUndo: {
     width: '100%',
@@ -481,7 +485,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndoText: {
     color: '#2563eb',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
 }); 

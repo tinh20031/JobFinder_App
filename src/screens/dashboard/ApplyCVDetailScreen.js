@@ -283,10 +283,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
     color: '#1a1a1a',
     marginBottom: 8,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   subtitle: {
     fontSize: 16,
@@ -294,6 +294,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
+    fontFamily: 'Poppins-Regular',
   },
 
   applicationCard: {
@@ -320,22 +321,23 @@ const styles = StyleSheet.create({
   applicationDate: {
     fontSize: 16,
     color: '#555',
-    fontWeight: '400',
     marginLeft: 4,
+    fontFamily: 'Poppins-Regular',
   },
   applicationContent: {
     gap: 16,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
     color: '#333',
     marginBottom: 8,
+    fontFamily: 'Poppins-Bold',
   },
   coverLetterText: {
     fontSize: 15,
     color: '#555',
     lineHeight: 22,
+    fontFamily: 'Poppins-Regular',
   },
   cvSection: {
     flexDirection: 'row',
@@ -355,7 +357,7 @@ const styles = StyleSheet.create({
   viewCvText: {
     color: '#1967d2',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   paginationContainer: {
     flexDirection: 'row',
@@ -391,8 +393,8 @@ const styles = StyleSheet.create({
   },
   paginationText: {
     fontSize: 16,
-    fontWeight: '700',
     color: '#666',
+    fontFamily: 'Poppins-Bold',
   },
   paginationTextActive: {
     color: '#fff',
@@ -427,8 +429,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#333',
+    fontFamily: 'Poppins-Bold',
   },
   closeButton: {
     padding: 4,
@@ -441,6 +443,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
+    fontFamily: 'Poppins-Regular',
   },
   loadingContainer: {
     flex: 1,
@@ -451,6 +454,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Poppins-Regular',
   },
   errorContainer: {
     flexDirection: 'row',
@@ -462,6 +466,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: '#dc2626',
+    fontFamily: 'Poppins-Regular',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -473,6 +478,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
 });
 

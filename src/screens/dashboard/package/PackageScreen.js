@@ -443,10 +443,10 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -456,6 +456,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#6b7280',
+    fontFamily: 'Poppins-Regular',
   },
   noSubscriptionContainer: {
     alignItems: 'center',
@@ -463,10 +464,10 @@ const styles = StyleSheet.create({
   },
   noSubscriptionTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 12,
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   noSubscriptionText: {
     fontSize: 16,
@@ -474,6 +475,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 25,
     lineHeight: 24,
+    fontFamily: 'Poppins-Regular',
   },
   benefitsList: {
     marginBottom: 30,
@@ -487,6 +489,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 15,
     color: '#4b5563',
+    fontFamily: 'Poppins-Regular',
   },
   packageInfoContainer: {
     backgroundColor: 'white',
@@ -517,9 +520,9 @@ const styles = StyleSheet.create({
   },
   packageName: {
     fontSize: 28,
-    fontWeight: 'bold',
     marginBottom: 12,
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -531,8 +534,8 @@ const styles = StyleSheet.create({
   statusText: {
     marginLeft: 6,
     fontSize: 13,
-    fontWeight: '600',
     color: '#059669',
+    fontFamily: 'Poppins-SemiBold',
   },
   freeBadge: {
     backgroundColor: 'rgba(107, 114, 128, 0.1)',
@@ -540,8 +543,8 @@ const styles = StyleSheet.create({
   freeStatusText: {
     marginLeft: 6,
     fontSize: 13,
-    fontWeight: '600',
     color: '#4b5563',
+    fontFamily: 'Poppins-SemiBold',
   },
   packageStats: {
     paddingHorizontal: 30,
@@ -588,13 +591,14 @@ const styles = StyleSheet.create({
   },
   statTitle: {
     fontSize: 18,
-    fontWeight: '600',
     marginBottom: 6,
     color: '#1f2937',
+    fontFamily: 'Poppins-SemiBold',
   },
   statDescription: {
     fontSize: 13,
     color: '#6b7280',
+    fontFamily: 'Poppins-Regular',
   },
   statContent: {
     alignItems: 'center',
@@ -606,19 +610,19 @@ const styles = StyleSheet.create({
   },
   currentNumber: {
     fontSize: 32,
-    fontWeight: 'bold',
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   divider: {
     fontSize: 20,
     color: '#d1d5db',
-    fontWeight: '500',
     marginHorizontal: 8,
+    fontFamily: 'Poppins-Medium',
   },
   totalNumber: {
     fontSize: 18,
     color: '#6b7280',
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   progressBar: {
     width: '100%',
@@ -638,15 +642,16 @@ const styles = StyleSheet.create({
   },
   noPackageTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 12,
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   noPackageText: {
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   packageActions: {
     padding: 30,
@@ -668,8 +673,8 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: 'white',
     fontSize: 15,
-    fontWeight: '600',
     marginLeft: 10,
+    fontFamily: 'Poppins-SemiBold',
   },
   modalOverlay: {
     flex: 1,
@@ -694,8 +699,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#333',
+    fontFamily: 'Poppins-SemiBold',
   },
   modalBody: {
     padding: 24,
@@ -709,6 +714,7 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     lineHeight: 24,
+    fontFamily: 'Poppins-Regular',
   },
   modalFooter: {
     flexDirection: 'row',
@@ -729,8 +735,8 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: '#666',
     fontSize: 14,
-    fontWeight: '500',
     marginLeft: 8,
+    fontFamily: 'Poppins-Medium',
   },
   confirmButton: {
     flexDirection: 'row',
@@ -743,8 +749,8 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '500',
     marginLeft: 8,
+    fontFamily: 'Poppins-Medium',
   },
 });
 

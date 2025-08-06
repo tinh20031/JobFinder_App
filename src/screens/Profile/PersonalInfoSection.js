@@ -142,10 +142,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontWeight: 'bold',
     fontSize: 16,
     color: '#150b3d',
     flex: 1,
+    fontFamily: 'Poppins-Bold',
   },
   editBtn: {
     padding: 4,
@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.1,
+    fontFamily: 'Poppins-SemiBold',
   },
   fieldInput: {
     backgroundColor: '#f8f8f8',
@@ -188,6 +189,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f0f0f0',
     fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
   },
   genderSection: {
     marginTop: 8,
@@ -216,6 +218,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginLeft: 8,
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   radioOuter: {
     width: 22,

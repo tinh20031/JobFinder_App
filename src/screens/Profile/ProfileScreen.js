@@ -1031,8 +1031,8 @@ const styles = StyleSheet.create({
   name: {
     color: '#fff',
     fontSize: 22,
-    fontWeight: '700',
     marginBottom: 2,
+    fontFamily: 'Poppins-Bold',
   },
   locationContainer: {
     flexDirection: 'row',
@@ -1044,6 +1044,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '400',
     marginLeft: 4,
+    fontFamily: 'Poppins-Regular',
   },
 
   changeImageBtn: {
@@ -1069,6 +1070,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     letterSpacing: 0.2,
+    fontFamily: 'Poppins-Medium',
   },
   formWrapper: {
     alignSelf: 'center',
@@ -1096,6 +1098,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12, // tăng thêm khoảng cách với input bên dưới
     letterSpacing: 0.1,
+    fontFamily: 'Poppins-SemiBold',
   },
   input: {
     backgroundColor: '#f8f8f8',
@@ -1109,6 +1112,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 18, // tăng thêm khoảng cách với label tiếp theo
     fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
   },
   genderRow: {
     flexDirection: 'row',
@@ -1135,6 +1139,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginLeft: 8,
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   radioOuter: {
     width: 22,
@@ -1177,6 +1182,7 @@ const styles = StyleSheet.create({
     color: '#514a6b',
     fontSize: 15,
     fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
   },
   saveBtn: {
     height: 54,
@@ -1199,6 +1205,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: 1,
+    fontFamily: 'Poppins-Bold',
   },
   header: {
     flexDirection: 'row',
@@ -1209,11 +1216,13 @@ const styles = StyleSheet.create({
     color: '#150a33',
     fontSize: 18,
     fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   content: {
     color: '#514a6b',
     fontSize: 15,
     fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
   },
   separator: {
     height: 1,
@@ -1225,6 +1234,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 10,
+    fontFamily: 'Poppins-Regular',
   },
 
   completionCard: {
@@ -1252,11 +1262,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#150b3d',
     marginLeft: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   completionPercentage: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#2563eb',
+    fontFamily: 'Poppins-Bold',
   },
   progressBar: {
     height: 8,
@@ -1275,6 +1287,7 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 18,
     fontStyle: 'italic',
+    fontFamily: 'Poppins-Regular',
   },
 
   sectionContainer: {
@@ -1311,9 +1324,9 @@ const styles = StyleSheet.create({
   },
   imagePreviewTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#150b3d',
     marginBottom: 20,
+    fontFamily: 'Poppins-Bold',
   },
   imagePreviewContainer: {
     width: 200,
@@ -1353,11 +1366,13 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   confirmBtnText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
 
   // Skeleton Loading Styles

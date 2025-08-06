@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   title: {
     color: '#150b3d',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   separator: {
     height: 1,
@@ -492,12 +492,14 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 12,
     marginBottom: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   emptySubtitle: {
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
     paddingHorizontal: 20,
+    fontFamily: 'Poppins-Regular',
   },
   videoContainer: {
     flexDirection: 'row',
@@ -517,11 +519,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2563eb',
     marginTop: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   videoSubtext: {
     fontSize: 14,
     color: '#64748b',
     marginTop: 2,
+    fontFamily: 'Poppins-Regular',
   },
   deleteButton: {
     padding: 8,
@@ -539,6 +543,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   uploadingContainer: {
     flexDirection: 'row',
@@ -551,6 +556,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 16,
     fontStyle: 'italic',
+    fontFamily: 'Poppins-Regular',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -560,6 +566,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#888',
+    fontFamily: 'Poppins-Regular',
   },
   // Modal styles
   modal: { 
@@ -581,16 +588,17 @@ const styles = StyleSheet.create({
     marginBottom: 16 
   },
   sheetTitle: { 
-    fontWeight: 'bold', 
     fontSize: 18, 
     color: '#150b3d', 
-    marginBottom: 12 
+    marginBottom: 12,
+    fontFamily: 'Poppins-Bold',
   },
   sheetDesc: { 
     color: '#514a6b', 
     fontSize: 14, 
     marginBottom: 24, 
-    textAlign: 'center' 
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   sheetBtn: {
     width: '100%',
@@ -605,6 +613,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   sheetBtnUndo: {
     width: '100%',
@@ -619,6 +628,7 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   urlContainer: {
     width: '100%',
@@ -629,12 +639,14 @@ const styles = StyleSheet.create({
     color: '#514a6b',
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: 'Poppins-Regular',
   },
   urlHint: {
     fontSize: 12,
     color: '#888',
     textAlign: 'center',
     fontStyle: 'italic',
+    fontFamily: 'Poppins-Regular',
   },
   // Add Profile Video Modal Styles (separate from delete modal)
   addVideoModal: { 
@@ -656,10 +668,10 @@ const styles = StyleSheet.create({
     marginBottom: 16 
   },
   addVideoSheetTitle: { 
-    fontWeight: 'bold', 
     fontSize: 18, 
     color: '#150b3d', 
-    marginBottom: 24 
+    marginBottom: 24,
+    fontFamily: 'Poppins-Bold',
   },
   addVideoOptionsContainer: {
     width: '100%',
@@ -681,12 +693,14 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginLeft: 16,
     flex: 1,
+    fontFamily: 'Poppins-SemiBold',
   },
   addVideoOptionSubtitle: {
     fontSize: 14,
     color: '#64748b',
     marginLeft: 16,
     flex: 1,
+    fontFamily: 'Poppins-Regular',
   },
   modalOverlay: {
     flex: 1,

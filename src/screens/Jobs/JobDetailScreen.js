@@ -256,12 +256,12 @@ const JobDetailScreen = ({ route }) => {
                       ul: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       ol: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       li: { marginBottom: 10, lineHeight: 25 },
-                      h1: { marginBottom: 20, fontSize: 22, fontWeight: 'bold' },
-                      h2: { marginBottom: 18, fontSize: 20, fontWeight: 'bold' },
-                      h3: { marginBottom: 16, fontSize: 18, fontWeight: 'bold' },
+                      h1: { marginBottom: 20, fontSize: 22, fontFamily: 'Poppins-Bold' },
+                      h2: { marginBottom: 18, fontSize: 20, fontFamily: 'Poppins-Bold' },
+                      h3: { marginBottom: 16, fontSize: 18, fontFamily: 'Poppins-Bold' },
                       img: { marginVertical: 16, borderRadius: 10 },
-                      strong: { fontWeight: 'bold' },
-                      b: { fontWeight: 'bold' },
+                      strong: { fontFamily: 'Poppins-Bold' },
+                      b: { fontFamily: 'Poppins-Bold' },
                     }}
                   />
                 </View>
@@ -280,12 +280,12 @@ const JobDetailScreen = ({ route }) => {
                       ul: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       ol: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       li: { marginBottom: 10, lineHeight: 25 },
-                      h1: { marginBottom: 20, fontSize: 22, fontWeight: 'bold' },
-                      h2: { marginBottom: 18, fontSize: 20, fontWeight: 'bold' },
-                      h3: { marginBottom: 16, fontSize: 18, fontWeight: 'bold' },
+                      h1: { marginBottom: 20, fontSize: 22, fontFamily: 'Poppins-Bold' },
+                      h2: { marginBottom: 18, fontSize: 20, fontFamily: 'Poppins-Bold' },
+                      h3: { marginBottom: 16, fontSize: 18, fontFamily: 'Poppins-Bold' },
                       img: { marginVertical: 16, borderRadius: 10 },
-                      strong: { fontWeight: 'bold' },
-                      b: { fontWeight: 'bold' },
+                      strong: { fontFamily: 'Poppins-Bold' },
+                      b: { fontFamily: 'Poppins-Bold' },
                     }}
                   />
                 </View>
@@ -304,12 +304,12 @@ const JobDetailScreen = ({ route }) => {
                       ul: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       ol: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       li: { marginBottom: 10, lineHeight: 25 },
-                      h1: { marginBottom: 20, fontSize: 22, fontWeight: 'bold' },
-                      h2: { marginBottom: 18, fontSize: 20, fontWeight: 'bold' },
-                      h3: { marginBottom: 16, fontSize: 18, fontWeight: 'bold' },
+                      h1: { marginBottom: 20, fontSize: 22, fontFamily: 'Poppins-Bold' },
+                      h2: { marginBottom: 18, fontSize: 20, fontFamily: 'Poppins-Bold' },
+                      h3: { marginBottom: 16, fontSize: 18, fontFamily: 'Poppins-Bold' },
                       img: { marginVertical: 16, borderRadius: 10 },
-                      strong: { fontWeight: 'bold' },
-                      b: { fontWeight: 'bold' },
+                      strong: { fontFamily: 'Poppins-Bold' },
+                      b: { fontFamily: 'Poppins-Bold' },
                     }}
                   />
                 </View>
@@ -328,12 +328,12 @@ const JobDetailScreen = ({ route }) => {
                       ul: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       ol: { marginBottom: 18, marginTop: 10, paddingLeft: 18 },
                       li: { marginBottom: 10, lineHeight: 25 },
-                      h1: { marginBottom: 20, fontSize: 22, fontWeight: 'bold' },
-                      h2: { marginBottom: 18, fontSize: 20, fontWeight: 'bold' },
-                      h3: { marginBottom: 16, fontSize: 18, fontWeight: 'bold' },
+                      h1: { marginBottom: 20, fontSize: 22, fontFamily: 'Poppins-Bold' },
+                      h2: { marginBottom: 18, fontSize: 20, fontFamily: 'Poppins-Bold' },
+                      h3: { marginBottom: 16, fontSize: 18, fontFamily: 'Poppins-Bold' },
                       img: { marginVertical: 16, borderRadius: 10 },
-                      strong: { fontWeight: 'bold' },
-                      b: { fontWeight: 'bold' },
+                      strong: { fontFamily: 'Poppins-Bold' },
+                      b: { fontFamily: 'Poppins-Bold' },
                     }}
                   />
                 </View>
@@ -519,6 +519,7 @@ const styles = StyleSheet.create({
     color: '#222',
     marginBottom: 6,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   infoRow: {
     flexDirection: 'row',
@@ -529,12 +530,13 @@ const styles = StyleSheet.create({
   infoText: {
     color: '#222',
     fontSize: 15,
+    fontFamily: 'Poppins-Regular',
   },
   dot: {
     color: '#222',
     fontSize: 18,
     marginHorizontal: 4,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   actionRow: {
     flexDirection: 'row',
@@ -560,6 +562,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 6,
+    fontFamily: 'Poppins-SemiBold',
   },
   cvMatchBtn: {
     flexDirection: 'row',
@@ -577,6 +580,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 6,
+    fontFamily: 'Poppins-SemiBold',
   },
   tabRow: {
     flexDirection: 'row',
@@ -604,11 +608,12 @@ const styles = StyleSheet.create({
     color: '#222',
     fontWeight: '600',
     fontSize: 15,
+    fontFamily: 'Poppins-SemiBold',
   },
   tabTextActive: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 15,
+    fontFamily: 'Poppins-Bold',
   },
   sectionWrap: {
     backgroundColor: '#fff',
@@ -625,15 +630,16 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: 'bold',
     color: '#222',
     marginBottom: 10,
+    fontFamily: 'Poppins-Bold',
   },
   sectionContent: {
     color: '#444',
     fontSize: 15,
     marginBottom: 18,
     lineHeight: 22,
+    fontFamily: 'Poppins-Regular',
   },
   infoRowDetail: {
     flexDirection: 'row',
@@ -646,6 +652,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
     flex: 1.2,
+    fontFamily: 'Poppins-Bold',
   },
   infoValue: {
     color: '#222',
@@ -653,6 +660,7 @@ const styles = StyleSheet.create({
     flex: 1.5,
     textAlign: 'right',
     textDecorationLine: 'underline',
+    fontFamily: 'Poppins-Regular',
   },
   overviewGrid: {
     marginTop: 12,
@@ -678,15 +686,16 @@ const styles = StyleSheet.create({
   },
   overviewLabel: {
     color: '#222',
-    fontWeight: 'bold',
     fontSize: 15,
     marginLeft: 8,
+    fontFamily: 'Poppins-Bold',
   },
   overviewValue: {
     color: '#222',
     fontSize: 15,
     marginLeft: 4,
     flexShrink: 1,
+    fontFamily: 'Poppins-Regular',
   },
   recruiterCard: {
     backgroundColor: '#fff',
@@ -709,15 +718,15 @@ const styles = StyleSheet.create({
   },
   recruiterName: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#222',
+    fontFamily: 'Poppins-Bold',
   },
   recruiterProfileLink: {
     color: '#1967D2',
     fontSize: 17,
-    fontWeight: 'bold',
     textAlign: 'center',
     textDecorationLine: 'none',
+    fontFamily: 'Poppins-Bold',
   },
   recruiterInfoRow: {
     flexDirection: 'row',
@@ -727,15 +736,16 @@ const styles = StyleSheet.create({
   },
   recruiterLabel: {
     color: '#222',
-    fontWeight: 'bold',
     fontSize: 15,
     flex: 1.2,
+    fontFamily: 'Poppins-Bold',
   },
   recruiterValue: {
     color: '#222',
     fontSize: 15,
     flex: 1.5,
     textAlign: 'right',
+    fontFamily: 'Poppins-Regular',
   },
   recruiterWebsiteBtn: {
     backgroundColor: '#e6edfa',
@@ -746,8 +756,8 @@ const styles = StyleSheet.create({
   },
   recruiterWebsiteText: {
     color: '#2563eb',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   recruiterProfileBtn: {
     backgroundColor: '#eaf1fb', // màu nền nhạt gần #1967D2
@@ -795,9 +805,9 @@ const styles = StyleSheet.create({
   },
   applyBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.5,
+    fontFamily: 'Poppins-Bold',
   },
   menuBarLine: {
     height: 1,
@@ -859,10 +869,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#222',
     marginBottom: 2,
+    fontFamily: 'Poppins-SemiBold',
   },
   modalCompanyIndustry: {
     fontSize: 13,
     color: '#65676b',
+    fontFamily: 'Poppins-Regular',
   },
   modalCloseBtn: {
     padding: 4,
@@ -879,6 +891,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     minHeight: 100,
     textAlignVertical: 'top',
+    fontFamily: 'Poppins-Regular',
   },
   modalFooter: {
     padding: 16,
@@ -899,6 +912,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

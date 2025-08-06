@@ -192,10 +192,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerTitle: {
-    fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   addButton: {
     width: 40,
@@ -218,6 +218,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 24,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   addFirstButton: {
     backgroundColor: '#2563eb',
@@ -229,7 +230,7 @@ const styles = StyleSheet.create({
   addFirstButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   languagesList: {
     flex: 1,
@@ -260,6 +261,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#150b3d',
+    fontFamily: 'Poppins-SemiBold',
   },
   levelInfo: {
     flexDirection: 'row',
@@ -268,6 +270,7 @@ const styles = StyleSheet.create({
   levelText: {
     fontSize: 14,
     color: '#514a6b',
+    fontFamily: 'Poppins-Regular',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -298,9 +301,9 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
+    fontFamily: 'Poppins-Bold',
   },
   modal: { 
     justifyContent: 'flex-end', 
@@ -321,16 +324,17 @@ const styles = StyleSheet.create({
     marginBottom: 16 
   },
   sheetTitle: { 
-    fontWeight: 'bold', 
     fontSize: 18, 
     color: '#150b3d', 
-    marginBottom: 12 
+    marginBottom: 12,
+    fontFamily: 'Poppins-Bold'
   },
   sheetDesc: { 
     color: '#514a6b', 
     fontSize: 14, 
     marginBottom: 24, 
-    textAlign: 'center' 
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular'
   },
   sheetBtn: {
     width: '100%',
@@ -343,8 +347,8 @@ const styles = StyleSheet.create({
   },
   sheetBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   sheetBtnUndo: {
     width: '100%',
@@ -357,7 +361,7 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndoText: {
     color: '#2563eb',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
 }); 

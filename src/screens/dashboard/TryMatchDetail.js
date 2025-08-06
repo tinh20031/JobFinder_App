@@ -314,9 +314,9 @@ const styles = StyleSheet.create({
   },
   jobTitle: {
     fontSize: 22,
-    fontWeight: '700',
     color: '#222',
     flex: 1,
+    fontFamily: 'Poppins-Bold',
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -327,12 +327,13 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   metaText: {
     fontSize: 13,
     color: '#888',
     marginTop: 2,
+    fontFamily: 'Poppins-Regular',
   },
   scoreSection: {
     backgroundColor: '#fff',
@@ -351,9 +352,9 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: 15,
-    fontWeight: '600',
     marginBottom: 8,
     color: '#444',
+    fontFamily: 'Poppins-SemiBold',
   },
   scoreCircle: {
     width: 74,
@@ -372,8 +373,8 @@ const styles = StyleSheet.create({
   },
   scoreNumber: {
     fontSize: 28,
-    fontWeight: '700',
     color: '#fff',
+    fontFamily: 'Poppins-Bold',
   },
   errorSection: {
     backgroundColor: '#fff',
@@ -394,8 +395,8 @@ const styles = StyleSheet.create({
   errorText: {
     marginLeft: 6,
     color: '#dc3545',
-    fontWeight: '600',
     fontSize: 14,
+    fontFamily: 'Poppins-SemiBold',
   },
   suggestionsSection: {
     backgroundColor: '#fff',
@@ -413,9 +414,9 @@ const styles = StyleSheet.create({
   },
   suggestionsTitle: {
     fontSize: 16,
-    fontWeight: '700',
     marginBottom: 10,
     color: '#2563eb',
+    fontFamily: 'Poppins-Bold',
   },
   suggestionsList: {
     gap: 8,
@@ -429,9 +430,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#444',
     lineHeight: 20,
+    fontFamily: 'Poppins-Regular',
   },
   boldText: {
-    fontWeight: '700',
+    fontFamily: 'Poppins-Bold',
   },
   suggestionTextContainer: {
     marginLeft: 8,
@@ -455,7 +457,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   loadingContainer: {
     flex: 1,
@@ -467,6 +469,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: '#6c757d',
+    fontFamily: 'Poppins-Regular',
   },
   errorContainer: {
     flex: 1,
@@ -477,10 +480,10 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#495057',
     marginTop: 16,
     textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold',
   },
   errorDescription: {
     fontSize: 14,
@@ -488,6 +491,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 16,
+    fontFamily: 'Poppins-Regular',
   },
   retryButton: {
     backgroundColor: '#667eea',
@@ -499,8 +503,8 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
     textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

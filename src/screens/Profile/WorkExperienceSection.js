@@ -215,10 +215,10 @@ const styles = StyleSheet.create({
     marginBottom: 12 
   },
   title: { 
-    fontWeight: 'bold', 
     fontSize: 16, 
     color: '#150b3d', 
-    flex: 1 
+    flex: 1,
+    fontFamily: 'Poppins-Bold',
   },
   addBtn: {
     backgroundColor: '#f0f7ff',
@@ -246,12 +246,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 12,
     marginBottom: 4,
+    fontFamily: 'Poppins-Medium',
   },
   emptySubtext: {
     color: '#999',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
+    fontFamily: 'Poppins-Regular',
   },
   workList: {
     gap: 12,
@@ -281,7 +283,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
     fontSize: 16, 
     color: '#150b3d', 
-    marginBottom: 4 
+    marginBottom: 4,
+    fontFamily: 'Poppins-Bold',
   },
   companyContainer: {
     flexDirection: 'row',
@@ -293,6 +296,7 @@ const styles = StyleSheet.create({
     color: '#514a6b', 
     marginLeft: 4,
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   timeRow: { 
     flexDirection: 'row', 
@@ -304,6 +308,7 @@ const styles = StyleSheet.create({
     fontSize: 13, 
     color: '#666',
     marginLeft: 4,
+    fontFamily: 'Poppins-Regular',
   },
   statusTag: {
     backgroundColor: '#28a745',
@@ -315,6 +320,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   fieldSection: { 
     marginTop: 8,
@@ -326,12 +332,14 @@ const styles = StyleSheet.create({
     fontWeight: '600', 
     fontSize: 13, 
     color: '#150b3d', 
-    marginBottom: 4 
+    marginBottom: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   fieldContent: { 
     fontSize: 13, 
     color: '#514a6b', 
-    lineHeight: 18 
+    lineHeight: 18,
+    fontFamily: 'Poppins-Regular',
   },
   workActions: {
     flexDirection: 'row',
@@ -371,16 +379,17 @@ const styles = StyleSheet.create({
     marginBottom: 16 
   },
   sheetTitle: { 
-    fontWeight: 'bold', 
     fontSize: 18, 
     color: '#150b3d', 
-    marginBottom: 12 
+    marginBottom: 12,
+    fontFamily: 'Poppins-Bold',
   },
   sheetDesc: { 
     color: '#514a6b', 
     fontSize: 14, 
     marginBottom: 24, 
-    textAlign: 'center' 
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   sheetBtn: {
     width: '100%',
@@ -395,6 +404,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   sheetBtnUndo: {
     width: '100%',
@@ -409,5 +419,6 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
 }); 

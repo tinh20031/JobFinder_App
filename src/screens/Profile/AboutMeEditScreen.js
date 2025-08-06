@@ -149,7 +149,7 @@ export default function AboutMeEditScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8', alignItems: 'center', paddingTop: 24 },
-  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center' },
+  header: { fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center', fontFamily: 'Poppins-Bold' },
   scrollView: { flex: 1 },
   form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2, alignSelf: 'center', borderWidth: 1, borderColor: '#eee' },
 
@@ -165,20 +165,23 @@ const styles = StyleSheet.create({
   tipsText: { 
     fontSize: 15, 
     color: '#222', 
-    flex: 1 
+    flex: 1,
+    fontFamily: 'Poppins-Regular'
   },
   tipsBold: { 
-    fontWeight: 'bold' 
+    fontFamily: 'Poppins-Bold'
   },
   charCount: {
     color: '#888',
     fontSize: 14,
     marginBottom: 8,
     textAlign: 'right',
+    fontFamily: 'Poppins-Regular',
   },
-  textarea: { minHeight: 200, maxHeight: 350, backgroundColor: '#fff', borderRadius: 12, padding: 16, fontSize: 14, color: '#514a6b', borderWidth: 1, borderColor: '#ddd', textAlignVertical: 'top' },
+  textarea: { minHeight: 200, maxHeight: 350, backgroundColor: '#fff', borderRadius: 12, padding: 16, fontSize: 14, color: '#514a6b', borderWidth: 1, borderColor: '#ddd', textAlignVertical: 'top', fontFamily: 'Poppins-Regular' },
   required: {
     color: '#e60023',
+    fontFamily: 'Poppins-Regular',
   },
   inputError: {
     borderColor: '#e60023',
@@ -193,16 +196,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 13,
     marginBottom: 8,
+    fontFamily: 'Poppins-Regular',
   },
   saveBtn: { width: '100%', height: 50, backgroundColor: '#2563eb', borderRadius: 12, alignItems: 'center', justifyContent: 'center', shadowColor: '#99aac5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5, marginTop: 20 },
-  saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
+  saveBtnText: { color: '#fff', fontSize: 16, letterSpacing: 0.84, fontFamily: 'Poppins-Bold' },
   modal: { justifyContent: 'flex-end', margin: 0 },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
-  sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
-  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
+  sheetTitle: { fontSize: 18, color: '#150b3d', marginBottom: 12, fontFamily: 'Poppins-Bold' },
+  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center', fontFamily: 'Poppins-Regular' },
   sheetBtn: { width: '100%', backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
-  sheetBtnText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16 },
+  sheetBtnText: { color: '#2563eb', fontSize: 16, fontFamily: 'Poppins-Bold' },
   sheetBtnUndo: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
-  sheetBtnUndoText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+  sheetBtnUndoText: { color: '#fff', fontSize: 16, fontFamily: 'Poppins-Bold' }
 }); 
