@@ -1,143 +1,194 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Header from '../../components/HeaderCandidate';
-import BannerImg from '../../images/banner-img-3.png';
-import WorkImg from '../../images/work-1.png';
+import SearchBar from './components/SearchBar';
+import Banner from './components/Banner';
+import CompanyCard from './components/CompanyCard';
+import JobCard from './components/JobCard';
+import { ProfileSkeleton } from '../../components/SkeletonLoading';
+
+import profileService from '../../services/profileService';
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
+
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 5000)
+        );
+        
+        const profilePromise = profileService.getCandidateProfile();
+        const profile = await Promise.race([profilePromise, timeoutPromise]);
+        
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        // Don't set fallback data, let the UI handle empty state
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const handleSearch = (text) => {
+    // Navigate to JobListScreen with search query
+    if (text && text.trim()) {
+      navigation.navigate('JobList', { 
+        searchQuery: text.trim(),
+        fromHome: true 
+      });
+    }
+  };
+
+  const handleFilter = () => {
+    // Navigate to FilterScreen
+    navigation.navigate('Filter');
+  };
+
+  const handleReadMore = () => {
+    // Handle read more logic
+    console.log('Read more pressed');
+  };
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
+    <View style={styles.container}>
+      {/* Fixed Header */}
       <Header />
 
-      {/* Banner */}
-      <View style={styles.banner}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.bannerText}>50% off{`\n`}take any courses</Text>
-          <View style={styles.bannerButton}><Text style={styles.bannerButtonText}>Join Now</Text></View>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Custom Header with Profile */}
+        <View style={styles.header}>
+          {loading ? (
+            <ProfileSkeleton />
+          ) : userProfile ? (
+            <View style={styles.profileSection}>
+              <Image 
+                source={{ uri: userProfile.image }} 
+                style={styles.profileImage} 
+              />
+              <View style={styles.greetingSection}>
+                <Text style={styles.greeting}>Welcome back 👋</Text>
+                <Text style={styles.userName}>
+                  {userProfile.fullName}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.profileSection}>
+              <View style={[styles.profileImage, styles.placeholderImage]} />
+              <View style={styles.greetingSection}>
+                <Text style={styles.greeting}>Welcome back 👋</Text>
+                <Text style={styles.userName}>Guest User</Text>
+              </View>
+            </View>
+          )}
         </View>
-        <Image source={BannerImg} style={styles.bannerImage} resizeMode="contain" />
-      </View>
 
-      {/* Find Your Job */}
-      <Text style={styles.sectionTitle}>Find Your Job</Text>
-      <View style={styles.findJobContainer}>
-        {/* Box lớn bên trái */}
-        <View style={styles.findJobBoxLarge}>
-          <Image source={WorkImg} style={styles.findJobIcon} resizeMode="contain" />
-          <Text style={styles.findJobNumberLarge}>44.5k</Text>
-          <Text style={styles.findJobLabelLarge}>Remote Job</Text>
-        </View>
-        {/* Hai box nhỏ bên phải */}
-        <View style={styles.findJobColSmall}>
-          <View style={[styles.findJobBoxSmall, {backgroundColor: '#D6C7FF'}]}>
-            <Text style={styles.findJobNumberSmall}>66.8k</Text>
-            <Text style={styles.findJobLabelSmall}>Full Time</Text>
-          </View>
-          <View style={[styles.findJobBoxSmall, {backgroundColor: '#FFE2B6'}]}>
-            <Text style={styles.findJobNumberSmall}>38.9k</Text>
-            <Text style={styles.findJobLabelSmall}>Part Time</Text>
-          </View>
-        </View>
-      </View>
+        {/* Search Bar */}
+        <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
 
-      {/* Recent Job List */}
-      <Text style={styles.sectionTitle}>Recent Job List</Text>
-      <View style={styles.jobList}>
-        {/* Placeholder cho danh sách job */}
-        <View style={styles.jobCard}>
-          <Text style={styles.jobTitle}>Product Designer</Text>
-          <Text style={styles.jobCompany}>Google inc · California, USA</Text>
-          <Text style={styles.jobSalary}>$15K/Mo</Text>
-          <View style={styles.jobTagsRow}>
-            <View style={styles.jobTag}><Text>Senior designer</Text></View>
-            <View style={styles.jobTag}><Text>Full time</Text></View>
-            <View style={styles.jobApply}><Text style={{color:'#fff'}}>Apply</Text></View>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
+        {/* Banner */}
+        <Banner onReadMore={handleReadMore} />
+
+        {/* Recommendation Companies Section */}
+        <CompanyCard 
+          title="List Companies"
+          showSeeAll={true}
+          horizontal={true}
+          limit={5}
+        />
+
+        {/* Recent Jobs Section */}
+        <JobCard 
+          title="Recent Jobs"
+          showSeeAll={true}
+          limit={5}
+        />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F8FF' },
-  banner: {
-    margin: 16,
-    borderRadius: 16,
-    backgroundColor: '#2B3990',
-    height: 200, // tăng chiều cao
-    padding: 24, // tăng padding cho thoáng
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  bannerText: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
-  bannerButton: { backgroundColor: '#FF9900', borderRadius: 8, alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, marginBottom: 16 },
-  bannerButtonText: { color: '#fff', fontWeight: 'bold' },
-  bannerImage: { width: 170, height: 170, marginLeft: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginHorizontal: 16, marginTop: 24, marginBottom: 8 },
-  findJobContainer: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    marginTop: 8,
-    height: 140,
-  },
-  findJobBoxLarge: {
-    flex: 1.2,
-    backgroundColor: '#B6E6FB',
-    borderRadius: 12,
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-  },
-  findJobIcon: {
-    width: 48,
-    height: 48,
-    marginBottom: 8,
-  },
-  findJobNumberLarge: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 2,
-  },
-  findJobLabelLarge: {
-    fontSize: 15,
-    color: '#222',
-  },
-  findJobColSmall: {
+  container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100,
+  },
+  header: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  findJobBoxSmall: {
-    borderRadius: 12,
-    marginBottom: 8,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    height: 62,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
-  findJobNumberSmall: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#222',
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 12,
+  },
+  placeholderImage: {
+    backgroundColor: '#e5e7eb',
+  },
+  greetingSection: {
+    flex: 1,
+  },
+  greeting: {
+    fontSize: 16,
+    color: '#666',
     marginBottom: 2,
+    fontFamily: 'Poppins-SemiBold',
   },
-  findJobLabelSmall: {
-    fontSize: 13,
-    color: '#222',
+  userName: {
+    fontSize: 20,
+    color: '#333',
+    fontFamily: 'Poppins-Bold',
   },
-  jobList: { margin: 16 },
-  jobCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  jobTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
-  jobCompany: { fontSize: 13, color: '#888', marginBottom: 8 },
-  jobSalary: { fontSize: 15, fontWeight: 'bold', color: '#2B3990', marginBottom: 8 },
-  jobTagsRow: { flexDirection: 'row', alignItems: 'center' },
-  jobTag: { backgroundColor: '#F2F2F2', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginRight: 8 },
-  jobApply: { backgroundColor: '#FF9900', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 6 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: '#333',
+    fontFamily: 'Poppins-Bold',
+  },
+  seeAllText: {
+    fontSize: 16,
+    color: '#2563eb',
+    fontFamily: 'Poppins-Bold',
+  },
+  jobCardsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
 });
 
 export default HomeScreen;

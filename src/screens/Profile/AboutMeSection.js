@@ -7,15 +7,6 @@ import LinearGradient from 'react-native-linear-gradient';
 
 export default function AboutMeSection({ aboutMe, loading, onAdd }) {
   const navigation = useNavigation();
-  const [token, setToken] = useState(null);
-
-  React.useEffect(() => {
-    async function fetchToken() {
-      const t = await profileService.getToken();
-      setToken(t);
-    }
-    fetchToken();
-  }, []);
 
   if (loading) {
     return (
@@ -37,15 +28,14 @@ export default function AboutMeSection({ aboutMe, loading, onAdd }) {
         <View style={styles.header}>
           <Icon name="account-circle-outline" size={22} color="#2563eb" style={{ marginRight: 10 }} />
           <Text style={styles.title}>About Me</Text>
-          {aboutMe && (aboutMe.aboutMeId || aboutMe.id) && (
+          {aboutMe && aboutMe.aboutMeDescription && (
             <TouchableOpacity
               style={styles.editBtn}
               onPress={() => {
                 if (navigation.getParent) {
                   const parentNav = navigation.getParent();
                   if (parentNav && parentNav.navigate) {
-              
-                    parentNav.navigate('AboutMeEdit', { aboutMe, token });
+                    parentNav.navigate('AboutMeEdit', { aboutMe });
                   }
                 }
               }}

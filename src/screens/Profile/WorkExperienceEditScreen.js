@@ -144,8 +144,6 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
       };
       
       const workData = {
-        workExperienceId: work?.workExperienceId || 0,
-        candidateProfileId: work?.candidateProfileId || 0,
         jobTitle: jobTitle.trim(),
         companyName: companyName.trim(),
         isWorking,
@@ -158,17 +156,14 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
         achievements: achievements.trim() || null,
         technologies: technologies.trim() || null,
         projectName: projectName.trim() || null,
-        createdAt: work?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
       
-      
-      
-              if (mode === 'edit' && work?.workExperienceId) {
-          await profileService.updateWorkExperience(workData);
-        } else {
-          await profileService.createWorkExperience(workData);
-        }
+      if (mode === 'edit' && work?.id) {
+        workData.id = work.id;
+        await profileService.updateWorkExperience(workData);
+      } else {
+        await profileService.createWorkExperience(workData);
+      }
       navigation.goBack();
     } catch (e) {
       console.error('Error saving work experience:', e);
@@ -182,9 +177,10 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
     setModalType(null);
     setRemoving(true);
     try {
-      await profileService.deleteWorkExperience(work.workExperienceId);
+      await profileService.deleteWorkExperience(work.id);
       navigation.goBack();
     } catch (e) {
+      console.error('WorkExperienceEditScreen - Delete error:', e);
       Alert.alert('Error', 'Failed to remove work experience.');
     }
     setRemoving(false);
@@ -403,7 +399,7 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
           {projectName.length}/2500
         </Text>
         <View style={styles.actionRow}>
-          {mode === 'edit' && work?.workExperienceId && (
+          {mode === 'edit' && work?.id && (
             <TouchableOpacity style={styles.removeBtn} onPress={handleRemove} disabled={removing}>
               <Text style={styles.removeBtnText}>REMOVE</Text>
             </TouchableOpacity>

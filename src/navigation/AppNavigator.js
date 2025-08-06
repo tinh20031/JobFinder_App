@@ -40,6 +40,8 @@ import NotificationScreen from '../components/header/notification/NotificationSc
 import { PackageScreen, BuyPackageScreen, PaymentSuccessScreen } from '../screens/dashboard/package';
 import PaymentWebView from '../screens/dashboard/package/PaymentWebView';
 import PaymentSuccessSimple from '../screens/dashboard/package/PaymentSuccessSimple';
+import FilterScreen from '../screens/Jobs/FilterScreen';
+import CompanyFilterScreen from '../screens/Company/CompanyFilterScreen';
 
 // Custom tab bar button cho nút giữa (Profile)
 function CustomTabBarButton({ children, onPress, profileCompletion = 0 }) {
@@ -343,6 +345,8 @@ export default function AppNavigator() {
           <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
           <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
           <Stack.Screen name="CompanyDetail" component={CompanyDetailScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CompanyList" component={CompanyListScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="JobList" component={JobListScreen} options={{ headerShown: false }} />
           <Stack.Screen name="JobDetail" component={JobDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Listchat" component={Listchat} options={{ headerShown: false }} />
           <Stack.Screen name="ChatDetail" component={ChatDetail} options={{ headerShown: false }} />
@@ -365,6 +369,8 @@ export default function AppNavigator() {
           <Stack.Screen name="ApplyCVDetail" component={ApplyCVDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="FavoriteJobDetail" component={FavoriteJobDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="NotificationScreen" component={NotificationScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Filter" component={FilterScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CompanyFilter" component={CompanyFilterScreen} options={{ headerShown: false }} />
           
           {/* Package System Screens */}
           <Stack.Screen name="Package" component={PackageScreen} options={{ headerShown: false }} />

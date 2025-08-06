@@ -31,7 +31,7 @@ export default function AddSkillScreen({ navigation, route }) {
     experience: s.experience || '',
     groupName: editGroup.title,
     type: editGroup.type === 0 ? 'Core' : 'Soft',
-    skillId: s.skillId
+    skillId: s.id || s.skillId
   })) : []);
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -100,12 +100,11 @@ export default function AddSkillScreen({ navigation, route }) {
     }
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
       if (isEditMode) {
-        // Xóa hết skill cũ trong group
-        const oldSkillIds = (editGroup.data || []).map(s => s.skillId).filter(Boolean);
+        // Xóa hết skill cũ trong group - support cả skillId (old) và id (new)
+        const oldSkillIds = (editGroup.data || []).map(s => s.id || s.skillId).filter(Boolean);
         for (const id of oldSkillIds) {
-          await profileService.deleteSkill(id, token);
+          await profileService.deleteSkill(id);
         }
       }
       // Thêm lại toàn bộ skill mới
@@ -114,7 +113,7 @@ export default function AddSkillScreen({ navigation, route }) {
         const skillToSend = { ...skill, groupName, type };
         delete skillToSend.skillId;
   
-        await profileService.createSkill(skillToSend, token);
+        await profileService.createSkill(skillToSend);
       }
       // Không Alert nữa, chỉ goBack
       navigation.goBack();
@@ -135,11 +134,10 @@ export default function AddSkillScreen({ navigation, route }) {
           text: 'Delete', style: 'destructive', onPress: async () => {
             try {
               setSaving(true);
-              const token = await AsyncStorage.getItem('token');
-              const oldSkillIds = (editGroup.data || []).map(s => s.skillId).filter(Boolean);
-              for (const id of oldSkillIds) {
-                await profileService.deleteSkill(id, token);
-              }
+                      const oldSkillIds = (editGroup.data || []).map(s => s.id || s.skillId).filter(Boolean);
+        for (const id of oldSkillIds) {
+          await profileService.deleteSkill(id);
+        }
               Alert.alert('Success', 'Group deleted!', [
                 { text: 'OK', onPress: () => navigation.goBack() }
               ]);

@@ -3,6 +3,146 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import companyService from './companyService';
 
 export const JobService = {
+  async getIndustries() {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(`${BASE_URL}/api/Industry`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Không thể lấy danh sách ngành nghề');
+      }
+      const industries = await response.json();
+      return industries;
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách ngành nghề:', error);
+      // Fallback to hardcoded data if API fails
+      return [
+        { industryId: 1, industryName: 'Technology' },
+        { industryId: 2, industryName: 'Finance' },
+        { industryId: 3, industryName: 'Healthcare' },
+        { industryId: 4, industryName: 'Education' },
+        { industryId: 5, industryName: 'Manufacturing' },
+        { industryId: 6, industryName: 'Retail' },
+        { industryId: 7, industryName: 'Marketing' },
+        { industryId: 8, industryName: 'Consulting' },
+        { industryId: 9, industryName: 'Real Estate' },
+        { industryId: 10, industryName: 'Transportation' },
+      ];
+    }
+  },
+
+  async getJobTypes() {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(`${BASE_URL}/api/JobType`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Không thể lấy danh sách loại công việc');
+      }
+      const jobTypes = await response.json();
+      return jobTypes;
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách loại công việc:', error);
+      // Fallback to hardcoded data if API fails
+      return [
+        { id: 1, jobTypeName: 'Onsite (Work from Office)' },
+        { id: 2, jobTypeName: 'Remote (Work from Home)' },
+        { id: 3, jobTypeName: 'Hybrid (Work from Office & Home)' },
+        { id: 4, jobTypeName: 'Part-time' },
+        { id: 5, jobTypeName: 'Full-time' },
+        { id: 6, jobTypeName: 'Contract' },
+        { id: 7, jobTypeName: 'Internship' },
+        { id: 8, jobTypeName: 'Freelance' },
+      ];
+    }
+  },
+
+  async getLevels() {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(`${BASE_URL}/api/Level`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Không thể lấy danh sách cấp độ');
+      }
+      const levels = await response.json();
+      return levels;
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách cấp độ:', error);
+      // Fallback to hardcoded data if API fails
+      return [
+        { id: 1, levelName: 'Intern' },
+        { id: 2, levelName: 'Junior' },
+        { id: 3, levelName: 'Senior' },
+        { id: 4, levelName: 'Lead' },
+        { id: 5, levelName: 'Manager' },
+        { id: 6, levelName: 'Director' },
+        { id: 7, levelName: 'Executive' },
+      ];
+    }
+  },
+
+  async getExperienceLevels() {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(`${BASE_URL}/api/ExperienceLevel`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Không thể lấy danh sách kinh nghiệm');
+      }
+      const experienceLevels = await response.json();
+      return experienceLevels;
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách kinh nghiệm:', error);
+      // Fallback to hardcoded data if API fails
+      return [
+        { id: 1, name: '0-1 years' },
+        { id: 2, name: '1-3 years' },
+        { id: 3, name: '3-5 years' },
+        { id: 4, name: '5-7 years' },
+        { id: 5, name: '7-10 years' },
+        { id: 6, name: '10+ years' },
+      ];
+    }
+  },
+
+  async getSalaryRanges() {
+    // Return hardcoded salary ranges directly since API is not available
+    return [
+      { id: 1, name: 'Under $2,000', minSalary: 0, maxSalary: 2000 },
+      { id: 2, name: '$2,000 - $4,000', minSalary: 2000, maxSalary: 4000 },
+      { id: 3, name: '$4,000 - $6,000', minSalary: 4000, maxSalary: 6000 },
+      { id: 4, name: '$6,000 - $8,000', minSalary: 6000, maxSalary: 8000 },
+      { id: 5, name: '$8,000 - $10,000', minSalary: 8000, maxSalary: 10000 },
+      { id: 6, name: '$10,000 - $12,000', minSalary: 10000, maxSalary: 12000 },
+      { id: 7, name: '$12,000 - $14,000', minSalary: 12000, maxSalary: 14000 },
+      { id: 8, name: '$14,000 - $16,000', minSalary: 14000, maxSalary: 16000 },
+      { id: 9, name: '$16,000 - $18,000', minSalary: 16000, maxSalary: 18000 },
+      { id: 10, name: '$18,000 - $20,000', minSalary: 18000, maxSalary: 20000 },
+      { id: 11, name: 'Over $20,000', minSalary: 20000, maxSalary: 999999 },
+    ];
+  },
+
   async getJobById(jobId) {
     try {
       const token = await AsyncStorage.getItem('token');

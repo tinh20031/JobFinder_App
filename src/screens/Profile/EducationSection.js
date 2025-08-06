@@ -45,17 +45,21 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
     const duration = calcDuration(item.monthStart, item.monthEnd);
 
     return (
-      <View style={styles.eduItem}>
+      <TouchableOpacity 
+        style={styles.eduItem}
+        onPress={() => onEdit(item)}
+        activeOpacity={0.7}
+      >
         <View style={styles.eduIconContainer}>
           <Icon name="school" size={20} color="#2563eb" />
         </View>
         <View style={styles.eduContent}>
-          {item.level && (
+          {(item.degree || item.level) && (
             <Text style={styles.eduLevel} numberOfLines={1} ellipsizeMode="tail">
-              {item.level}
+              {(item.degree || item.level) === 'Bacholar' ? 'Bachelor' : (item.degree || item.level)}
             </Text>
           )}
-          {item.school && (
+          {(item.school) && (
             <View style={styles.schoolContainer}>
               <MaterialIcons name="business" size={14} color="#666" />
               <Text style={styles.eduSchool} numberOfLines={1} ellipsizeMode="tail">
@@ -63,7 +67,7 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
               </Text>
             </View>
           )}
-          {item.major && (
+          {(item.major) && (
             <Text style={styles.eduMajor} numberOfLines={1} ellipsizeMode="tail">
               {item.major}
             </Text>
@@ -75,7 +79,15 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
             </Text>
           </View>
           
-          {item.gpa && (
+          {(item.detail || item.description) && (
+            <View style={styles.descriptionSection}>
+              <Text style={styles.descriptionText} numberOfLines={2} ellipsizeMode="tail">
+                {item.detail || item.description}
+              </Text>
+            </View>
+          )}
+          
+          {(item.gpa) && (
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>GPA:</Text>
               <Text style={styles.fieldContent} numberOfLines={1} ellipsizeMode="tail">
@@ -83,27 +95,21 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
               </Text>
             </View>
           )}
-          
-          {item.description && (
-            <View style={styles.fieldSection}>
-              <Text style={styles.fieldLabel}>Description:</Text>
-              <Text style={styles.fieldContent} numberOfLines={2} ellipsizeMode="tail">
-                {item.description}
-              </Text>
-            </View>
-          )}
         </View>
         <View style={styles.eduActions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#2563eb" />
-          </TouchableOpacity>
           {onDelete && (
-            <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteEducation(item)}>
+            <TouchableOpacity 
+              style={[styles.actionBtn, styles.deleteBtn]} 
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDeleteEducation(item);
+              }}
+            >
               <Icon name="delete" size={16} color="#ff4757" />
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -126,7 +132,7 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
       ) : (
         <View style={styles.eduList}>
           {educations.map((item, idx) => (
-            <EducationItem key={item.educationId || item.id || idx} item={item} index={idx} />
+            <EducationItem key={item.id || item.educationId || idx} item={item} index={idx} />
           ))}
         </View>
       )}
@@ -147,7 +153,7 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
             Delete Education ?
           </Text>
           <Text style={styles.sheetDesc}>
-            Are you sure you want to delete this education "{selectedEducation?.level}" at "{selectedEducation?.school}"?
+            Are you sure you want to delete this education at "{selectedEducation?.school}"?
           </Text>
           <TouchableOpacity 
             style={styles.sheetBtn} 
@@ -237,6 +243,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#e8eaff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   eduIconContainer: {
     width: 40,
@@ -249,6 +260,12 @@ const styles = StyleSheet.create({
   },
   eduContent: {
     flex: 1,
+  },
+  eduLevel: { 
+    fontWeight: 'bold', 
+    fontSize: 16, 
+    color: '#150b3d', 
+    marginBottom: 4 
   },
   eduMajor: { 
     fontWeight: 'bold', 
@@ -355,7 +372,7 @@ const styles = StyleSheet.create({
   },
   fieldSection: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 8,
   },
   fieldLabel: {
@@ -368,11 +385,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#150b3d',
     flex: 1,
+    lineHeight: 18,
   },
 
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
+  },
+  descriptionSection: {
+    marginTop: 8,
+  },
+  descriptionText: {
+    fontSize: 13,
+    color: '#514a6b',
+    lineHeight: 18,
+    fontStyle: 'italic',
   },
 }); 

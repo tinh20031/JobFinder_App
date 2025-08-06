@@ -33,6 +33,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to camera to record profile introduction videos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to microphone to record profile introduction videos.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -51,6 +55,10 @@
 	<array>
 		<string>DMSans-Italic-VariableFont_opsz,wght.ttf</string>
 		<string>DMSans-VariableFont_opsz,wght.ttf</string>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-Medium.ttf</string>
+		<string>Poppins-Regular.ttf</string>
+		<string>Poppins-SemiBold.ttf</string>
 	</array>
 	<!-- Google Sign-In Configuration -->
 	<key>CFBundleURLTypes</key>

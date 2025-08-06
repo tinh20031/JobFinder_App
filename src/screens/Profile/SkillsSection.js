@@ -36,12 +36,11 @@ export default function SkillsSection({ navigation }) {
 
   const loadSkills = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const skillsData = await profileService.getSkillsList(token);
+      const skillsData = await profileService.getSkillsList();
       setSkills(skillsData);
-          } catch (error) {
-        // Handle error silently
-      } finally {
+    } catch (error) {
+      // Handle error silently
+    } finally {
       setLoading(false);
     }
   };
@@ -63,25 +62,23 @@ export default function SkillsSection({ navigation }) {
     if (!selectedGroup) return;
     
     try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('token');
-      // Lọc ra các skillId trong group
-      const skillIds = selectedGroup.data.map(skill => skill.skillId).filter(Boolean);
+      // Lọc ra các skillId trong group - support cả skillId (old) và id (new)
+      const skillIds = selectedGroup.data.map(skill => skill.id || skill.skillId).filter(Boolean);
+      
       for (const id of skillIds) {
-        await profileService.deleteSkill(id, token);
+        await profileService.deleteSkill(id);
       }
       await loadSkills();
-          } catch (error) {
-        // Handle error silently
-      } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Error deleting skills:', error);
+    } finally {
       setShowDeleteModal(false);
       setSelectedGroup(null);
     }
   };
 
   const renderSkillTag = (skill, index) => (
-    <View key={skill.skillId || index} style={[
+    <View key={skill.id || skill.skillId || index} style={[
       styles.skillTag,
       skill.type === 0 || skill.type === 'Core' ? styles.coreSkillTag : styles.softSkillTag
     ]}>

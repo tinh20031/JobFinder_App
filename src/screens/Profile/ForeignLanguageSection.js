@@ -16,12 +16,11 @@ export default function ForeignLanguageSection({ navigation }) {
 
   const loadLanguages = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const languagesData = await profileService.getForeignLanguageList(token);
+      const languagesData = await profileService.getForeignLanguageList();
       setLanguages(languagesData);
-          } catch (error) {
-        // Handle error silently
-      } finally {
+    } catch (error) {
+      // Handle error silently
+    } finally {
       setLoading(false);
     }
   };
@@ -31,8 +30,8 @@ export default function ForeignLanguageSection({ navigation }) {
   };
 
   const renderLanguageItem = ({ item }) => (
-    <View key={item.foreignLanguageId} style={styles.languageTag}>
-                  <Icon name="translate" size={14} color="#2563eb" style={{ marginRight: 6 }} />
+    <View key={item.id || item.foreignLanguageId} style={styles.languageTag}>
+      <Icon name="translate" size={14} color="#2563eb" style={{ marginRight: 6 }} />
       <Text style={styles.languageTagText}>{item.languageName}</Text>
     </View>
   );
@@ -48,9 +47,8 @@ export default function ForeignLanguageSection({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const token = await AsyncStorage.getItem('token');
-              await profileService.deleteForeignLanguage(languageId, token);
-              setLanguages(prev => prev.filter(lang => lang.foreignLanguageId !== languageId));
+              await profileService.deleteForeignLanguage(languageId);
+              setLanguages(prev => prev.filter(lang => lang.id !== languageId));
               Alert.alert('Success', 'Language removed successfully!');
             } catch (error) {
               Alert.alert('Error', 'Failed to remove language. Please try again.');

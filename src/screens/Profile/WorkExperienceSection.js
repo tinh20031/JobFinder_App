@@ -24,7 +24,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
 
   const confirmDeleteWork = () => {
     if (selectedWork && onDelete) {
-      onDelete(selectedWork.workExperienceId);
+      onDelete(selectedWork.id);
     }
     setShowDeleteModal(false);
     setSelectedWork(null);
@@ -35,7 +35,11 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
     const end = item.isWorking ? 'Now' : formatMonthYear(item.monthEnd);
 
     return (
-      <View style={styles.workItem}>
+      <TouchableOpacity 
+        style={styles.workItem}
+        onPress={() => onEdit(item)}
+        activeOpacity={0.7}
+      >
         <View style={styles.workIconContainer}>
           <Icon name="briefcase" size={20} color="#2563eb" />
         </View>
@@ -112,16 +116,19 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
           )}
         </View>
         <View style={styles.workActions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)}>
-            <Icon name="pencil" size={16} color="#2563eb" />
-          </TouchableOpacity>
           {onDelete && (
-            <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteWork(item)}>
+            <TouchableOpacity 
+              style={[styles.actionBtn, styles.deleteBtn]} 
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDeleteWork(item);
+              }}
+            >
               <Icon name="delete" size={16} color="#ff4757" />
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -146,7 +153,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
       ) : (
         <View style={styles.workList}>
           {works.map((item, idx) => (
-            <WorkExperienceItem key={item.workExperienceId || idx} item={item} index={idx} />
+            <WorkExperienceItem key={item.id || item.workExperienceId || idx} item={item} index={idx} />
           ))}
         </View>
       )}

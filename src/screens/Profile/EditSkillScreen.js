@@ -32,7 +32,7 @@ export default function EditSkillScreen({ navigation, route }) {
           experience: s.experience || '',
           groupName: editGroup.title,
           type: editGroup.type === 0 ? 'Core' : 'Soft',
-          skillId: s.skillId
+          skillId: s.id || s.skillId
         }))
       : []
   );
@@ -89,15 +89,14 @@ export default function EditSkillScreen({ navigation, route }) {
     setModalType(null);
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      const oldSkillIds = (editGroup.data || []).map(s => s.skillId).filter(Boolean);
+      const oldSkillIds = (editGroup.data || []).map(s => s.id || s.skillId).filter(Boolean);
       for (const id of oldSkillIds) {
-        await profileService.deleteSkill(id, token);
+        await profileService.deleteSkill(id);
       }
       // Không Alert nữa, chỉ goBack
       navigation.goBack();
     } catch (error) {
-      // Có thể dùng modal custom báo lỗi nếu muốn
+      console.error('Error deleting skills:', error);
     } finally {
       setSaving(false);
     }
@@ -124,18 +123,17 @@ export default function EditSkillScreen({ navigation, route }) {
     }
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      // Xóa hết skill cũ trong group
-      const oldSkillIds = (editGroup.data || []).map(s => s.skillId).filter(Boolean);
+      // Xóa hết skill cũ trong group - support cả skillId (old) và id (new)
+      const oldSkillIds = (editGroup.data || []).map(s => s.id || s.skillId).filter(Boolean);
       for (const id of oldSkillIds) {
-        await profileService.deleteSkill(id, token);
+        await profileService.deleteSkill(id);
       }
       // Thêm lại toàn bộ skill mới
       for (const skill of skillsInGroup) {
         const type = skill.type === 'Core' ? 0 : 1;
         const skillToSend = { ...skill, groupName, type };
         delete skillToSend.skillId;
-        await profileService.createSkill(skillToSend, token);
+        await profileService.createSkill(skillToSend);
       }
       // Không Alert nữa, chỉ goBack
       navigation.goBack();
@@ -260,20 +258,20 @@ export default function EditSkillScreen({ navigation, route }) {
           </Text>
           {modalType === 'delete' ? (
             <>
-              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-                <Text style={styles.sheetBtnText}>CONTINUE EDITING</Text>
+              <TouchableOpacity style={styles.sheetBtn} onPress={handleDeleteGroupConfirm}>
+                <Text style={styles.sheetBtnText}>DELETE</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleDeleteGroupConfirm}>
-                <Text style={styles.sheetBtnUndoText}>DELETE</Text>
+              <TouchableOpacity style={styles.sheetBtnUndo} onPress={() => setModalType(null)}>
+                <Text style={styles.sheetBtnUndoText}>CONTINUE EDITING</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <TouchableOpacity style={styles.sheetBtn} onPress={() => setModalType(null)}>
-                <Text style={styles.sheetBtnText}>CONTINUE EDITING</Text>
+              <TouchableOpacity style={styles.sheetBtn} onPress={handleModalMainAction}>
+                <Text style={styles.sheetBtnText}>{modalType === 'back' ? 'UNDO CHANGES' : 'SAVE CHANGES'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.sheetBtnUndo} onPress={handleModalMainAction}>
-                <Text style={styles.sheetBtnUndoText}>{modalType === 'back' ? 'UNDO CHANGES' : 'SAVE CHANGES'}</Text>
+              <TouchableOpacity style={styles.sheetBtnUndo} onPress={() => setModalType(null)}>
+                <Text style={styles.sheetBtnUndoText}>CONTINUE EDITING</Text>
               </TouchableOpacity>
             </>
           )}

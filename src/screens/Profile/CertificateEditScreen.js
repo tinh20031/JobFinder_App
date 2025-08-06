@@ -71,8 +71,6 @@ export default function CertificateEditScreen({ route, navigation }) {
     }
     setSaving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      
       // Format data theo BE expectation - tương tự web version
       const toISO = (y, m) => (y && m ? `${y}-${m}-01T00:00:00.000Z` : null);
       
@@ -85,10 +83,10 @@ export default function CertificateEditScreen({ route, navigation }) {
         CertificateDescription: certificateDescription.trim() || null,
       };
       
-      if (mode === 'edit' && certificate?.certificateId) {
-        await profileService.updateCertificate(certificate.certificateId, data, token);
+      if (mode === 'edit' && certificate?.id) {
+        await profileService.updateCertificate(certificate.id, data);
       } else {
-        await profileService.createCertificate(data, token);
+        await profileService.createCertificate(data);
       }
       navigation.goBack();
     } catch (e) {
@@ -102,8 +100,7 @@ export default function CertificateEditScreen({ route, navigation }) {
     setModalType(null);
     setRemoving(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      await profileService.deleteCertificate(certificate.certificateId, token);
+      await profileService.deleteCertificate(certificate.id);
       navigation.goBack();
     } catch (e) {
       Alert.alert('Error', 'Failed to remove certificate.');
@@ -235,7 +232,7 @@ export default function CertificateEditScreen({ route, navigation }) {
           </Text>
 
           <View style={styles.actionRow}>
-            {mode === 'edit' && certificate?.certificateId && (
+            {mode === 'edit' && certificate?.id && (
               <TouchableOpacity style={styles.removeBtn} onPress={handleRemove} disabled={removing}>
                 {removing ? (
                   <ActivityIndicator size="small" color="#130160" />

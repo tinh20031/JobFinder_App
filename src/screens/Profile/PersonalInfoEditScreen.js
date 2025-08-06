@@ -47,7 +47,8 @@ export default function PersonalInfoEditScreen({ route }) {
 
   const loadProfile = async () => {
     try {
-      const profile = await profileService.getCandidateProfile();
+          const profile = await profileService.getCandidateProfile();
+      
       setFullname(profile.fullName || '');
       setEmail(profile.email || '');
       setPhone(profile.phone || '');
@@ -71,6 +72,7 @@ export default function PersonalInfoEditScreen({ route }) {
         personalLink: profile.personalLink || '',
       });
     } catch (e) {
+      console.error('PersonalInfoEditScreen - Error loading profile:', e);
       setError('Unable to load profile information.');
     } finally {
       setLoading(false);
@@ -91,7 +93,8 @@ export default function PersonalInfoEditScreen({ route }) {
       // Tìm province code từ tên province
       const selectedProvince = provinces.find(p => p.name === provinceName);
       if (selectedProvince) {
-        const citiesData = await locationService.getDistricts(selectedProvince.code);
+        // Sử dụng getWards thay vì getDistricts vì API mới trả về wards
+        const citiesData = await locationService.getWards(selectedProvince.province_code || selectedProvince.code);
         setCities(citiesData);
       } else {
         setCities([]);
@@ -173,9 +176,11 @@ export default function PersonalInfoEditScreen({ route }) {
         formData.append('Email', email);
         formData.append('JobTitle', jobTitle);
         formData.append('PersonalLink', personalLink);
+        
         await profileService.updateCandidateProfile(formData);
         navigation.goBack();
       } catch (e) {
+        console.error('PersonalInfoEditScreen - Save error:', e);
         setError('Update failed.');
       }
       setSaving(false);
@@ -343,7 +348,7 @@ export default function PersonalInfoEditScreen({ route }) {
 
           {/* City */}
           <Text style={styles.label}>
-            City <Text style={styles.required}>*</Text>
+            Award <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity 
             style={[getInputStyle('city')[0], !province && styles.disabledInput]} 

@@ -62,12 +62,24 @@ const companyService = {
           'Accept': 'application/json',
         },
       });
-      console.log('Company API URL:', url, 'Status:', res.status);
+
       if (!res.ok) throw new Error('Network response was not ok');
       return await res.json();
     } catch (error) {
       throw error;
     }
+  },
+
+  // Lấy danh sách company sizes
+  getCompanySizes: async () => {
+    // Return hardcoded data directly since API is not available
+    return [
+      { id: 1, sizeName: '50 - 100' },
+      { id: 2, sizeName: '100 - 150' },
+      { id: 3, sizeName: '200 - 250' },
+      { id: 4, sizeName: '300 - 350' },
+      { id: 5, sizeName: '500 - 1000' },
+    ];
   },
 
   getCompanyDetail: async (companyId) => {

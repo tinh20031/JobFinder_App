@@ -1,17 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import companyService from '../../services/companyService';
 import HeaderCandidates from '../../components/HeaderCandidate';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { BASE_URL } from '../../constants/api';
 import * as Animatable from 'react-native-animatable';
+import NotFoundScreen from '../../components/NotFoundScreen';
 
 const CompanyListScreen = () => {
   const [companies, setCompanies] = useState([]);
+  const [filteredCompanies, setFilteredCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const [savedFilters, setSavedFilters] = useState({});
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigation = useNavigation();
+  const route = useRoute();
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -20,6 +29,8 @@ const CompanyListScreen = () => {
       try {
         const companies = await companyService.filterCompanies();
         setCompanies(Array.isArray(companies) ? companies : []);
+        setFilteredCompanies(Array.isArray(companies) ? companies : []);
+        setIsInitialLoad(false);
       } catch (err) {
         setError(err?.message || 'Unable to load company list.');
       } finally {
@@ -29,52 +40,205 @@ const CompanyListScreen = () => {
     fetchCompanies();
   }, []);
 
+  // Handle filters from CompanyFilterScreen
+  useEffect(() => {
+    if (route.params?.filters) {
+      setFilterLoading(true);
+      setAppliedFilters(route.params.filters);
+      setTimeout(() => {
+        setFilterLoading(false);
+      }, 500);
+    }
+    if (route.params?.savedFilters) {
+      setSavedFilters(route.params.savedFilters);
+    }
+  }, [route.params?.filters, route.params?.savedFilters]);
+
+  // Filter function with useCallback
+  const applyFilters = useCallback((companyList, filters) => {
+    if (!filters || Object.keys(filters).every(key => !filters[key])) {
+      return companyList;
+    }
+
+    return companyList.filter(company => {
+      // Location filter
+      if (filters.location && company.location !== filters.location) {
+        return false;
+      }
+
+      // Industry filter
+      if (filters.industry && company.industryName !== filters.industry) {
+        return false;
+      }
+
+      // Company size filter
+      if (filters.companySize) {
+        const selectedRange = filters.companySize;
+        const companySize = company.teamSize;
+        
+        // Parse the selected range (e.g., "50 - 100")
+        const rangeMatch = selectedRange.match(/(\d+)\s*-\s*(\d+)/);
+        if (rangeMatch) {
+          const minSize = parseInt(rangeMatch[1]);
+          const maxSize = parseInt(rangeMatch[2]);
+          
+          // Parse company size (e.g., "500 - 1000 employees")
+          const companySizeMatch = companySize?.match(/(\d+)\s*-\s*(\d+)/);
+          if (companySizeMatch) {
+            const companyMin = parseInt(companySizeMatch[1]);
+            const companyMax = parseInt(companySizeMatch[2]);
+            
+            // Check if ranges overlap
+            if (!(companyMin <= maxSize && companyMax >= minSize)) {
+              return false;
+            }
+          } else {
+            // If company size doesn't match the range format, exclude it
+            return false;
+          }
+        } else {
+          // If filter doesn't match range format, do exact match
+          if (company.teamSize !== filters.companySize) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, []);
+
+  // Search function with useCallback
+  const performSearch = useCallback((text, companyList) => {
+    if (text.trim() === '') {
+      return companyList;
+    }
+    
+    const lowercasedSearchText = text.toLowerCase();
+    return companyList.filter(company =>
+      company.companyName?.toLowerCase().includes(lowercasedSearchText) ||
+      company.name?.toLowerCase().includes(lowercasedSearchText)
+    );
+  }, []);
+
+  // Search and filter effect
+  useEffect(() => {
+    let timeoutId;
+
+    if (searchText.trim() === '') {
+      const filtered = applyFilters(companies, appliedFilters);
+      setFilteredCompanies(filtered);
+      setSearchLoading(false);
+    } else {
+      setSearchLoading(true);
+      
+      timeoutId = setTimeout(() => {
+        const searchFiltered = performSearch(searchText, companies);
+        const finalFiltered = applyFilters(searchFiltered, appliedFilters);
+        setFilteredCompanies(finalFiltered);
+        setSearchLoading(false);
+      }, 300);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [searchText, companies, appliedFilters, applyFilters, performSearch]);
+
+  const clearFilters = () => {
+    setFilterLoading(true);
+    setAppliedFilters({});
+    setSavedFilters({});
+    setSearchText('');
+    setTimeout(() => {
+      setFilterLoading(false);
+    }, 300);
+  };
+
+  const hasActiveFilters = () => {
+    return searchText.trim() !== '' || Object.keys(appliedFilters).some(key => appliedFilters[key]);
+  };
+
+  // Helper function to generate logo color based on company name
+  const getLogoColor = (companyName) => {
+    const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be185d', '#65a30d'];
+    const index = companyName.length % colors.length;
+    return colors[index];
+  };
+
+  // Helper function to generate logo text (first letter of company name)
+  const getLogoText = (companyName) => {
+    return companyName.charAt(0).toUpperCase();
+  };
+
+  // Helper function to get company tags
+  const getCompanyTags = (company) => {
+    const tags = [];
+    if (company.teamSize) {
+      tags.push(`${company.teamSize} employees`);
+    }
+    return tags;
+  };
+
+
+
   const renderCompanyCard = ({ item, index }) => {
     const logoUrl = item.urlCompanyLogo
       ? (item.urlCompanyLogo.startsWith('http') ? item.urlCompanyLogo : `${BASE_URL}${item.urlCompanyLogo}`)
       : null;
+    const tags = getCompanyTags(item);
+    const logoColor = getLogoColor(item.companyName || item.name || 'Unknown');
+    const logoText = getLogoText(item.companyName || item.name || 'Unknown');
+
     return (
       <TouchableOpacity
-        activeOpacity={0.85}
-        style={{ marginBottom: 24 }}
+        activeOpacity={0.8}
         onPress={() => navigation.navigate('CompanyDetail', { companyId: item.userId })}
       >
         <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
-        <View style={styles.companyCard}>
-          {/* Hàng trên: logo + company name + location (location dưới company name) */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image
-              source={logoUrl ? { uri: logoUrl } : require('../../images/jobfinder-logo.png')}
-              style={styles.companyLogo}
-            />
-            <View style={{ marginLeft: 10, justifyContent: 'center' }}>
-              <Text style={styles.companyTitle}>{item.companyName || item.name}</Text>
-              {item.location ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                  <MaterialIcons name="place" size={16} color="#222" style={{ marginRight: 2 }} />
-                  <Text style={styles.locationTagText}>{item.location}</Text>
+          <View style={styles.newCompanyCard}>
+            <View style={styles.companyCardHeader}>
+              <View style={styles.companyInfoSection}>
+                {logoUrl ? (
+                  <Image 
+                    source={{ uri: logoUrl }}
+                    style={[styles.companyLogo, { backgroundColor: '#fff' }]}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.companyLogo, { backgroundColor: logoColor }]}>
+                    <Text style={styles.companyLogoText}>{logoText}</Text>
+                  </View>
+                )}
+                <View style={styles.companyTextSection}>
+                  <Text style={styles.companyTitle} numberOfLines={1} ellipsizeMode="tail">
+                    {item.companyName || item.name || 'Unknown Company'}
+                  </Text>
+                  <Text style={styles.companyIndustry}>
+                    {item.industryName || 'Unknown Industry'}
+                  </Text>
                 </View>
-              ) : null}
+              </View>
+            </View>
+            
+            <View style={styles.divider} />
+            
+            <View style={styles.companyLocation}>
+              <Text style={styles.locationText}>
+                {item.location || 'Unknown Location'}
+              </Text>
+            </View>
+            
+            <View style={styles.companyTags}>
+              {tags.map((tag, tagIndex) => (
+                <View key={tagIndex} style={styles.companyTag}>
+                  <Text style={styles.companyTagText}>{tag}</Text>
+                </View>
+              ))}
             </View>
           </View>
-          {/* Hàng dưới: industry + team size, thẳng hàng với logo */}
-          {(item.industryName || item.teamSize) && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, marginLeft: 0 }}>
-              {item.industryName && (
-                <View style={styles.industryTagLarge}>
-                  <MaterialIcons name="business-center" size={14} color="#1ca97c" style={{ marginRight: 6 }} />
-                  <Text style={styles.industryTagTextLarge}>{item.industryName}</Text>
-                </View>
-              )}
-              {item.teamSize && (
-                <View style={styles.sizeTagLarge}>
-                  <MaterialIcons name="group" size={14} color="#888" style={{ marginRight: 6 }} />
-                  <Text style={styles.sizeTagTextLarge}>{item.teamSize}</Text>
-                </View>
-              )}
-            </View>
-          )}
-        </View>
         </Animatable.View>
       </TouchableOpacity>
     );
@@ -82,11 +246,35 @@ const CompanyListScreen = () => {
 
   if (loading) {
     return (
-      <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
         <HeaderCandidates />
+        
+        {/* Header Title */}
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Find Companies</Text>
+        </View>
+        
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search"
+              placeholderTextColor="#666"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+            <TouchableOpacity onPress={() => navigation.navigate('CompanyFilter', { savedFilters })}>
+              <MaterialIcons name="tune" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Loading Company List */}
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#007bff" />
-          <Text>Loading company list...</Text>
+          <Text style={styles.loadingText}>Loading company list...</Text>
         </View>
       </View>
     );
@@ -104,30 +292,76 @@ const CompanyListScreen = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f3f7fd' }}>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <HeaderCandidates />
-      {/* Banner */}
-      <View style={styles.banner}>
-        <Text style={styles.bannerTitle}>Find Companies</Text>
+      
+      {/* Header Title */}
+      <View style={styles.headerTitleContainer}>
+        <Text style={styles.headerTitle}>Find Companies</Text>
       </View>
-      {/* Filter & Sort (placeholder, có thể mở rộng sau) */}
-      <View style={styles.filterRow}>
-        <TouchableOpacity style={styles.filterBtn}>
-          <MaterialIcons name="filter-list" size={22} color="#2563eb" />
-          <Text style={styles.filterBtnText}>Filter</Text>
-        </TouchableOpacity>
-        <Text style={styles.totalCompanyText}>Show <Text style={{ fontWeight: 'bold' }}>{companies.length}</Text> companies</Text>
+      
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            placeholderTextColor="#666"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+          {searchLoading ? (
+            <ActivityIndicator size="small" color="#666" style={styles.searchLoading} />
+          ) : (
+            <TouchableOpacity onPress={() => navigation.navigate('CompanyFilter', { savedFilters })}>
+              <MaterialIcons name="tune" size={20} color="#666" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-      <View style={styles.sortRow}>
-        <View style={styles.sortDropdown}></View>
-      </View>
-      {/* Company List - only this part scrolls */}
+
+      {/* Search Results Count and Filter Indicator */}
+      {hasActiveFilters() && !isInitialLoad && (
+        <View style={styles.searchResultsHeader}>
+          <View style={styles.resultsInfo}>
+            <Text style={styles.searchResultsCount}>
+              {filteredCompanies.length} found
+            </Text>
+            {Object.keys(appliedFilters).some(key => appliedFilters[key]) && (
+              <View style={styles.filterIndicator}>
+                <MaterialIcons name="filter-list" size={16} color="#2563eb" />
+                <Text style={styles.filterIndicatorText}>Filters applied</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.filterActions}>
+            {hasActiveFilters() && (
+              <TouchableOpacity style={styles.clearFilterButton} onPress={clearFilters}>
+                <MaterialIcons name="clear" size={16} color="#666" />
+                <Text style={styles.clearFilterText}>Clear</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Company List or Loading */}
       <View style={{ flex: 1 }}>
-        {companies.length === 0 ? (
-          <Text style={{ textAlign: 'center', color: '#888', marginTop: 32 }}>No companies found.</Text>
+        {filterLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#007bff" />
+            <Text style={styles.loadingText}>Applying filters...</Text>
+          </View>
+        ) : filteredCompanies.length === 0 ? (
+          <NotFoundScreen 
+            title="No Companies Found"
+            message="Sorry, no companies match your current search and filter criteria. Please try adjusting your filters or search terms."
+            variant="work"
+          />
         ) : (
           <FlatList
-            data={companies}
+            data={filteredCompanies}
             keyExtractor={(item, idx) => item.userId?.toString() || idx.toString()}
             renderItem={renderCompanyCard}
             contentContainerStyle={styles.companyListWrap}
@@ -140,6 +374,104 @@ const CompanyListScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  // Header Title Styles
+  headerTitleContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+  },
+  headerTitle: {
+    fontSize: 28,
+    color: '#333',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    fontFamily: 'Poppins-Bold',
+    fontStyle: 'normal',
+    letterSpacing: 0,
+    textAlign: 'center'
+  },
+
+  // Search Bar Styles
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Regular',
+  },
+  searchLoading: {
+    marginLeft: 8,
+  },
+
+  // Search Results Header
+  searchResultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+  },
+  resultsInfo: {
+    flex: 1,
+  },
+  searchResultsCount: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Poppins-Bold',
+  },
+  filterIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  filterIndicatorText: {
+    fontSize: 12,
+    color: '#2563eb',
+    fontFamily: 'Poppins-Regular',
+    marginLeft: 4,
+  },
+  filterActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
+    marginRight: 12,
+  },
+  clearFilterText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Poppins-Regular',
+    marginLeft: 4,
+  },
+
+  // Company List Styles
+  companyListWrap: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -151,6 +483,12 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 16,
     textAlign: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 12,
   },
   banner: {
     backgroundColor: '#f3f7fd',
@@ -205,10 +543,103 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
-  companyListWrap: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
+
+  // New Company Card Styles (from HomeScreen)
+  newCompanyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
+  companyCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  companyInfoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  companyTextSection: {
+    marginLeft: 12,
+    flex: 1,
+    paddingLeft: 0,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  companyLogo: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  companyLogoText: {
+    color: '#2563eb',
+    fontSize: 24,
+    fontFamily: 'Poppins-Bold',
+  },
+
+  companyTitle: {
+    fontSize: 20,
+    color: '#000',
+    marginBottom: 2,
+    fontFamily: 'Poppins-Bold',
+  },
+  companyIndustry: {
+    fontSize: 15,
+    color: '#666',
+    marginBottom: 0,
+    fontFamily: 'Poppins-Regular',
+  },
+  companyLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    marginLeft: 68,
+  },
+  locationText: {
+    fontSize: 16, 
+    color: '#666',
+    marginLeft: 0,
+    fontFamily: 'Poppins-Regular',
+  },
+  companyTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginLeft: 68,
+    marginTop: 2,
+  },
+  companyTag: {
+    backgroundColor: '#F0F0F0',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  companyTagText: {
+    fontSize: 12,
+    color: '#000',
+    fontWeight: '500',
+    fontFamily: 'Poppins-Regular',
+  },
+  // Old Company Card Styles (keeping for reference)
   companyCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -223,20 +654,21 @@ const styles = StyleSheet.create({
     borderColor: '#e6edfa', // màu xanh nhạt
     position: 'relative',
   },
-  companyLogo: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginRight: 12,
-  },
-  companyTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#222',
-  },
+  // Old company logo and title styles (removed to avoid conflicts)
+  // companyLogo: {
+  //   width: 44,
+  //   height: 44,
+  //   borderRadius: 22,
+  //   backgroundColor: '#fff',
+  //   borderWidth: 1,
+  //   borderColor: '#eee',
+  //   marginRight: 12,
+  // },
+  // companyTitle: {
+  //   fontSize: 17,
+  //   fontWeight: 'bold',
+  //   color: '#222',
+  // },
   industryTag: {
     flexDirection: 'row',
     alignItems: 'center',
