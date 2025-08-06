@@ -111,10 +111,10 @@ const HomeScreen = () => {
           limit={5}
         />
 
-        {/* Recent Jobs Section */}
+        {/* Trending Jobs Section */}
         <JobCard 
-          title="Recent Jobs"
-          showSeeAll={true}
+          title="Trending Jobs"
+          showSeeAll={false}
           limit={5}
         />
       </ScrollView>

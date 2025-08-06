@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Alert, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { JobService } from '../../../../services/JobService';
@@ -7,21 +7,25 @@ import { JobCardSkeleton } from '../../../../components/SkeletonLoading';
 import { authService } from '../../../../services/authService';
 import * as favoriteJobService from '../../../../services/favoriteJobService';
 
+const { width: screenWidth } = Dimensions.get('window');
+
 const JobCard = ({ 
-  title = "Recent Jobs", 
+  title = "Trending Jobs", 
   showSeeAll = true, 
   limit = null,
   showHeader = true 
 }) => {
   const navigation = useNavigation();
+  const flatListRef = useRef(null);
   const [jobs, setJobs] = useState([]);
   const [allJobs, setAllJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favoriteJobs, setFavoriteJobs] = useState(new Set());
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Fetch jobs data from API
+  // Fetch trending jobs data from API
   useEffect(() => {
-    const fetchJobs = async (retryCount = 0) => {
+    const fetchTrendingJobs = async (retryCount = 0) => {
       try {
         setLoading(true);
         
@@ -29,33 +33,106 @@ const JobCard = ({
           setTimeout(() => reject(new Error('Timeout')), 5000) // Increased to 5 seconds
         );
         
-        const jobsPromise = JobService.getJobs();
+        const jobsPromise = JobService.getTrendingJobs({ 
+          role: "candidate", 
+          page: 1, 
+          pageSize: limit || 10 
+        });
         const jobsData = await Promise.race([jobsPromise, timeoutPromise]);
         
+        console.log('API trending jobs response:', jobsData);
+        
+        // Debug company data structure
+        if (jobsData && Array.isArray(jobsData) && jobsData.length > 0) {
+          console.log('First job company data:', jobsData[0]?.company);
+          console.log('First job logo data:', jobsData[0]?.company?.urlCompanyLogo);
+        }
+        
+        // Kiểm tra và xử lý dữ liệu an toàn
+        let actualJobsData = jobsData;
+        
+        // Nếu jobsData là object, tìm thuộc tính chứa mảng jobs
+        if (jobsData && typeof jobsData === 'object' && !Array.isArray(jobsData)) {
+          if (jobsData.data && Array.isArray(jobsData.data)) {
+            actualJobsData = jobsData.data;
+          } else if (jobsData.jobs && Array.isArray(jobsData.jobs)) {
+            actualJobsData = jobsData.jobs;
+          } else if (jobsData.items && Array.isArray(jobsData.items)) {
+            actualJobsData = jobsData.items;
+          } else if (jobsData.results && Array.isArray(jobsData.results)) {
+            actualJobsData = jobsData.results;
+          }
+        }
+        
+        if (!actualJobsData || !Array.isArray(actualJobsData)) {
+          console.log('API trending jobs trả về dữ liệu không hợp lệ, thử dùng API getJobs:', jobsData);
+          
+          // Fallback to getJobs API
+          try {
+            const fallbackJobsData = await JobService.getJobs();
+            if (fallbackJobsData && Array.isArray(fallbackJobsData)) {
+                             const mappedJobs = fallbackJobsData.map((job, index) => ({
+                 id: job.id?.toString() || job.jobId?.toString() || index.toString(),
+                 title: job.jobTitle || job.title || 'Unknown Job',
+                 company: job.company?.companyName || 'Unknown Company',
+                 location: formatLocation(job.location, job.provinceName),
+                 salary: formatSalary(job.minSalary, job.maxSalary, job.isSalaryNegotiable),
+                 tags: getJobTags(job),
+                 logoColor: getLogoColor(job.company?.companyName || 'Unknown'),
+                 logoText: getLogoText(job.company?.companyName || 'Unknown'),
+                 logoUrl: job.company?.urlCompanyLogo || job.logo || null
+               }));
+              
+              setAllJobs(mappedJobs);
+              const limitedJobs = limit ? mappedJobs.slice(0, limit) : mappedJobs;
+              setJobs(limitedJobs);
+              return;
+            }
+          } catch (fallbackError) {
+            console.error('Lỗi khi dùng API getJobs fallback:', fallbackError);
+          }
+          
+          setJobs([]);
+          setAllJobs([]);
+          return;
+        }
+        
         // Map API data to match component structure
-        const mappedJobs = jobsData.map((job, index) => ({
-          id: job.id?.toString() || index.toString(),
-          title: job.jobTitle || job.title || 'Unknown Job',
-          company: job.company?.companyName || 'Unknown Company',
-          location: formatLocation(job.location, job.provinceName),
-          salary: formatSalary(job.minSalary, job.maxSalary, job.isSalaryNegotiable),
-          tags: getJobTags(job),
-          logoColor: getLogoColor(job.company?.companyName || 'Unknown'),
-          logoText: getLogoText(job.company?.companyName || 'Unknown'),
-          logoUrl: job.logo || null
-        }));
+        const mappedJobs = actualJobsData.map((job, index) => {
+          const mappedJob = {
+            id: job.id?.toString() || job.jobId?.toString() || index.toString(),
+            title: job.jobTitle || job.title || 'Unknown Job',
+            company: job.company?.companyName || 'Unknown Company',
+            location: formatLocation(job.location, job.provinceName),
+            salary: formatSalary(job.minSalary, job.maxSalary, job.isSalaryNegotiable),
+            tags: getJobTags(job),
+            logoColor: getLogoColor(job.company?.companyName || 'Unknown'),
+            logoText: getLogoText(job.company?.companyName || 'Unknown'),
+            logoUrl: job.company?.urlCompanyLogo || job.logo || null
+          };
+          
+          // Debug logo URL for first job
+          if (index === 0) {
+            console.log('First mapped job logo URL:', mappedJob.logoUrl);
+            console.log('Original job company data:', job.company);
+            console.log('Original job ID:', job.id, 'jobId:', job.jobId);
+            console.log('Mapped job ID:', mappedJob.id);
+          }
+          
+          return mappedJob;
+        });
         
         // Store all jobs and apply limit if specified
         setAllJobs(mappedJobs);
         const limitedJobs = limit ? mappedJobs.slice(0, limit) : mappedJobs;
         setJobs(limitedJobs);
       } catch (error) {
-        console.error('Error fetching jobs:', error);
+        console.error('Error fetching trending jobs:', error);
         
         // Retry logic - try again up to 2 times
         if (retryCount < 2) {
           console.log(`Retrying... Attempt ${retryCount + 1}`);
-          setTimeout(() => fetchJobs(retryCount + 1), 1000); // Wait 1 second before retry
+          setTimeout(() => fetchTrendingJobs(retryCount + 1), 1000); // Wait 1 second before retry
           return;
         }
         
@@ -67,7 +144,7 @@ const JobCard = ({
       }
     };
 
-    fetchJobs();
+    fetchTrendingJobs();
   }, [limit]);
 
   // Check favorite status for jobs when jobs are loaded
@@ -108,6 +185,33 @@ const JobCard = ({
       checkFavoriteStatus();
     }
   }, [jobs]);
+
+  // Auto-scroll carousel effect
+  useEffect(() => {
+    if (jobs.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % jobs.length;
+          if (flatListRef.current) {
+            flatListRef.current.scrollToIndex({
+              index: nextIndex,
+              animated: true,
+            });
+          }
+          return nextIndex;
+        });
+      }, 3000); // Auto-scroll every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [jobs]);
+
+  // Handle scroll events
+  const handleScroll = (event) => {
+    const contentOffset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffset / (screenWidth - 60)); // 60 is total horizontal padding
+    setCurrentIndex(index);
+  };
 
   // Helper function to format location - use provinceName from API
   const formatLocation = (location, provinceName) => {
@@ -213,10 +317,13 @@ const JobCard = ({
     }
   };
 
-  const renderJobItem = ({ item }) => (
+  const renderJobItem = ({ item, index }) => (
     <TouchableOpacity 
       style={styles.jobCard}
-      onPress={() => navigation.navigate('JobDetail', { jobId: item.id })}
+      onPress={() => {
+        console.log('Navigating to JobDetail with jobId:', item.id);
+        navigation.navigate('JobDetail', { jobId: item.id });
+      }}
       activeOpacity={0.8}
     >
       <View style={styles.jobCardHeader}>
@@ -297,12 +404,41 @@ const JobCard = ({
           <Text style={styles.loadingText}>No jobs available</Text>
         </View>
       ) : (
-        <View style={styles.jobsListContainer}>
-          {jobs.map((job, index) => (
-            <View key={job.id} style={{ marginBottom: 0 }}>
-              {renderJobItem({ item: job })}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={jobs}
+            renderItem={renderJobItem}
+            keyExtractor={(item) => item.id.toString()}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            pagingEnabled={true}
+            snapToInterval={screenWidth - 60} // 60 is total horizontal padding
+            decelerationRate="fast"
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={styles.carouselContent}
+            getItemLayout={(data, index) => ({
+              length: screenWidth - 60,
+              offset: (screenWidth - 60) * index,
+              index,
+            })}
+          />
+          
+          {/* Pagination Dots */}
+          {jobs.length > 1 && (
+            <View style={styles.paginationContainer}>
+              {jobs.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.paginationDot,
+                    index === currentIndex && styles.paginationDotActive
+                  ]}
+                />
+              ))}
             </View>
-          ))}
+          )}
           
           {/* Load More Button - Show when there are more jobs than the limit */}
           {limit && allJobs.length > limit && (
@@ -341,6 +477,12 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontFamily: 'Poppins-Bold',
   },
+  carouselContainer: {
+    paddingBottom: 20,
+  },
+  carouselContent: {
+    paddingHorizontal: 20,
+  },
   jobsListContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -364,6 +506,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    marginRight: 20,
+    width: screenWidth - 60, // Full width minus padding
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -482,6 +626,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontFamily: 'Poppins-SemiBold',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#2563eb',
+    width: 24,
   },
 });
 

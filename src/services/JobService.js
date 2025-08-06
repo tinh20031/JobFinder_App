@@ -265,4 +265,33 @@ export const JobService = {
       return [];
     }
   },
+
+  async getTrendingJobs({ role = "candidate", companyId = null, page = 1, pageSize = 10 } = {}) {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const params = new URLSearchParams();
+      if (role) params.append("role", role);
+      if (companyId) params.append("companyId", companyId);
+      if (page) params.append("page", page);
+      if (pageSize) params.append("pageSize", pageSize);
+      
+      const response = await fetch(`${BASE_URL}/api/job/trending?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Không thể lấy danh sách việc làm trending');
+      }
+      
+      const trendingJobs = await response.json();
+      return trendingJobs;
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách việc làm trending:', error);
+      throw error;
+    }
+  },
 };

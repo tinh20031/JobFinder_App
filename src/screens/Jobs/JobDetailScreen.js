@@ -34,11 +34,61 @@ const JobDetailScreen = ({ route }) => {
     const fetchJob = async () => {
       setLoading(true);
       setError(null);
+      console.log('Fetching job with ID:', jobId);
+      
       try {
-        const jobs = await JobService.getJobs();
-        const found = jobs.find(j => j.id?.toString() === jobId?.toString());
+        // Thử lấy job từ trending jobs trước
+        let found = null;
+        
+        try {
+          const trendingJobs = await JobService.getTrendingJobs({ 
+            role: "candidate", 
+            page: 1, 
+            pageSize: 50 
+          });
+          
+          // Xử lý cấu trúc dữ liệu trending jobs
+          let actualTrendingJobs = trendingJobs;
+          if (trendingJobs && typeof trendingJobs === 'object' && !Array.isArray(trendingJobs)) {
+            if (trendingJobs.data && Array.isArray(trendingJobs.data)) {
+              actualTrendingJobs = trendingJobs.data;
+            } else if (trendingJobs.jobs && Array.isArray(trendingJobs.jobs)) {
+              actualTrendingJobs = trendingJobs.jobs;
+            } else if (trendingJobs.items && Array.isArray(trendingJobs.items)) {
+              actualTrendingJobs = trendingJobs.items;
+            } else if (trendingJobs.results && Array.isArray(trendingJobs.results)) {
+              actualTrendingJobs = trendingJobs.results;
+            }
+          }
+          
+          if (actualTrendingJobs && Array.isArray(actualTrendingJobs)) {
+            found = actualTrendingJobs.find(j => j.id?.toString() === jobId?.toString());
+            console.log('Found in trending jobs:', found ? 'Yes' : 'No');
+          }
+        } catch (trendingError) {
+          console.log('Error fetching trending jobs, trying regular jobs:', trendingError);
+        }
+        
+        // Nếu không tìm thấy trong trending jobs, thử với regular jobs
+        if (!found) {
+          const jobs = await JobService.getJobs();
+          found = jobs.find(j => j.id?.toString() === jobId?.toString());
+          console.log('Found in regular jobs:', found ? 'Yes' : 'No');
+        }
+        
+        // Nếu vẫn không tìm thấy, thử lấy trực tiếp bằng API getJobById
+        if (!found) {
+          try {
+            found = await JobService.getJobById(jobId);
+            console.log('Found via getJobById:', found ? 'Yes' : 'No');
+          } catch (getByIdError) {
+            console.log('Error getting job by ID:', getByIdError);
+          }
+        }
+        
         setJob(found || null);
       } catch (err) {
+        console.error('Error fetching job:', err);
         setError('Failed to load job data.');
       } finally {
         setLoading(false);
