@@ -127,6 +127,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#150b3d',
     paddingVertical: 12,
+    fontFamily: 'Poppins-Regular',
   },
   languagesList: {
     flex: 1,
@@ -158,9 +159,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#150b3d',
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   selectedLanguageText: {
     color: '#130160',
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
 }); 

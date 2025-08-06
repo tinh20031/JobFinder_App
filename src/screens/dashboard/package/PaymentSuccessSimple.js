@@ -245,16 +245,17 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 8,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   successSubtitle: {
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 24,
+    fontFamily: 'Poppins-Regular',
   },
   detailsContainer: {
     width: '100%',
@@ -277,9 +278,9 @@ const styles = StyleSheet.create({
   },
   detailTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#1f2937',
     marginLeft: 8,
+    fontFamily: 'Poppins-Bold',
   },
   detailItem: {
     flexDirection: 'row',
@@ -292,11 +293,12 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     color: '#6b7280',
+    fontFamily: 'Poppins-Regular',
   },
   detailValue: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#1f2937',
+    fontFamily: 'Poppins-SemiBold',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -309,8 +311,8 @@ const styles = StyleSheet.create({
   statusText: {
     color: 'white',
     fontSize: 12,
-    fontWeight: '600',
     marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   featuresContainer: {
     width: '100%',
@@ -318,9 +320,9 @@ const styles = StyleSheet.create({
   },
   featuresTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 16,
+    fontFamily: 'Poppins-Bold',
   },
   featureItem: {
     flexDirection: 'row',
@@ -349,14 +351,15 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#1f2937',
     marginBottom: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   featureDescription: {
     fontSize: 14,
     color: '#6b7280',
     lineHeight: 20,
+    fontFamily: 'Poppins-Regular',
   },
   actionButtons: {
     width: '100%',
@@ -379,8 +382,8 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   secondaryButton: {
     flexDirection: 'row',
@@ -401,8 +404,8 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: colors.primary,
     fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

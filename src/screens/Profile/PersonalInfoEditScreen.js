@@ -423,9 +423,9 @@ export default function PersonalInfoEditScreen({ route }) {
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Select Province</Text>
           <ScrollView style={styles.pickerList}>
-            {provinces.map((provinceItem) => (
+            {provinces.map((provinceItem, index) => (
               <TouchableOpacity
-                key={provinceItem.code || provinceItem.id}
+                key={provinceItem.code || provinceItem.id || `province-${index}`}
                 style={styles.pickerItem}
                 onPress={() => {
                   setProvince(provinceItem.name);
@@ -457,9 +457,9 @@ export default function PersonalInfoEditScreen({ route }) {
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Select City</Text>
           <ScrollView style={styles.pickerList}>
-            {cities.map((cityItem) => (
+            {cities.map((cityItem, index) => (
               <TouchableOpacity
-                key={cityItem.code || cityItem.id}
+                key={cityItem.code || cityItem.id || `city-${index}`}
                 style={styles.pickerItem}
                 onPress={() => {
                   setCity(cityItem.name);
@@ -517,18 +517,18 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    fontWeight: 'bold',
     fontSize: 20,
     color: '#150b3d',
     marginTop: 8,
     marginBottom: 16,
     alignSelf: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   scrollView: {
     flex: 1,
   },
   form: { width: SCREEN_WIDTH - 36, backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 2, alignSelf: 'center', borderWidth: 1, borderColor: '#eee' },
-  label: { fontWeight: '600', fontSize: 15, color: '#222', marginBottom: 6, marginTop: 12 },
+  label: { fontWeight: '600', fontSize: 15, color: '#222', marginBottom: 6, marginTop: 12, fontFamily: 'Poppins-SemiBold' },
   input: { 
     backgroundColor: '#fff', 
     borderRadius: 8, 
@@ -542,16 +542,19 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    fontFamily: 'Poppins-Regular'
   },
   inputText: {
     fontSize: 15,
     color: '#514a6b',
     fontWeight: '400',
-    flex: 1
+    flex: 1,
+    fontFamily: 'Poppins-Regular'
   },
   placeholderText: {
-    color: '#bcbcbc'
+    color: '#bcbcbc',
+    fontFamily: 'Poppins-Regular'
   },
   disabledInput: {
     backgroundColor: '#f0f0f0',
@@ -581,6 +584,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginLeft: 8,
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   radioOuter: {
     width: 22,
@@ -606,9 +610,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 13,
     marginBottom: 8,
+    fontFamily: 'Poppins-Regular',
   },
   required: {
     color: '#e60023',
+    fontFamily: 'Poppins-Regular',
   },
   inputError: {
     borderColor: '#e60023',
@@ -623,16 +629,16 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   saveBtn: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingVertical: 16, marginTop: 24, alignSelf: 'center' },
-  saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
+  saveBtnText: { color: '#fff', fontSize: 16, letterSpacing: 0.84, fontFamily: 'Poppins-Bold' },
   modal: { justifyContent: 'flex-end', margin: 0 },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
-  sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
-  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
+  sheetTitle: { fontSize: 18, color: '#150b3d', marginBottom: 12, fontFamily: 'Poppins-Bold' },
+  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center', fontFamily: 'Poppins-Regular' },
   sheetBtn: { width: '100%', backgroundColor: '#2563eb', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 12 },
-  sheetBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  sheetBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Poppins-Bold' },
   sheetBtnUndo: { width: '100%', backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 0 },
-  sheetBtnUndoText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16 },
+  sheetBtnUndoText: { color: '#2563eb', fontSize: 16, fontFamily: 'Poppins-Bold' },
   pickerList: {
     maxHeight: 300,
     marginBottom: 16
@@ -648,6 +654,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#514a6b',
     textAlign: 'center',
-    fontWeight: '500'
+    fontWeight: '500',
+    fontFamily: 'Poppins-Medium'
   },
 }); 

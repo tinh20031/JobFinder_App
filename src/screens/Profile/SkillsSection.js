@@ -217,10 +217,10 @@ const styles = StyleSheet.create({
     marginBottom: 12 
   },
   title: { 
-    fontWeight: 'bold', 
     fontSize: 16, 
     color: '#150b3d', 
-    flex: 1 
+    flex: 1,
+    fontFamily: 'Poppins-Bold',
   },
   addBtn: {
     backgroundColor: '#f0f7ff',
@@ -246,6 +246,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: '#666',
     fontSize: 14,
+    fontFamily: 'Poppins-Regular',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -254,15 +255,16 @@ const styles = StyleSheet.create({
   emptyText: { 
     color: '#666', 
     fontSize: 16,
-    fontWeight: '500',
     marginTop: 12,
     marginBottom: 4,
+    fontFamily: 'Poppins-Medium',
   },
   emptySubtext: {
     color: '#999',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
+    fontFamily: 'Poppins-Regular',
   },
   sectionListContent: {
     paddingBottom: 8,
@@ -278,9 +280,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   groupTitle: {
-    fontWeight: 'bold',
     fontSize: 16,
     color: '#130160',
+    fontFamily: 'Poppins-Bold',
   },
   groupActionBtn: {
     padding: 6,
@@ -299,7 +301,7 @@ const styles = StyleSheet.create({
   skillText: {
     fontSize: 14,
     color: '#150b3d',
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   coreSkillTag: {
     backgroundColor: '#f0f7ff',
@@ -351,16 +353,17 @@ const styles = StyleSheet.create({
     marginBottom: 16 
   },
   sheetTitle: { 
-    fontWeight: 'bold', 
     fontSize: 18, 
     color: '#150b3d', 
-    marginBottom: 12 
+    marginBottom: 12,
+    fontFamily: 'Poppins-Bold',
   },
   sheetDesc: { 
     color: '#514a6b', 
     fontSize: 14, 
     marginBottom: 24, 
-    textAlign: 'center' 
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   sheetBtn: {
     width: '100%',
@@ -375,6 +378,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   sheetBtnUndo: {
     width: '100%',
@@ -389,5 +393,6 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
 }); 

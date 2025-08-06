@@ -88,10 +88,10 @@ const styles = StyleSheet.create({
     marginBottom: 12 
   },
   title: { 
-    fontWeight: 'bold', 
     fontSize: 16, 
     color: '#150b3d', 
-    flex: 1 
+    flex: 1,
+    fontFamily: 'Poppins-Bold',
   },
   editBtn: {
     backgroundColor: '#f0f7ff',
@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
   },
   contentContainer: {
     backgroundColor: '#fff',
@@ -139,6 +140,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: '#666',
     fontSize: 14,
+    fontFamily: 'Poppins-Regular',
   },
   emptyContainer: {
     backgroundColor: '#f8f9ff',
@@ -155,12 +157,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 12,
     marginBottom: 4,
+    fontFamily: 'Poppins-Medium',
   },
   emptySubtext: {
     color: '#999',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
+    fontFamily: 'Poppins-Regular',
   },
   input: { 
     borderWidth: 1, 

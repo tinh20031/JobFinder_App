@@ -141,8 +141,8 @@ const DashboardScreen = () => {
                style={styles.modalContent}
              >
                <View style={styles.modalHandle} />
-               <Text style={styles.modalTitle}>Log out</Text>
-               <Text style={styles.modalMessage}>Are you sure you want to leave?</Text>
+               <Text style={styles.modalTitle}>LOG OUT</Text>
+               <Text style={styles.modalMessage}>Are you sure you want to log out?</Text>
                <View style={styles.modalButtons}>
                  <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmLogout}>
                    <Text style={styles.confirmButtonText}>YES</Text>
@@ -192,8 +192,8 @@ const styles = StyleSheet.create({
   },
   menuText: {
     fontSize: 16,
-    fontWeight: '500',
     color: '#333',
+    fontFamily: 'Poppins-Medium',
   },
   modalOverlay: {
     flex: 1,
@@ -228,9 +228,9 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '700',
     marginBottom: 12,
     color: '#111827',
+    fontFamily: 'Poppins-Bold',
   },
   modalMessage: {
     fontSize: 16,
@@ -238,13 +238,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 22,
+    fontFamily: 'Poppins-Regular',
   },
   modalButtons: {
     width: '100%',
     gap: 12,
   },
   confirmButton: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#2563eb',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -254,8 +255,8 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
     letterSpacing: 0.5,
+    fontFamily: 'Poppins-SemiBold',
   },
   cancelButton: {
     backgroundColor: '#E5E7EB',
@@ -266,10 +267,10 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   cancelButtonText: {
-    color: '#374151',
+    color: '#2563eb',
     fontSize: 16,
-    fontWeight: '600',
     letterSpacing: 0.5,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

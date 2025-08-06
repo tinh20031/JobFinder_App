@@ -362,13 +362,14 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: 24,
     color: '#222',
+    fontFamily: 'Poppins-Regular',
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
     textAlign: 'center',
     marginBottom: 20,
     color: '#222',
+    fontFamily: 'Poppins-SemiBold',
   },
   section: {
     backgroundColor: '#f7fafd',
@@ -383,9 +384,9 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#222',
     marginBottom: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   radioRow: {
     flexDirection: 'row',
@@ -406,8 +407,8 @@ const styles = StyleSheet.create({
   },
   radioLabel: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#222',
+    fontFamily: 'Poppins-SemiBold',
   },
   uploadBtnContainer: {
     flexDirection: 'row',
@@ -425,14 +426,15 @@ const styles = StyleSheet.create({
   },
   uploadBtnText: {
     color: '#1976d2',
-    fontWeight: '600',
     fontSize: 15,
     marginRight: 10,
+    fontFamily: 'Poppins-SemiBold',
   },
   uploadFileName: {
     color: '#444',
     fontSize: 14,
     flex: 1,
+    fontFamily: 'Poppins-Regular',
   },
   removeBtn: {
     marginLeft: 10,
@@ -443,19 +445,20 @@ const styles = StyleSheet.create({
   },
   removeBtnText: {
     color: '#d32f2f',
-    fontWeight: '600',
     fontSize: 14,
+    fontFamily: 'Poppins-SemiBold',
   },
   uploadNote: {
     color: '#888',
     fontSize: 13,
     marginTop: 8,
+    fontFamily: 'Poppins-Regular',
   },
   coverLabel: {
     fontSize: 15,
-    fontWeight: '500',
     color: '#222',
     marginBottom: 8,
+    fontFamily: 'Poppins-Medium',
   },
   coverInput: {
     backgroundColor: '#f2f6fa',
@@ -464,12 +467,14 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 15,
     color: '#222',
+    fontFamily: 'Poppins-Regular',
   },
   errorText: {
     color: '#d32f2f',
     textAlign: 'center',
     marginVertical: 8,
     fontSize: 14,
+    fontFamily: 'Poppins-Regular',
   },
   applyBtn: {
     backgroundColor: '#1976d2',
@@ -482,8 +487,8 @@ const styles = StyleSheet.create({
   },
   applyBtnText: {
     color: '#fff',
-    fontWeight: '600',
     fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
   },
   cvList: {
     maxHeight: 150,
@@ -505,15 +510,16 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#1976d2',
     marginBottom: 12,
+    fontFamily: 'Poppins-Bold',
   },
   successMessage: {
     fontSize: 16,
     color: '#222',
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: 'Poppins-Regular',
   },
   successBtn: {
     backgroundColor: '#1976d2',
@@ -523,8 +529,8 @@ const styles = StyleSheet.create({
   },
   successBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
 });
 

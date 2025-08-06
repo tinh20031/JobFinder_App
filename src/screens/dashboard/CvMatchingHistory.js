@@ -181,11 +181,11 @@ const styles = StyleSheet.create({
 
   titleText: {
     fontSize: 20,
-    fontWeight: '700',
     color: '#2c3e50',
     textAlign: 'center',
     paddingVertical: 16,
     paddingHorizontal: 20,
+    fontFamily: 'Poppins-Bold',
   },
   listContainer: {
     padding: 16,
@@ -220,13 +220,14 @@ const styles = StyleSheet.create({
   },
   jobTitle: {
     fontSize: 16,
-    fontWeight: '700',
     color: '#2c3e50',
     marginBottom: 4,
+    fontFamily: 'Poppins-Bold',
   },
   date: {
     fontSize: 12,
     color: '#6c757d',
+    fontFamily: 'Poppins-Regular',
   },
   scoreCompleted: {
     alignItems: 'center',
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   scoreNumber: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Poppins-Bold',
   },
   scoreProcessing: {
     flexDirection: 'row',
@@ -257,8 +258,8 @@ const styles = StyleSheet.create({
   processingText: {
     fontSize: 12,
     color: '#2563eb',
-    fontWeight: '600',
     marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   scoreFailed: {
     flexDirection: 'row',
@@ -268,8 +269,8 @@ const styles = StyleSheet.create({
   failedText: {
     fontSize: 12,
     color: '#c62828',
-    fontWeight: '600',
     marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   statusCompleted: {
     backgroundColor: '#e8f5e9',
@@ -307,16 +308,17 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#495057',
     marginTop: 16,
     marginBottom: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   emptyDescription: {
     fontSize: 14,
     color: '#6c757d',
     textAlign: 'center',
     paddingHorizontal: 20,
+    fontFamily: 'Poppins-Regular',
   },
   loadingContainer: {
     flex: 1,
@@ -328,6 +330,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: '#6c757d',
+    fontFamily: 'Poppins-Regular',
   },
 });
 

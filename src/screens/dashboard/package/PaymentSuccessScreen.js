@@ -264,6 +264,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#6b7280',
+    fontFamily: 'Poppins-Regular',
   },
   errorContainer: {
     flex: 1,
@@ -273,10 +274,10 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 12,
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   errorText: {
     fontSize: 16,
@@ -284,6 +285,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 24,
+    fontFamily: 'Poppins-Regular',
   },
   header: {
     alignItems: 'center',
@@ -297,23 +299,24 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
     marginBottom: 8,
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   headerSubtitle: {
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   content: {
     padding: 20,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     marginBottom: 20,
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   orderInfoContainer: {
     backgroundColor: 'white',
@@ -344,13 +347,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     color: '#6b7280',
+    fontFamily: 'Poppins-Regular',
   },
   orderInfoValue: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#1f2937',
     flex: 1,
     textAlign: 'right',
+    fontFamily: 'Poppins-SemiBold',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -368,8 +372,8 @@ const styles = StyleSheet.create({
   statusText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
     marginLeft: 6,
+    fontFamily: 'Poppins-SemiBold',
   },
   orderDetailsContainer: {
     backgroundColor: 'white',
@@ -398,8 +402,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   tableRow: {
     flexDirection: 'row',
@@ -411,6 +415,7 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
     color: '#4b5563',
+    fontFamily: 'Poppins-Regular',
   },
   tableFooter: {
     flexDirection: 'row',
@@ -422,16 +427,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#1f2937',
+    fontFamily: 'Poppins-Bold',
   },
   tableFooterAmount: {
     flex: 1,
     padding: 15,
     fontSize: 18,
-    fontWeight: 'bold',
     color: colors.primary,
     textAlign: 'right',
+    fontFamily: 'Poppins-Bold',
   },
   statusMessageContainer: {
     marginBottom: 30,
@@ -449,7 +454,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     color: colors.success,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   errorMessage: {
     flexDirection: 'row',
@@ -464,7 +469,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     color: colors.error,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   actionButtons: {
     alignItems: 'center',
@@ -486,8 +491,8 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   secondaryButton: {
     flexDirection: 'row',
@@ -509,6 +514,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   returnButton: {
     backgroundColor: colors.primary,
@@ -519,7 +525,7 @@ const styles = StyleSheet.create({
   returnButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

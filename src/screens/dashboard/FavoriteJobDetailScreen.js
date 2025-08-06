@@ -362,6 +362,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 16,
+    fontFamily: 'Poppins-Regular',
   },
   retryBtn: {
     backgroundColor: '#2563eb',
@@ -371,8 +372,8 @@ const styles = StyleSheet.create({
   },
   retryBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
   banner: {
     backgroundColor: '#f3f7fd',
@@ -385,13 +386,14 @@ const styles = StyleSheet.create({
   },
   bannerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
     color: '#222',
     marginBottom: 6,
+    fontFamily: 'Poppins-Bold',
   },
   bannerSubtitle: {
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Poppins-Regular',
   },
   statsRow: {
     flexDirection: 'row',
@@ -414,13 +416,14 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: 'bold',
     color: '#2563eb',
     marginBottom: 4,
+    fontFamily: 'Poppins-Bold',
   },
   statLabel: {
     fontSize: 14,
     color: '#666',
+    fontFamily: 'Poppins-Regular',
   },
   jobListWrap: {
     paddingHorizontal: 16,
@@ -450,26 +453,28 @@ const styles = StyleSheet.create({
   },
   jobTitle: {
     fontSize: 17,
-    fontWeight: 'bold',
     color: '#222',
+    fontFamily: 'Poppins-Bold',
   },
   jobCompany: {
     fontSize: 14,
     color: '#222',
     marginLeft: 4,
     marginRight: 8,
+    fontFamily: 'Poppins-Regular',
   },
   jobLocation: {
     fontSize: 12,
     color: '#666',
     marginLeft: 4,
     marginTop: 2,
+    fontFamily: 'Poppins-Regular',
   },
   jobSalary: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#2563eb',
     marginLeft: 8,
+    fontFamily: 'Poppins-Bold',
   },
   jobTagsRow: {
     flexDirection: 'row',
@@ -486,7 +491,7 @@ const styles = StyleSheet.create({
   jobTagText: {
     color: '#222',
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   jobDetailsRow: {
     flexDirection: 'row',
@@ -504,6 +509,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginLeft: 4,
+    fontFamily: 'Poppins-Regular',
   },
   additionalInfoRow: {
     flexDirection: 'row',
@@ -521,6 +527,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
     marginLeft: 4,
+    fontFamily: 'Poppins-Regular',
   },
   removeFavoriteBtn: {
     backgroundColor: '#eaf1fb',
@@ -539,10 +546,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#222',
     marginTop: 16,
     marginBottom: 8,
+    fontFamily: 'Poppins-Bold',
   },
   emptySubtitle: {
     fontSize: 16,
@@ -550,6 +557,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 24,
+    fontFamily: 'Poppins-Regular',
   },
   browseBtn: {
     backgroundColor: '#2563eb',
@@ -559,8 +567,8 @@ const styles = StyleSheet.create({
   },
   browseBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Poppins-Bold',
   },
 
 });

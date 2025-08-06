@@ -377,7 +377,7 @@ export default function EducationEditScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8', paddingTop: 24 },
   scrollView: { flex: 1, width: '100%' },
-  header: { fontWeight: 'bold', fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center' },
+  header: { fontSize: 20, color: '#150b3d', marginTop: 8, marginBottom: 16, alignSelf: 'center', fontFamily: 'Poppins-Bold' },
   scrollContent: { alignItems: 'center', paddingBottom: 20 },
 
 
@@ -391,12 +391,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 8,
   },
-  tipsText: { fontSize: 15, color: '#222', flex: 1 },
-  tipsBold: { fontWeight: 'bold' },
-  label: { fontWeight: '600', fontSize: 15, color: '#222', marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: '#222', borderWidth: 1.5, borderColor: '#ddd', marginBottom: 0, fontWeight: '400' },
+  tipsText: { fontSize: 15, color: '#222', flex: 1, fontFamily: 'Poppins-Regular' },
+  tipsBold: { fontFamily: 'Poppins-Bold' },
+  label: { fontWeight: '600', fontSize: 15, color: '#222', marginBottom: 6, marginTop: 12, fontFamily: 'Poppins-SemiBold' },
+  input: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: '#222', borderWidth: 1.5, borderColor: '#ddd', marginBottom: 0, fontWeight: '400', fontFamily: 'Poppins-Regular' },
   required: {
     color: '#e60023',
+    fontFamily: 'Poppins-Regular',
   },
   inputError: {
     borderColor: '#e60023',
@@ -415,13 +416,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 13,
     marginBottom: 8,
+    fontFamily: 'Poppins-Regular',
   },
   rowBetween: { flexDirection: 'row', alignItems: 'center', marginVertical: 12 },
-  switchLabel: { marginLeft: 12, color: '#514a6b', fontSize: 14 },
-  textarea: { minHeight: 100, maxHeight: 200, backgroundColor: '#f8f8f8', borderRadius: 8, padding: 14, fontSize: 15, color: '#514a6b', borderWidth: 1, borderColor: '#eee', textAlignVertical: 'top', marginTop: 0 },
+  switchLabel: { marginLeft: 12, color: '#514a6b', fontSize: 14, fontFamily: 'Poppins-Regular' },
+  textarea: { minHeight: 100, maxHeight: 200, backgroundColor: '#f8f8f8', borderRadius: 8, padding: 14, fontSize: 15, color: '#514a6b', borderWidth: 1, borderColor: '#eee', textAlignVertical: 'top', marginTop: 0, fontFamily: 'Poppins-Regular' },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, gap: 12 },
   removeBtn: { flex: 1, backgroundColor: '#dbeafe', borderRadius: 8, alignItems: 'center', justifyContent: 'center', height: 50, marginRight: 6 },
-  removeBtnText: { color: '#2563eb', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.84 },
+  removeBtnText: { color: '#2563eb', fontSize: 16, letterSpacing: 0.84, fontFamily: 'Poppins-Bold' },
   saveBtn: {
     flex: 1,
     backgroundColor: '#2563eb',
@@ -439,9 +441,9 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
+    fontFamily: 'Poppins-Bold',
   },
   pickerWrapper: {
     backgroundColor: '#f8f8f8',
@@ -458,13 +460,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     height: 56,
     textAlignVertical: 'center',
+    fontFamily: 'Poppins-Regular',
     // paddingHorizontal: 16, // tuỳ platform
   },
   modal: { justifyContent: 'flex-end', margin: 0 },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   sheetHandle: { width: 34, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 16 },
-  sheetTitle: { fontWeight: 'bold', fontSize: 18, color: '#150b3d', marginBottom: 12 },
-  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center' },
+  sheetTitle: { fontSize: 18, color: '#150b3d', marginBottom: 12, fontFamily: 'Poppins-Bold' },
+  sheetDesc: { color: '#514a6b', fontSize: 14, marginBottom: 24, textAlign: 'center', fontFamily: 'Poppins-Regular' },
   sheetBtn: {
     width: '100%',
     backgroundColor: '#dbeafe',
@@ -476,9 +479,9 @@ const styles = StyleSheet.create({
   },
   sheetBtnText: {
     color: '#2563eb',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
+    fontFamily: 'Poppins-Bold',
   },
   sheetBtnUndo: {
     width: '100%',
@@ -491,8 +494,8 @@ const styles = StyleSheet.create({
   },
   sheetBtnUndoText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.84,
+    fontFamily: 'Poppins-Bold',
   },
 }); 

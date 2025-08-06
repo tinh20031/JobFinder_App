@@ -327,10 +327,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
     color: '#333',
     marginBottom: 16,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -353,6 +353,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     color: '#333',
+    fontFamily: 'Poppins-Regular',
   },
   jobCard: {
     backgroundColor: '#fff',
@@ -378,10 +379,10 @@ const styles = StyleSheet.create({
   },
   jobTitle: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#333',
     flex: 1,
     marginRight: 12,
+    fontFamily: 'Poppins-SemiBold',
   },
   headerRight: {
     flexDirection: 'row',
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
   viewApplicationsText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   jobDetails: {
     gap: 8,
@@ -412,6 +413,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     flex: 1,
+    fontFamily: 'Poppins-Regular',
   },
 
   paginationContainer: {
@@ -437,8 +439,8 @@ const styles = StyleSheet.create({
   },
   paginationText: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#444',
+    fontFamily: 'Poppins-SemiBold',
   },
   paginationTextActive: {
     color: '#fff',
@@ -453,6 +455,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Poppins-Regular',
   },
   errorContainer: {
     flexDirection: 'row',
@@ -464,6 +467,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: '#dc2626',
+    fontFamily: 'Poppins-Regular',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -475,6 +479,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
 });
 
