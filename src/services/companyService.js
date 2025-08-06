@@ -70,6 +70,18 @@ const companyService = {
     }
   },
 
+  // Lấy danh sách company sizes
+  getCompanySizes: async () => {
+    // Return hardcoded data directly since API is not available
+    return [
+      { id: 1, sizeName: '50 - 100' },
+      { id: 2, sizeName: '100 - 150' },
+      { id: 3, sizeName: '200 - 250' },
+      { id: 4, sizeName: '300 - 350' },
+      { id: 5, sizeName: '500 - 1000' },
+    ];
+  },
+
   getCompanyDetail: async (companyId) => {
     try {
       const url = `${BASE_URL}/api/CompanyProfile/${companyId}`;

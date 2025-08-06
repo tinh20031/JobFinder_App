@@ -41,6 +41,7 @@ import { PackageScreen, BuyPackageScreen, PaymentSuccessScreen } from '../screen
 import PaymentWebView from '../screens/dashboard/package/PaymentWebView';
 import PaymentSuccessSimple from '../screens/dashboard/package/PaymentSuccessSimple';
 import FilterScreen from '../screens/Jobs/FilterScreen';
+import CompanyFilterScreen from '../screens/Company/CompanyFilterScreen';
 
 // Custom tab bar button cho nút giữa (Profile)
 function CustomTabBarButton({ children, onPress, profileCompletion = 0 }) {
@@ -369,6 +370,7 @@ export default function AppNavigator() {
           <Stack.Screen name="FavoriteJobDetail" component={FavoriteJobDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="NotificationScreen" component={NotificationScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Filter" component={FilterScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CompanyFilter" component={CompanyFilterScreen} options={{ headerShown: false }} />
           
           {/* Package System Screens */}
           <Stack.Screen name="Package" component={PackageScreen} options={{ headerShown: false }} />

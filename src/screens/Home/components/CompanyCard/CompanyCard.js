@@ -38,8 +38,7 @@ const CompanyCard = ({
           name: company.companyName || company.name || 'Unknown Company',
           industry: company.industryName || 'Unknown Industry',
           location: company.location || 'Unknown Location',
-          jobCount: company.teamSize ? `${company.teamSize} employees` : 'Unknown size',
-          tags: company.teamSize ? [`${company.teamSize} employees`] : ['Top Rated'],
+          teamSize: company.teamSize,
           logoColor: getLogoColor(company.companyName || company.name),
           logoText: getLogoText(company.companyName || company.name),
           logoUrl: company.urlCompanyLogo || null
@@ -72,6 +71,15 @@ const CompanyCard = ({
     return companyName.charAt(0).toUpperCase();
   };
 
+  // Helper function to get company tags
+  const getCompanyTags = (company) => {
+    const tags = [];
+    if (company.teamSize) {
+      tags.push(`${company.teamSize} employees`);
+    }
+    return tags;
+  };
+
   // Handle logo display - use image if available, otherwise use text
   const renderLogo = (company) => {
     if (company.logoUrl) {
@@ -99,11 +107,6 @@ const CompanyCard = ({
     );
   };
 
-  const handleCompanyBookmark = (companyId) => {
-    // Handle company bookmark logic
-    console.log('Company bookmarked:', companyId);
-  };
-
   const handleScroll = (event) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
     const cardWidth = 376; // width + marginRight
@@ -128,15 +131,6 @@ const CompanyCard = ({
             <Text style={styles.jobCompany}>{item.industry}</Text>
           </View>
         </View>
-        <TouchableOpacity 
-          style={styles.bookmarkButton} 
-          onPress={(e) => {
-            e.stopPropagation(); // Prevent card press when bookmark is pressed
-            handleCompanyBookmark(item.id);
-          }}
-        >
-          <Icon name="bookmark-border" size={28} color="#0070BA" />
-        </TouchableOpacity>
       </View>
       
       {/* Divider */}
@@ -151,7 +145,7 @@ const CompanyCard = ({
       
       {/* Tags */}
       <View style={styles.jobTags}>
-        {item.tags.map((tag, index) => (
+        {getCompanyTags(item).map((tag, index) => (
           <View key={index} style={styles.jobTag}>
             <Text style={styles.jobTagText}>{tag}</Text>
           </View>
@@ -340,9 +334,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'Poppins-Bold',
   },
-  bookmarkButton: {
-    padding: 4,
-  },
+
   jobTitle: {
     fontSize: 20,
     color: '#000',
@@ -358,7 +350,7 @@ const styles = StyleSheet.create({
   jobLocation: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 4,
     marginLeft: 68,
   },
   locationText: {
@@ -367,17 +359,11 @@ const styles = StyleSheet.create({
     marginLeft: 0,
     fontFamily: 'Poppins-Regular',
   },
-  jobSalary: {
-    fontSize: 17,
-    color: '#2563eb',
-    marginBottom: 16,
-    marginLeft: 68,
-    fontFamily: 'Poppins-SemiBold',
-  },
   jobTags: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginLeft: 68,
-    marginTop: 8,
+    marginTop: 2,
   },
   jobTag: {
     backgroundColor: '#F0F0F0',

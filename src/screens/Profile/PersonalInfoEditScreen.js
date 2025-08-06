@@ -93,7 +93,8 @@ export default function PersonalInfoEditScreen({ route }) {
       // Tìm province code từ tên province
       const selectedProvince = provinces.find(p => p.name === provinceName);
       if (selectedProvince) {
-        const citiesData = await locationService.getDistricts(selectedProvince.code);
+        // Sử dụng getWards thay vì getDistricts vì API mới trả về wards
+        const citiesData = await locationService.getWards(selectedProvince.province_code || selectedProvince.code);
         setCities(citiesData);
       } else {
         setCities([]);
@@ -347,7 +348,7 @@ export default function PersonalInfoEditScreen({ route }) {
 
           {/* City */}
           <Text style={styles.label}>
-            City <Text style={styles.required}>*</Text>
+            Award <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity 
             style={[getInputStyle('city')[0], !province && styles.disabledInput]} 

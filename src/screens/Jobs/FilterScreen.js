@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,34 +9,331 @@ import {
   StatusBar,
   TextInput,
   PanResponder,
+  Modal,
+  FlatList,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import HeaderDetail from '../../components/HeaderDetail';
+import locationService from '../../services/locationService';
+import { JobService } from '../../services/JobService';
 
 const FilterScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  
+  // Get saved filters from route params
+  const savedFilters = route.params?.savedFilters || {};
+  
   const [expandedCategories, setExpandedCategories] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({
-    location: '',
-    salary: '',
-    workType: '',
-    jobLevel: '',
-    employmentType: '',
-    experience: '',
-    education: '',
-    jobFunction: '',
+    location: savedFilters.location || '',
+    salary: savedFilters.salary || '',
+    workType: savedFilters.workType || '',
+    jobLevel: savedFilters.jobLevel || '',
+    employmentType: savedFilters.employmentType || '',
+    experience: savedFilters.experience || '',
+    education: savedFilters.education || '',
+    jobFunction: savedFilters.jobFunction || '',
   });
-  const [locationText, setLocationText] = useState('United States');
-  const [industryText, setIndustryText] = useState('Technology');
-  const [jobTypes, setJobTypes] = useState(['onsite']);
-  const [datePosted, setDatePosted] = useState('all');
-  const [levels, setLevels] = useState(['intern']);
-  const [salaryType, setSalaryType] = useState('negotiable');
-  const [salaryRange, setSalaryRange] = useState({ min: 0, max: 20000 });
-  const [sliderWidth, setSliderWidth] = useState(300);
-  const sliderRef = useRef(null);
+  const [locationText, setLocationText] = useState(savedFilters.locationText || 'Select Location');
+  const [industryText, setIndustryText] = useState(savedFilters.industryText || 'Select Industry');
+  const [selectedJobTypes, setSelectedJobTypes] = useState(savedFilters.selectedJobTypes || []);
+  const [datePosted, setDatePosted] = useState(savedFilters.datePosted || 'all');
+  const [selectedLevels, setSelectedLevels] = useState(savedFilters.selectedLevels || []);
+  const [salaryType, setSalaryType] = useState(savedFilters.salaryType || []); // Không có giá trị mặc định
 
+  // Location picker states
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [provinces, setProvinces] = useState([]);
+  const [filteredProvinces, setFilteredProvinces] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState(null);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  // Industry picker states
+  const [showIndustryModal, setShowIndustryModal] = useState(false);
+  const [industries, setIndustries] = useState([]);
+  const [filteredIndustries, setFilteredIndustries] = useState([]);
+  const [selectedIndustry, setSelectedIndustry] = useState(null);
+  const [loadingIndustries, setLoadingIndustries] = useState(false);
+  const [industrySearchText, setIndustrySearchText] = useState('');
+
+  // Job Type states
+  const [jobTypes, setJobTypes] = useState([]);
+  const [loadingJobTypes, setLoadingJobTypes] = useState(false);
+
+  // Level states
+  const [levels, setLevels] = useState([]);
+  const [loadingLevels, setLoadingLevels] = useState(false);
+
+  // Salary states
+  const [salaryRanges, setSalaryRanges] = useState([]);
+  const [selectedSalaryRange, setSelectedSalaryRange] = useState(null);
+
+  // Load provinces, industries, job types, levels and salary ranges on component mount
+  useEffect(() => {
+    loadProvinces();
+    loadIndustries();
+    loadJobTypes();
+    loadLevels();
+    loadSalaryRanges();
+  }, [loadProvinces]);
+
+  // Debug selectedJobTypes changes
+  useEffect(() => {
+    // If selectedJobTypes contains NaN values, reset it
+    if (selectedJobTypes.some(id => isNaN(Number(id)))) {
+      setSelectedJobTypes([]);
+    }
+  }, [selectedJobTypes]);
+
+  // Debug selectedLevels changes
+  useEffect(() => {
+    // If selectedLevels contains NaN values, reset it
+    if (selectedLevels.some(id => isNaN(Number(id)))) {
+      setSelectedLevels([]);
+    }
+  }, [selectedLevels]);
+
+  // Sync selectedFilters.salary with salaryType
+  useEffect(() => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      salary: salaryType.length > 0 ? salaryType : '' // Nếu có selection thì gửi array, không thì empty string
+    }));
+  }, [salaryType]);
+
+  const loadProvinces = useCallback(async () => {
+    try {
+      setLoadingProvinces(true);
+      const provincesData = await locationService.getProvinces();
+      setProvinces(provincesData);
+      setFilteredProvinces(provincesData);
+      
+      // Restore selectedProvince from saved filters
+      if (savedFilters.location && provincesData.length > 0) {
+        const savedProvince = provincesData.find(province => province.name === savedFilters.location);
+        if (savedProvince) {
+          setSelectedProvince(savedProvince);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading provinces:', error);
+    } finally {
+      setLoadingProvinces(false);
+    }
+  }, [savedFilters.location]);
+
+  const handleSearchLocation = (text) => {
+    setSearchText(text);
+    if (text.trim() === '') {
+      setFilteredProvinces(provinces);
+    } else {
+      const filtered = provinces.filter(province =>
+        province.name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredProvinces(filtered);
+    }
+  };
+
+  const loadIndustries = async () => {
+    try {
+      setLoadingIndustries(true);
+      const industriesData = await JobService.getIndustries();
+      setIndustries(industriesData);
+      setFilteredIndustries(industriesData);
+    } catch (error) {
+      console.error('Error loading industries:', error);
+    } finally {
+      setLoadingIndustries(false);
+    }
+  };
+
+  const handleSearchIndustry = (text) => {
+    setIndustrySearchText(text);
+    if (text.trim() === '') {
+      setFilteredIndustries(industries);
+    } else {
+      const filtered = industries.filter(industry =>
+        industry.industryName.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredIndustries(filtered);
+    }
+  };
+
+  const loadJobTypes = async () => {
+    try {
+      setLoadingJobTypes(true);
+      const jobTypesData = await JobService.getJobTypes();
+      setJobTypes(jobTypesData);
+    } catch (error) {
+      console.error('Error loading job types:', error);
+    } finally {
+      setLoadingJobTypes(false);
+    }
+  };
+
+  const loadLevels = async () => {
+    try {
+      setLoadingLevels(true);
+      const levelsData = await JobService.getLevels();
+      setLevels(levelsData);
+    } catch (error) {
+      console.error('Error loading levels:', error);
+    } finally {
+      setLoadingLevels(false);
+    }
+  };
+
+  const loadSalaryRanges = async () => {
+    try {
+      const salaryRangesData = await JobService.getSalaryRanges();
+      setSalaryRanges(salaryRangesData);
+    } catch (error) {
+      console.error('Error loading salary ranges:', error);
+    }
+  };
+
+  const handleLocationSelect = (province) => {
+    setSelectedProvince(province);
+    setLocationText(province.name);
+    setSelectedFilters(prev => ({
+      ...prev,
+      location: province.name, // Lưu tên tỉnh thay vì code
+    }));
+    setShowLocationModal(false);
+  };
+
+  const openLocationPicker = () => {
+    setSearchText('');
+    setFilteredProvinces(provinces);
+    setShowLocationModal(true);
+  };
+
+  const handleIndustrySelect = (industry) => {
+    setSelectedIndustry(industry);
+    setIndustryText(industry.industryName);
+    setSelectedFilters(prev => ({
+      ...prev,
+      jobFunction: industry.industryName, // Map to jobFunction instead of workType
+    }));
+    setShowIndustryModal(false);
+  };
+
+  const openIndustryPicker = () => {
+    setIndustrySearchText('');
+    setFilteredIndustries(industries);
+    setShowIndustryModal(true);
+  };
+
+  const handleJobTypeToggle = (jobTypeId) => {
+    // If jobTypeId is undefined or invalid, don't proceed
+    if (jobTypeId === undefined || jobTypeId === null) {
+      return;
+    }
+    
+    setSelectedJobTypes(prev => {
+      // Convert jobTypeId to number for consistent comparison
+      const numericId = Number(jobTypeId);
+      
+      // Check if the result is NaN, if so reset the array
+      if (isNaN(numericId)) {
+        return [];
+      }
+      
+      // Check if the ID is already in the array
+      const isCurrentlySelected = prev.some(id => Number(id) === numericId);
+      
+      let newSelected;
+      if (isCurrentlySelected) {
+        // Remove if already selected
+        newSelected = prev.filter(id => Number(id) !== numericId);
+      } else {
+        // Add if not selected
+        newSelected = [...prev, numericId];
+      }
+      
+      return newSelected;
+    });
+  };
+
+  const handleLevelToggle = (levelId) => {
+    // If levelId is undefined or invalid, don't proceed
+    if (levelId === undefined || levelId === null) {
+      return;
+    }
+    
+    setSelectedLevels(prev => {
+      // Convert levelId to number for consistent comparison
+      const numericId = Number(levelId);
+      
+      // Check if the result is NaN, if so reset the array
+      if (isNaN(numericId)) {
+        return [];
+      }
+      
+      // Check if the ID is already in the array
+      const isCurrentlySelected = prev.some(id => Number(id) === numericId);
+      
+      let newSelected;
+      if (isCurrentlySelected) {
+        // Remove if already selected
+        newSelected = prev.filter(id => Number(id) !== numericId);
+      } else {
+        // Add if not selected
+        newSelected = [...prev, numericId];
+      }
+      
+      return newSelected;
+    });
+  };
+
+  const handleApply = () => {
+    // Map selected values to filter structure
+    const finalFilters = {
+      ...selectedFilters,
+      // Ensure salary is properly set as array
+      salary: salaryType.length > 0 ? salaryType : '',
+      // Map job types - try to find the jobType by ID
+      workType: selectedJobTypes.length > 0 ? (() => {
+        const selectedJobType = jobTypes.find(jt => {
+          const jtId = jt.id || jt.jobTypeId || jt.industryId;
+          return Number(jtId) === selectedJobTypes[0];
+        });
+        return selectedJobType?.jobTypeName || '';
+      })() : '',
+      // Map levels - try to find the level by ID
+      jobLevel: selectedLevels.length > 0 ? (() => {
+        const selectedLevel = levels.find(l => {
+          const lId = l.id || l.levelId;
+          return Number(lId) === selectedLevels[0];
+        });
+        return selectedLevel?.levelName || '';
+      })() : '',
+      // Map date posted
+      employmentType: datePosted !== 'all' ? datePosted : '',
+    };
+    
+    // Save current filter state for next time
+    const savedFilterState = {
+      ...selectedFilters,
+      locationText,
+      industryText,
+      selectedJobTypes,
+      datePosted,
+      selectedLevels,
+      salaryType,
+      selectedProvince,
+      selectedIndustry,
+    };
+    
+    // Pass selected filters back to JobListScreen
+    navigation.navigate('JobList', { 
+      filters: finalFilters,
+      savedFilters: savedFilterState 
+    });
+  };
 
   const filterCategories = [
     {
@@ -99,69 +396,20 @@ const FilterScreen = () => {
       education: '',
       jobFunction: '',
     });
-    setLocationText('United States');
-    setIndustryText('Technology');
-    setJobTypes(['onsite']);
+    setLocationText('Select Location');
+    setIndustryText('Select Industry');
+    setSelectedJobTypes([]);
     setDatePosted('all');
-    setLevels(['intern']);
-    setSalaryType('negotiable');
-    setSalaryRange({ min: 0, max: 20000 });
+    setSelectedLevels([]);
+    setSalaryType([]); // Reset về empty array
+    setSelectedSalaryRange(null);
   };
-
-  const handleApply = () => {
-    // Pass selected filters back to JobListScreen
-    navigation.navigate('JobList', { filters: selectedFilters });
-  };
-
-  // State for active thumb
-  const [activeThumb, setActiveThumb] = useState(null);
-
-  // Improved PanResponder for dual-thumb slider
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: (evt, gestureState) => {
-      const { locationX } = evt.nativeEvent;
-      const minPosition = (salaryRange.min / 20000) * sliderWidth;
-      const maxPosition = (salaryRange.max / 20000) * sliderWidth;
-      
-      // Determine which thumb is closer to the tap
-      const distanceToMin = Math.abs(locationX - minPosition);
-      const distanceToMax = Math.abs(locationX - maxPosition);
-      
-      // Set the active thumb based on which is closer
-      if (distanceToMin < distanceToMax) {
-        setActiveThumb('min');
-        console.log('Activated MIN thumb');
-      } else {
-        setActiveThumb('max');
-        console.log('Activated MAX thumb');
-      }
-    },
-    onPanResponderMove: (evt, gestureState) => {
-      const { locationX } = evt.nativeEvent;
-      const percentage = Math.max(0, Math.min(1, locationX / sliderWidth));
-      const newValue = Math.round(percentage * 20000);
-      
-      if (activeThumb === 'min') {
-        const newMin = Math.max(0, Math.min(salaryRange.max - 1000, newValue));
-        setSalaryRange(prev => ({ ...prev, min: newMin }));
-      } else if (activeThumb === 'max') {
-        const newMax = Math.max(salaryRange.min + 1000, Math.min(20000, newValue));
-        setSalaryRange(prev => ({ ...prev, max: newMax }));
-      }
-    },
-    onPanResponderRelease: () => {
-      setActiveThumb(null);
-    },
-  });
-
 
 
   const renderLocationSalaryContent = () => (
     <View style={styles.locationSalaryContent}>
       {/* Location Input */}
-      <TouchableOpacity style={styles.periodContainer} onPress={() => console.log('Open location picker')}>
+      <TouchableOpacity style={styles.periodContainer} onPress={openLocationPicker}>
         <MaterialIcons name="location-on" size={20} color="#666" style={styles.inputIcon} />
         <Text style={styles.periodText}>{locationText}</Text>
         <View style={styles.spacer} />
@@ -173,7 +421,7 @@ const FilterScreen = () => {
   const renderIndustryContent = () => (
     <View style={styles.locationSalaryContent}>
       {/* Industry Input */}
-      <TouchableOpacity style={styles.periodContainer} onPress={() => console.log('Open industry picker')}>
+      <TouchableOpacity style={styles.periodContainer} onPress={openIndustryPicker}>
         <MaterialIcons name="business" size={20} color="#666" style={styles.inputIcon} />
         <Text style={styles.periodText}>{industryText}</Text>
         <View style={styles.spacer} />
@@ -183,255 +431,184 @@ const FilterScreen = () => {
   );
 
   const renderJobTypeContent = () => {
-    const handleJobTypeToggle = (type) => {
-      setJobTypes(prev => {
-        if (prev.includes(type)) {
-          return prev.filter(t => t !== type);
-        } else {
-          return [...prev, type];
-        }
-      });
-    };
+    if (loadingJobTypes) {
+    return (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading job types...</Text>
+          </View>
+      );
+    }
+
+
 
     return (
       <View style={styles.locationSalaryContent}>
-        {/* Onsite Option */}
+        {jobTypes.map((jobType, index) => {
+          // Try different possible ID fields
+          const jobTypeId = jobType.id || jobType.jobTypeId || jobType.industryId || index;
+          const numericId = Number(jobTypeId);
+          const isSelected = selectedJobTypes.some(id => Number(id) === numericId);
+          
+          return (
         <TouchableOpacity 
+              key={jobTypeId}
           style={styles.radioOption} 
-          onPress={() => handleJobTypeToggle('onsite')}
+              onPress={() => handleJobTypeToggle(jobTypeId)}
         >
           <View style={[
             styles.checkboxButton,
-            jobTypes.includes('onsite') && styles.checkboxButtonSelected
+                isSelected && styles.checkboxButtonSelected
           ]}>
-            {jobTypes.includes('onsite') && <MaterialIcons name="check" size={16} color="#fff" />}
+                {isSelected && <MaterialIcons name="check" size={16} color="#fff" />}
           </View>
-          <Text style={styles.radioOptionText}>Onsite (Work from Office)</Text>
+            <Text style={styles.radioOptionText}>{jobType.jobTypeName}</Text>
         </TouchableOpacity>
-
-        {/* Remote Option */}
-        <TouchableOpacity 
-          style={styles.radioOption} 
-          onPress={() => handleJobTypeToggle('remote')}
-        >
-          <View style={[
-            styles.checkboxButton,
-            jobTypes.includes('remote') && styles.checkboxButtonSelected
-          ]}>
-            {jobTypes.includes('remote') && <MaterialIcons name="check" size={16} color="#fff" />}
-          </View>
-          <Text style={styles.radioOptionText}>Remote (Work from Home)</Text>
-        </TouchableOpacity>
+          );
+        })}
       </View>
     );
   };
 
   const renderDatePostedContent = () => (
     <View style={styles.locationSalaryContent}>
-      {/* All */}
+      {[
+        { key: 'all', label: 'All', value: 'all' },
+        { key: 'last-hour', label: 'Last Hour', value: 'last-hour' },
+        { key: 'last-24-hour', label: 'Last 24 Hour', value: 'last-24-hour' },
+        { key: 'last-7-days', label: 'Last 7 Days', value: 'last-7-days' },
+        { key: 'last-14-days', label: 'Last 14 Days', value: 'last-14-days' },
+        { key: 'last-30-days', label: 'Last 30 Days', value: 'last-30-days' }
+      ].map((option) => (
       <TouchableOpacity 
+          key={option.key}
         style={styles.radioOption} 
-        onPress={() => setDatePosted('all')}
+          onPress={() => setDatePosted(option.value)}
       >
         <View style={styles.radioButton}>
-          {datePosted === 'all' && <View style={styles.radioButtonSelected} />}
+            {datePosted === option.value && <View style={styles.radioButtonSelected} />}
         </View>
-        <Text style={styles.radioOptionText}>All</Text>
+          <Text style={styles.radioOptionText}>{option.label}</Text>
       </TouchableOpacity>
-
-      {/* Last Hour */}
-      <TouchableOpacity 
-        style={styles.radioOption} 
-        onPress={() => setDatePosted('last-hour')}
-      >
-        <View style={styles.radioButton}>
-          {datePosted === 'last-hour' && <View style={styles.radioButtonSelected} />}
-        </View>
-        <Text style={styles.radioOptionText}>Last Hour</Text>
-      </TouchableOpacity>
-
-      {/* Last 24 Hour */}
-      <TouchableOpacity 
-        style={styles.radioOption} 
-        onPress={() => setDatePosted('last-24-hour')}
-      >
-        <View style={styles.radioButton}>
-          {datePosted === 'last-24-hour' && <View style={styles.radioButtonSelected} />}
-        </View>
-        <Text style={styles.radioOptionText}>Last 24 Hour</Text>
-      </TouchableOpacity>
-
-      {/* Last 7 Days */}
-      <TouchableOpacity 
-        style={styles.radioOption} 
-        onPress={() => setDatePosted('last-7-days')}
-      >
-        <View style={styles.radioButton}>
-          {datePosted === 'last-7-days' && <View style={styles.radioButtonSelected} />}
-        </View>
-        <Text style={styles.radioOptionText}>Last 7 Days</Text>
-      </TouchableOpacity>
-
-      {/* Last 14 Days */}
-      <TouchableOpacity 
-        style={styles.radioOption} 
-        onPress={() => setDatePosted('last-14-days')}
-      >
-        <View style={styles.radioButton}>
-          {datePosted === 'last-14-days' && <View style={styles.radioButtonSelected} />}
-        </View>
-        <Text style={styles.radioOptionText}>Last 14 Days</Text>
-      </TouchableOpacity>
-
-      {/* Last 30 Days */}
-      <TouchableOpacity 
-        style={styles.radioOption} 
-        onPress={() => setDatePosted('last-30-days')}
-      >
-        <View style={styles.radioButton}>
-          {datePosted === 'last-30-days' && <View style={styles.radioButtonSelected} />}
-        </View>
-        <Text style={styles.radioOptionText}>Last 30 Days</Text>
-      </TouchableOpacity>
+      ))}
     </View>
   );
 
   const renderLevelContent = () => {
-    const handleLevelToggle = (level) => {
-      setLevels(prev => {
-        if (prev.includes(level)) {
-          return prev.filter(l => l !== level);
-        } else {
-          return [...prev, level];
-        }
-      });
-    };
+    if (loadingLevels) {
+    return (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading levels...</Text>
+          </View>
+      );
+    }
+
+
 
     return (
       <View style={styles.locationSalaryContent}>
-        {/* Intern */}
+        {levels.map((level, index) => {
+          // Try different possible ID fields
+          const levelId = level.id || level.levelId || level.industryId || index;
+          const numericId = Number(levelId);
+          const isSelected = selectedLevels.some(id => Number(id) === numericId);
+          
+          return (
         <TouchableOpacity 
+              key={levelId}
           style={styles.radioOption} 
-          onPress={() => handleLevelToggle('intern')}
+              onPress={() => handleLevelToggle(levelId)}
         >
           <View style={[
             styles.checkboxButton,
-            levels.includes('intern') && styles.checkboxButtonSelected
+                isSelected && styles.checkboxButtonSelected
           ]}>
-            {levels.includes('intern') && <MaterialIcons name="check" size={16} color="#fff" />}
+                {isSelected && <MaterialIcons name="check" size={16} color="#fff" />}
           </View>
-          <Text style={styles.radioOptionText}>Intern</Text>
+            <Text style={styles.radioOptionText}>{level.levelName}</Text>
         </TouchableOpacity>
-
-        {/* Junior */}
-        <TouchableOpacity 
-          style={styles.radioOption} 
-          onPress={() => handleLevelToggle('junior')}
-        >
-          <View style={[
-            styles.checkboxButton,
-            levels.includes('junior') && styles.checkboxButtonSelected
-          ]}>
-            {levels.includes('junior') && <MaterialIcons name="check" size={16} color="#fff" />}
-          </View>
-          <Text style={styles.radioOptionText}>Junior</Text>
-        </TouchableOpacity>
-
-        {/* Senior */}
-        <TouchableOpacity 
-          style={styles.radioOption} 
-          onPress={() => handleLevelToggle('senior')}
-        >
-          <View style={[
-            styles.checkboxButton,
-            levels.includes('senior') && styles.checkboxButtonSelected
-          ]}>
-            {levels.includes('senior') && <MaterialIcons name="check" size={16} color="#fff" />}
-          </View>
-          <Text style={styles.radioOptionText}>Senior</Text>
-        </TouchableOpacity>
+          );
+        })}
       </View>
     );
   };
 
-  const renderSalaryContent = () => (
+  const renderSalaryContent = () => {
+    const handleSalaryTypeChange = (type) => {
+      setSalaryType(prev => {
+        if (prev.includes(type)) {
+          // Remove if already selected
+          return prev.filter(t => t !== type);
+      } else {
+          // Add if not selected
+          return [...prev, type];
+      }
+      });
+    };
+
+    const handleSalaryRangeSelect = (range) => {
+      const rangeKey = `${range.minSalary}-${range.maxSalary}`;
+      setSalaryType(prev => {
+        if (prev.includes(rangeKey)) {
+          // Remove if already selected
+          return prev.filter(t => t !== rangeKey);
+        } else {
+          // Add if not selected
+          return [...prev, rangeKey];
+        }
+      });
+      
+      // Update min/max salary in selectedFilters
+      setSelectedFilters(prev => ({
+        ...prev,
+        minSalary: range.minSalary,
+        maxSalary: range.maxSalary,
+      }));
+    };
+
+
+
+    return (
     <View style={styles.locationSalaryContent}>
       {/* Negotiable Salary Option */}
       <TouchableOpacity 
         style={styles.radioOption} 
-        onPress={() => setSalaryType('negotiable')}
+          onPress={() => handleSalaryTypeChange('negotiable')}
       >
-        <View style={styles.radioButton}>
-          {salaryType === 'negotiable' && <View style={styles.radioButtonSelected} />}
+        <View style={[
+          styles.checkboxButton,
+          salaryType.includes('negotiable') && styles.checkboxButtonSelected
+        ]}>
+          {salaryType.includes('negotiable') && <MaterialIcons name="check" size={16} color="#fff" />}
         </View>
         <Text style={styles.radioOptionText}>Negotiable Salary</Text>
       </TouchableOpacity>
 
-      {/* Salary Range Option */}
-      <TouchableOpacity 
-        style={styles.radioOption} 
-        onPress={() => setSalaryType('range')}
-      >
-        <View style={styles.radioButton}>
-          {salaryType === 'range' && <View style={styles.radioButtonSelected} />}
-        </View>
-        <Text style={styles.radioOptionText}>Salary Range</Text>
-      </TouchableOpacity>
-
-      {/* Salary Range Slider (only show when range is selected) */}
-      {salaryType === 'range' && (
-        <View style={styles.salarySliderContainer}>
-          {/* Slider */}
-          <View style={styles.sliderContainer}>
-            <View 
-              ref={sliderRef}
-              style={styles.sliderTrack}
-              onLayout={(event) => {
-                const { width } = event.nativeEvent.layout;
-                setSliderWidth(width);
-              }}
-              {...panResponder.panHandlers}
-            >
-              <View 
-                style={[
-                  styles.sliderFill, 
-                  { 
-                    left: `${(salaryRange.min / 20000) * 100}%`, 
-                    width: `${((salaryRange.max - salaryRange.min) / 20000) * 100}%` 
-                  }
-                ]} 
-              />
-              
-              {/* Min Thumb */}
+      {/* Salary Range Options - all at same level */}
+      {salaryRanges.map((range) => {
+        const rangeKey = `${range.minSalary}-${range.maxSalary}`;
+        const isSelected = salaryType.includes(rangeKey);
+        
+        return (
               <TouchableOpacity 
-                style={[
-                  styles.sliderThumb, 
-                  { left: `${(salaryRange.min / 20000) * 100}%` }
-                ]}
-                onPress={() => console.log('Min thumb pressed')}
-              />
-              
-              {/* Max Thumb */}
-              <TouchableOpacity 
-                style={[
-                  styles.sliderThumb, 
-                  { left: `${(salaryRange.max / 20000) * 100}%` }
-                ]}
-                onPress={() => console.log('Max thumb pressed')}
-              />
+                key={range.id}
+            style={styles.radioOption}
+                onPress={() => handleSalaryRangeSelect(range)}
+              >
+            <View style={[
+              styles.checkboxButton,
+              isSelected && styles.checkboxButtonSelected
+            ]}>
+              {isSelected && <MaterialIcons name="check" size={16} color="#fff" />}
             </View>
-          </View>
-          
-          {/* Range Display Box */}
-          <View style={styles.rangeDisplayBox}>
-            <Text style={styles.rangeDisplayText}>
-              ${salaryRange.min} - ${salaryRange.max}
+            <Text style={styles.radioOptionText}>
+                  {range.name}
             </Text>
-          </View>
-        </View>
-      )}
+              </TouchableOpacity>
+        );
+      })}
     </View>
   );
+  };
 
   const renderFilterCategory = (category) => {
     const isExpanded = expandedCategories.includes(category.id);
@@ -467,9 +644,9 @@ const FilterScreen = () => {
               renderSalaryContent()
             ) : (
               <View style={styles.optionsContainer}>
-                {category.options.map((option, index) => (
+                {category.options?.map((option, index) => (
                   <TouchableOpacity
-                    key={index}
+                    key={`${category.id}-${option}-${index}`}
                     style={[
                       styles.filterOption,
                       selectedFilters[category.id] === option && styles.selectedOption,
@@ -512,7 +689,7 @@ const FilterScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       >
-        {filterCategories.map(renderFilterCategory)}
+        {filterCategories.map((category) => renderFilterCategory(category))}
       </ScrollView>
 
       {/* Bottom Buttons */}
@@ -524,6 +701,166 @@ const FilterScreen = () => {
           <Text style={styles.applyButtonText}>Apply</Text>
         </TouchableOpacity>
       </View>
+
+             {/* Location Picker Modal */}
+       <Modal
+         visible={showLocationModal}
+         animationType="slide"
+         transparent={true}
+         onRequestClose={() => setShowLocationModal(false)}
+       >
+         <View style={styles.modalOverlay}>
+           <TouchableOpacity 
+             style={styles.modalBackdrop}
+             activeOpacity={1}
+             onPress={() => setShowLocationModal(false)}
+           />
+           <View style={styles.modalContent}>
+             {/* Drag Handle */}
+             <View style={styles.dragHandle} />
+             
+             <View style={styles.modalHeader}>
+               <Text style={styles.modalTitle}>Select Location</Text>
+               <TouchableOpacity
+                 onPress={() => setShowLocationModal(false)}
+                 style={styles.closeIcon}
+               >
+                 <MaterialIcons name="close" size={24} color="#666" />
+               </TouchableOpacity>
+             </View>
+             
+             {/* Search Bar */}
+             <View style={styles.searchContainer}>
+               <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+               <TextInput
+                 style={styles.searchInput}
+                 placeholder="Search provinces..."
+                 value={searchText}
+                 onChangeText={handleSearchLocation}
+                 placeholderTextColor="#999"
+               />
+             </View>
+
+             {loadingProvinces ? (
+               <View style={styles.loadingContainer}>
+                 <Text style={styles.loadingText}>Loading provinces...</Text>
+               </View>
+             ) : filteredProvinces.length > 0 ? (
+               <FlatList
+                 data={filteredProvinces}
+                 renderItem={({ item }) => (
+                   <TouchableOpacity
+                     style={[
+                       styles.provinceItem,
+                       selectedProvince?.province_code === item.province_code && styles.selectedProvinceItem
+                     ]}
+                     onPress={() => handleLocationSelect(item)}
+                   >
+                     <Text style={[
+                       styles.provinceName,
+                       selectedProvince?.province_code === item.province_code && styles.selectedProvinceName
+                     ]}>
+                       {item.name}
+                     </Text>
+                     {selectedProvince?.province_code === item.province_code && (
+                       <MaterialIcons name="check" size={20} color="#2563eb" />
+                     )}
+                   </TouchableOpacity>
+                 )}
+                 keyExtractor={(item) => item.province_code}
+                 showsVerticalScrollIndicator={false}
+                 style={styles.provinceList}
+               />
+             ) : (
+               <View style={styles.noResultsContainer}>
+                 <MaterialIcons name="search-off" size={48} color="#ccc" />
+                 <Text style={styles.noResultsText}>No provinces found</Text>
+                 <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+               </View>
+             )}
+                      </View>
+         </View>
+       </Modal>
+
+       {/* Industry Picker Modal */}
+       <Modal
+         visible={showIndustryModal}
+         animationType="slide"
+         transparent={true}
+         onRequestClose={() => setShowIndustryModal(false)}
+       >
+         <View style={styles.modalOverlay}>
+           <TouchableOpacity 
+             style={styles.modalBackdrop}
+             activeOpacity={1}
+             onPress={() => setShowIndustryModal(false)}
+           />
+           <View style={styles.modalContent}>
+             {/* Drag Handle */}
+             <View style={styles.dragHandle} />
+             
+             <View style={styles.modalHeader}>
+               <Text style={styles.modalTitle}>Select Industry</Text>
+               <TouchableOpacity
+                 onPress={() => setShowIndustryModal(false)}
+                 style={styles.closeIcon}
+               >
+                 <MaterialIcons name="close" size={24} color="#666" />
+               </TouchableOpacity>
+             </View>
+             
+             {/* Search Bar */}
+             <View style={styles.searchContainer}>
+               <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+               <TextInput
+                 style={styles.searchInput}
+                 placeholder="Search industries..."
+                 value={industrySearchText}
+                 onChangeText={handleSearchIndustry}
+                 placeholderTextColor="#999"
+               />
+             </View>
+
+             {loadingIndustries ? (
+               <View style={styles.loadingContainer}>
+                 <Text style={styles.loadingText}>Loading industries...</Text>
+               </View>
+             ) : filteredIndustries.length > 0 ? (
+               <FlatList
+                 data={filteredIndustries}
+                 renderItem={({ item }) => (
+                   <TouchableOpacity
+                     style={[
+                       styles.provinceItem,
+                       selectedIndustry?.industryId === item.industryId && styles.selectedProvinceItem
+                     ]}
+                     onPress={() => handleIndustrySelect(item)}
+                   >
+                     <Text style={[
+                       styles.provinceName,
+                       selectedIndustry?.industryId === item.industryId && styles.selectedProvinceName
+                     ]}>
+                       {item.industryName}
+                     </Text>
+                     {selectedIndustry?.industryId === item.industryId && (
+                       <MaterialIcons name="check" size={20} color="#2563eb" />
+                     )}
+                   </TouchableOpacity>
+                 )}
+                 keyExtractor={(item) => item.industryId.toString()}
+                 showsVerticalScrollIndicator={false}
+                 style={styles.provinceList}
+               />
+             ) : (
+               <View style={styles.noResultsContainer}>
+                 <MaterialIcons name="search-off" size={48} color="#ccc" />
+                 <Text style={styles.noResultsText}>No industries found</Text>
+                 <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+               </View>
+             )}
+           </View>
+         </View>
+       </Modal>
     </SafeAreaView>
   );
 };
@@ -655,59 +992,7 @@ const styles = StyleSheet.create({
     color: '#333',
     fontFamily: 'Poppins-Medium',
   },
-  // Salary slider styles
-  salarySliderContainer: {
-    marginTop: 16,
-    paddingHorizontal: 8,
-  },
-  sliderContainer: {
-    height: 40,
-    justifyContent: 'center',
-  },
-  sliderTrack: {
-    height: 4,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 2,
-    position: 'relative',
-  },
-  sliderFill: {
-    position: 'absolute',
-    height: 4,
-    backgroundColor: '#2563eb',
-    borderRadius: 2,
-  },
-  sliderThumb: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#2563eb',
-    borderRadius: 10,
-    top: -8, // Center the thumb on the track (track height 4px, thumb height 20px)
-  },
-  sliderValue: {
-    position: 'absolute',
-    bottom: 25,
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    minWidth: 80,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sliderValueText: {
-    fontSize: 12,
-    color: '#fff',
-    fontFamily: 'Poppins-SemiBold',
-    textAlign: 'center',
-    lineHeight: 14,
-    flexShrink: 0,
-    numberOfLines: 1,
-    ellipsizeMode: 'tail',
-  },
+
   // Range display box styles
   rangeDisplayBox: {
     backgroundColor: '#f0f8ff',
@@ -722,6 +1007,35 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontFamily: 'Poppins-SemiBold',
     textAlign: 'center',
+  },
+  // Salary range options styles
+  salaryRangeOptions: {
+    marginTop: 16,
+  },
+  salaryRangeOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#fff',
+  },
+  selectedSalaryRangeOption: {
+    backgroundColor: '#f0f8ff',
+    borderColor: '#2563eb',
+  },
+  salaryRangeText: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Medium',
+  },
+  selectedSalaryRangeText: {
+    color: '#2563eb',
+    fontFamily: 'Poppins-SemiBold',
   },
 
   periodContainer: {
@@ -800,6 +1114,132 @@ const styles = StyleSheet.create({
   applyButtonText: {
     fontSize: 16,
     color: '#fff',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    width: '100%',
+    height: '70%',
+    padding: 0,
+    overflow: 'hidden',
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  closeIcon: {
+    padding: 4,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Regular',
+    paddingVertical: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Poppins-Regular',
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  noResultsText: {
+    fontSize: 18,
+    color: '#666',
+    fontFamily: 'Poppins-SemiBold',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  noResultsSubtext: {
+    fontSize: 14,
+    color: '#999',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  provinceList: {
+    flex: 1,
+  },
+  provinceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#f0f0f0',
+  },
+  selectedProvinceItem: {
+    backgroundColor: '#f0f8ff',
+  },
+  provinceName: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Medium',
+    flex: 1,
+  },
+  selectedProvinceName: {
+    color: '#2563eb',
     fontFamily: 'Poppins-SemiBold',
   },
 });

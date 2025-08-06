@@ -64,7 +64,17 @@ export const isJobFavorite = async (userId, jobId) => {
     
     const data = await response.json();
     console.log('Favorite check response:', data);
-    return data;
+    
+    // Handle different response types
+    if (typeof data === 'boolean') {
+      return data;
+    } else if (data && typeof data === 'object') {
+      // If response is an object, check for a boolean property
+      return data.isFavorite || data.favorited || false;
+    } else {
+      // If we get any response, assume it's favorited
+      return true;
+    }
   } catch (error) {
     console.error('Error checking favorite status:', error);
     // Return false if there's an error (assume not favorited)
@@ -109,6 +119,12 @@ export const removeFavoriteJob = async (userId, jobId) => {
     });
     
     console.log('Remove favorite response status:', response.status);
+    
+    // If 404, job is not in favorites (which is what we want)
+    if (response.status === 404) {
+      console.log('Remove favorite response: Job not in favorites (404)');
+      return { success: true }; // Return success object for consistency
+    }
     
     if (!response.ok) {
       throw new Error(`Failed to remove favorite job: ${response.status}`);

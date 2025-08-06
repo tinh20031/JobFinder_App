@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal, Alert } from 'react-native';
 import { JobService } from '../../services/JobService';
 import HeaderCandidates from '../../components/HeaderCandidate';
 import NotFoundScreen from '../../components/NotFoundScreen';
@@ -7,16 +7,23 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
+import { authService } from '../../services/authService';
+import * as favoriteJobService from '../../services/favoriteJobService';
 
 const JobListScreen = ({ route }) => {
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState('');
   const [sort, setSort] = useState('default');
   const [searchText, setSearchText] = useState('');
   const [appliedFilters, setAppliedFilters] = useState({});
+  const [savedFilters, setSavedFilters] = useState({});
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [favoriteJobs, setFavoriteJobs] = useState(new Set());
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -27,6 +34,7 @@ const JobListScreen = ({ route }) => {
         const data = await JobService.getJobs();
         setJobs(data);
         setFilteredJobs(data);
+        setIsInitialLoad(false); // Mark initial load as complete
       } catch (err) {
         setError('Failed to load job list.');
       } finally {
@@ -36,12 +44,60 @@ const JobListScreen = ({ route }) => {
     fetchJobs();
   }, []);
 
+  // Check favorite status for all jobs when jobs are loaded
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (jobs.length === 0) return;
+      
+      try {
+        const userId = await authService.getUserId();
+        if (!userId) {
+          console.log('No user ID found, skipping favorite check');
+          return;
+        }
+        
+        // Only check for first 10 jobs to avoid too many API calls
+        const jobsToCheck = jobs.slice(0, 10);
+        const newFavoriteJobs = new Set();
+        
+        // Check favorite status for each job
+        for (const job of jobsToCheck) {
+          try {
+            const response = await favoriteJobService.isJobFavorite(userId, job.id);
+            if (response) {
+              newFavoriteJobs.add(job.id);
+            }
+          } catch (error) {
+            console.log(`Error checking favorite status for job ${job.id}:`, error);
+          }
+        }
+        
+        setFavoriteJobs(newFavoriteJobs);
+      } catch (error) {
+        console.log('Error checking favorite status:', error);
+      }
+    };
+
+    if (jobs.length > 0) {
+      checkFavoriteStatus();
+    }
+  }, [jobs]);
+
   // Handle filters from FilterScreen
   useEffect(() => {
     if (route.params?.filters) {
+      setFilterLoading(true);
       setAppliedFilters(route.params.filters);
+      // Simulate a small delay for better UX
+      setTimeout(() => {
+        setFilterLoading(false);
+      }, 500);
     }
-  }, [route.params?.filters]);
+    // Save savedFilters for next time
+    if (route.params?.savedFilters) {
+      setSavedFilters(route.params.savedFilters);
+    }
+  }, [route.params?.filters, route.params?.savedFilters]);
 
   // Handle search query from HomeScreen
   useEffect(() => {
@@ -57,47 +113,96 @@ const JobListScreen = ({ route }) => {
     }
 
     return jobList.filter(job => {
-      // Location filter
+      // Location filter - compare with provinceName
       if (filters.location && job.provinceName !== filters.location) {
         return false;
       }
 
-      // Salary filter
-      if (filters.salary) {
-        const jobSalary = formatSalary(job.minSalary, job.maxSalary, job.isSalaryNegotiable);
-        if (jobSalary !== filters.salary) {
+      // Salary filter - handle negotiable and specific ranges
+      if (filters.salary && Array.isArray(filters.salary) && filters.salary.length > 0) {
+        // Check if job matches any of the selected salary types
+        const matchesNegotiable = filters.salary.includes('negotiable') && job.isSalaryNegotiable;
+        
+        // Check if job matches any selected salary range
+        const matchesRange = filters.salary.some(salaryOption => {
+          if (salaryOption === 'negotiable') return false;
+          
+          // Parse range option (e.g., "0-2000")
+          const [minStr, maxStr] = salaryOption.split('-');
+          const rangeMin = parseInt(minStr);
+          const rangeMax = parseInt(maxStr);
+          
+          // Job must have specific salary (not negotiable)
+          if (job.isSalaryNegotiable) return false;
+          
+          const jobMinSalary = job.minSalary || 0;
+          const jobMaxSalary = job.maxSalary || 0;
+          
+          // Check if job salary overlaps with this range
+          return jobMaxSalary >= rangeMin && jobMinSalary <= rangeMax;
+        });
+        
+        // Job must match at least one selected salary type
+        if (!matchesNegotiable && !matchesRange) {
           return false;
         }
       }
 
-      // Work type filter
+      // Work type filter - compare with jobType.jobTypeName
       if (filters.workType && job.jobType?.jobTypeName !== filters.workType) {
         return false;
       }
 
-      // Job level filter
-      if (filters.jobLevel && job.jobLevel !== filters.jobLevel) {
+      // Job level filter - compare with level.levelName
+      if (filters.jobLevel && job.level?.levelName !== filters.jobLevel) {
         return false;
       }
 
-      // Employment type filter
-      if (filters.employmentType && job.employmentType !== filters.employmentType) {
+      // Employment type filter - compare with jobType.jobTypeName (for employment types)
+      if (filters.employmentType && job.jobType?.jobTypeName !== filters.employmentType) {
         return false;
       }
 
-      // Experience filter
-      if (filters.experience && job.experience !== filters.experience) {
+      // Experience filter - compare with experienceLevel.name
+      if (filters.experience && job.experienceLevel?.name !== filters.experience) {
         return false;
       }
 
-      // Education filter
+      // Education filter - compare with education field
       if (filters.education && job.education !== filters.education) {
         return false;
       }
 
-      // Job function filter
+      // Job function filter - compare with industry.industryName
       if (filters.jobFunction && job.industry?.industryName !== filters.jobFunction) {
         return false;
+      }
+
+      // Date posted filter
+      if (filters.employmentType && filters.employmentType !== 'all') {
+        const jobDate = new Date(job.createdAt);
+        const now = new Date();
+        const diffInHours = (now - jobDate) / (1000 * 60 * 60);
+        
+        switch (filters.employmentType) {
+          case 'last-hour':
+            if (diffInHours > 1) return false;
+            break;
+          case 'last-24-hour':
+            if (diffInHours > 24) return false;
+            break;
+          case 'last-7-days':
+            if (diffInHours > 24 * 7) return false;
+            break;
+          case 'last-14-days':
+            if (diffInHours > 24 * 14) return false;
+            break;
+          case 'last-30-days':
+            if (diffInHours > 24 * 30) return false;
+            break;
+          default:
+            break;
+        }
       }
 
       return true;
@@ -124,7 +229,8 @@ const JobListScreen = ({ route }) => {
     if (searchText.trim() === '') {
       // Apply only filters when search is empty
       const filtered = applyFilters(jobs, appliedFilters);
-      setFilteredJobs(filtered);
+      const sorted = sortJobs(filtered);
+      setFilteredJobs(sorted);
       setSearchLoading(false);
     } else {
       // Show loading and debounce search + filter
@@ -133,7 +239,8 @@ const JobListScreen = ({ route }) => {
       timeoutId = setTimeout(() => {
         const searchFiltered = performSearch(searchText, jobs);
         const finalFiltered = applyFilters(searchFiltered, appliedFilters);
-        setFilteredJobs(finalFiltered);
+        const sorted = sortJobs(finalFiltered);
+        setFilteredJobs(sorted);
         setSearchLoading(false);
       }, 300);
     }
@@ -143,7 +250,7 @@ const JobListScreen = ({ route }) => {
         clearTimeout(timeoutId);
       }
     };
-  }, [searchText, jobs, performSearch, appliedFilters, applyFilters]);
+  }, [searchText, jobs, appliedFilters, sort, applyFilters, performSearch, sortJobs]); // Added back necessary dependencies
 
   // Helper function to format salary
   const formatSalary = (minSalary, maxSalary, isNegotiable) => {
@@ -184,9 +291,115 @@ const JobListScreen = ({ route }) => {
     return companyName.charAt(0).toUpperCase();
   };
 
-  const handleJobBookmark = (jobId) => {
-    // Handle job bookmark logic
-    console.log('Job bookmarked:', jobId);
+    const handleJobBookmark = async (jobId) => {
+    try {
+      const userId = await authService.getUserId();
+      if (!userId) {
+        Alert.alert('Error', 'Please log in to bookmark jobs.');
+        return;
+      }
+
+      // Update UI immediately for better UX
+      const isCurrentlyFavorite = favoriteJobs.has(jobId);
+      
+      if (isCurrentlyFavorite) {
+        // Optimistically remove from favorites
+        setFavoriteJobs(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(jobId);
+          return newFavorites;
+        });
+        
+        // Call API in background
+        try {
+          await favoriteJobService.removeFavoriteJob(userId, jobId);
+        } catch (error) {
+          // Revert UI if API fails
+          setFavoriteJobs(prev => {
+            const newFavorites = new Set(prev);
+            newFavorites.add(jobId);
+            return newFavorites;
+          });
+          console.error('Error removing favorite job:', error);
+          Alert.alert('Error', 'Failed to remove from favorites. Please try again.');
+        }
+      } else {
+        // Optimistically add to favorites
+        setFavoriteJobs(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.add(jobId);
+          return newFavorites;
+        });
+        
+        // Call API in background
+        try {
+          await favoriteJobService.addFavoriteJob(userId, jobId);
+        } catch (error) {
+          // Revert UI if API fails
+          setFavoriteJobs(prev => {
+            const newFavorites = new Set(prev);
+            newFavorites.delete(jobId);
+            return newFavorites;
+          });
+          console.error('Error adding favorite job:', error);
+          Alert.alert('Error', 'Failed to add to favorites. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite status:', error);
+      Alert.alert('Error', 'Failed to update favorite status. Please try again.');
+    }
+  };
+
+  const clearFilters = () => {
+    setFilterLoading(true);
+    setAppliedFilters({});
+    setSavedFilters({});
+    setSearchText('');
+    // Simulate a small delay for better UX
+    setTimeout(() => {
+      setFilterLoading(false);
+    }, 300);
+  };
+
+  const hasActiveFilters = () => {
+    return searchText.trim() !== '' || Object.keys(appliedFilters).some(key => appliedFilters[key]);
+  };
+
+  const sortJobs = useCallback((jobList) => {
+    if (sort === 'default') return jobList;
+    
+    const sortedJobs = [...jobList];
+    
+    switch (sort) {
+      case 'newest':
+        return sortedJobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      case 'oldest':
+        return sortedJobs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      case 'salary-high':
+        return sortedJobs.sort((a, b) => {
+          const aSalary = a.isSalaryNegotiable ? 0 : (a.maxSalary || a.minSalary || 0);
+          const bSalary = b.isSalaryNegotiable ? 0 : (b.maxSalary || b.minSalary || 0);
+          return bSalary - aSalary;
+        });
+      case 'salary-low':
+        return sortedJobs.sort((a, b) => {
+          const aSalary = a.isSalaryNegotiable ? 0 : (a.minSalary || a.maxSalary || 0);
+          const bSalary = b.isSalaryNegotiable ? 0 : (b.minSalary || b.maxSalary || 0);
+          return aSalary - bSalary;
+        });
+      case 'title-az':
+        return sortedJobs.sort((a, b) => (a.jobTitle || '').localeCompare(b.jobTitle || ''));
+      case 'title-za':
+        return sortedJobs.sort((a, b) => (b.jobTitle || '').localeCompare(a.jobTitle || ''));
+      default:
+        return sortedJobs;
+    }
+  }, [sort]);
+
+  const handleSortSelect = (sortOption) => {
+    setSort(sortOption);
+    setShowSortModal(false);
   };
 
   const renderJobCard = ({ item, index }) => {
@@ -231,7 +444,11 @@ const JobListScreen = ({ route }) => {
                   handleJobBookmark(item.id);
                 }}
               >
-                <MaterialIcons name="bookmark-border" size={28} color="#0070BA" />
+                <MaterialIcons 
+                  name={favoriteJobs.has(item.id) ? "bookmark" : "bookmark-border"} 
+                  size={28} 
+                  color={favoriteJobs.has(item.id) ? "#2563eb" : "#0070BA"} 
+                />
               </TouchableOpacity>
             </View>
             
@@ -245,7 +462,7 @@ const JobListScreen = ({ route }) => {
             <Text style={styles.jobSalary}>{salaryText}</Text>
             <View style={styles.jobTags}>
               {tags.map((tag, tagIndex) => (
-                <View key={tagIndex} style={styles.jobTag}>
+                <View key={`${tag}-${tagIndex}`} style={styles.jobTag}>
                   <Text style={styles.jobTagText}>{tag}</Text>
                 </View>
               ))}
@@ -258,8 +475,41 @@ const JobListScreen = ({ route }) => {
 
   if (loading) {
     return (
-      <View style={{flex: 1, backgroundColor: '#fff'}}>
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
         <HeaderCandidates />
+        
+        {/* Header Title */}
+        <View style={styles.headerTitleContainer}>
+          <Text style={{
+            fontSize: 28,
+            color: '#333',
+            includeFontPadding: false,
+            textAlignVertical: 'center',
+            fontFamily: 'Poppins-Bold',
+            fontStyle: 'normal',
+            letterSpacing: 0,
+            textAlign: 'center'
+          }}>Find Jobs</Text>
+        </View>
+        
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search"
+              placeholderTextColor="#666"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+            <TouchableOpacity onPress={() => navigation.navigate('Filter', { savedFilters })}>
+              <MaterialIcons name="tune" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Loading Job List */}
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#007bff" />
           <Text style={styles.loadingText}>Loading job list...</Text>
@@ -311,7 +561,7 @@ const JobListScreen = ({ route }) => {
           {searchLoading ? (
             <ActivityIndicator size="small" color="#666" style={styles.searchLoading} />
           ) : (
-            <TouchableOpacity onPress={() => navigation.navigate('Filter')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Filter', { savedFilters })}>
               <MaterialIcons name="tune" size={20} color="#666" />
             </TouchableOpacity>
           )}
@@ -319,7 +569,7 @@ const JobListScreen = ({ route }) => {
       </View>
 
       {/* Search Results Count and Filter Indicator */}
-      {(searchText.trim() !== '' || Object.keys(appliedFilters).some(key => appliedFilters[key])) && (
+      {hasActiveFilters() && !isInitialLoad && (
         <View style={styles.searchResultsHeader}>
           <View style={styles.resultsInfo}>
             <Text style={styles.searchResultsCount}>
@@ -332,23 +582,34 @@ const JobListScreen = ({ route }) => {
               </View>
             )}
           </View>
-          <TouchableOpacity style={styles.sortButton}>
+          <View style={styles.filterActions}>
+            {hasActiveFilters() && (
+              <TouchableOpacity style={styles.clearFilterButton} onPress={clearFilters}>
+                <MaterialIcons name="clear" size={16} color="#666" />
+                <Text style={styles.clearFilterText}>Clear</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortModal(true)}>
             <MaterialIcons name="sort" size={20} color="#666" />
           </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {/* Job List or Not Found */}
       <View style={{ flex: 1 }}>
-        {searchText.trim() !== '' && filteredJobs.length === 0 ? (
+        {filterLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#007bff" />
+            <Text style={styles.loadingText}>Applying filters...</Text>
+          </View>
+        ) : filteredJobs.length === 0 ? (
           <NotFoundScreen 
             useImage={true}
             imageResizeMode="contain"
             imageWidth={280}
             imageHeight={200}
           />
-        ) : filteredJobs.length === 0 ? (
-          <Text style={styles.noJobsText}>No jobs found.</Text>
         ) : (
           <FlatList
             data={filteredJobs}
@@ -359,6 +620,107 @@ const JobListScreen = ({ route }) => {
           />
         )}
       </View>
+
+      {/* Sort Modal */}
+      <Modal
+        visible={showSortModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowSortModal(false)}
+          />
+          <View style={styles.modalContent}>
+            <View style={styles.dragHandle} />
+            
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Sort by</Text>
+              <TouchableOpacity
+                onPress={() => setShowSortModal(false)}
+                style={styles.closeIcon}
+              >
+                <MaterialIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.sortOptions}>
+              <TouchableOpacity 
+                style={[styles.sortOption, sort === 'default' && styles.selectedSortOption]}
+                onPress={() => handleSortSelect('default')}
+              >
+                <Text style={[styles.sortOptionText, sort === 'default' && styles.selectedSortOptionText]}>
+                  Default
+                </Text>
+                {sort === 'default' && <MaterialIcons name="check" size={20} color="#2563eb" />}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.sortOption, sort === 'newest' && styles.selectedSortOption]}
+                onPress={() => handleSortSelect('newest')}
+              >
+                <Text style={[styles.sortOptionText, sort === 'newest' && styles.selectedSortOptionText]}>
+                  Newest First
+                </Text>
+                {sort === 'newest' && <MaterialIcons name="check" size={20} color="#2563eb" />}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.sortOption, sort === 'oldest' && styles.selectedSortOption]}
+                onPress={() => handleSortSelect('oldest')}
+              >
+                <Text style={[styles.sortOptionText, sort === 'oldest' && styles.selectedSortOptionText]}>
+                  Oldest First
+                </Text>
+                {sort === 'oldest' && <MaterialIcons name="check" size={20} color="#2563eb" />}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.sortOption, sort === 'salary-high' && styles.selectedSortOption]}
+                onPress={() => handleSortSelect('salary-high')}
+              >
+                <Text style={[styles.sortOptionText, sort === 'salary-high' && styles.selectedSortOptionText]}>
+                  Salary: High to Low
+                </Text>
+                {sort === 'salary-high' && <MaterialIcons name="check" size={20} color="#2563eb" />}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.sortOption, sort === 'salary-low' && styles.selectedSortOption]}
+                onPress={() => handleSortSelect('salary-low')}
+              >
+                <Text style={[styles.sortOptionText, sort === 'salary-low' && styles.selectedSortOptionText]}>
+                  Salary: Low to High
+                </Text>
+                {sort === 'salary-low' && <MaterialIcons name="check" size={20} color="#2563eb" />}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.sortOption, sort === 'title-az' && styles.selectedSortOption]}
+                onPress={() => handleSortSelect('title-az')}
+              >
+                <Text style={[styles.sortOptionText, sort === 'title-az' && styles.selectedSortOptionText]}>
+                  Job Title: A-Z
+                </Text>
+                {sort === 'title-az' && <MaterialIcons name="check" size={20} color="#2563eb" />}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.sortOption, sort === 'title-za' && styles.selectedSortOption]}
+                onPress={() => handleSortSelect('title-za')}
+              >
+                <Text style={[styles.sortOptionText, sort === 'title-za' && styles.selectedSortOptionText]}>
+                  Job Title: Z-A
+                </Text>
+                {sort === 'title-za' && <MaterialIcons name="check" size={20} color="#2563eb" />}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -430,7 +792,25 @@ const styles = StyleSheet.create({
   sortButton: {
     padding: 4,
   },
-
+  filterActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
+    marginRight: 12,
+  },
+  clearFilterText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Poppins-Regular',
+    marginLeft: 4,
+  },
 
 
   // Job List Styles
@@ -509,7 +889,7 @@ const styles = StyleSheet.create({
   jobLocation: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 2,
     marginLeft: 68,
   },
   locationText: {
@@ -521,7 +901,7 @@ const styles = StyleSheet.create({
   jobSalary: {
     fontSize: 17,
     color: '#2563eb',
-    marginBottom: 16,
+    marginBottom: 2,
     marginLeft: 68,
     fontFamily: 'Poppins-SemiBold',
   },
@@ -529,7 +909,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginLeft: 68,
-    marginTop: 8,
+    marginTop: 2,
   },
   jobTag: {
     backgroundColor: '#f8f9fa',
@@ -574,6 +954,82 @@ const styles = StyleSheet.create({
     marginTop: 32,
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#ccc',
+    borderRadius: 2,
+    marginBottom: 15,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontFamily: 'Poppins-Bold',
+    color: '#333',
+  },
+  closeIcon: {
+    padding: 5,
+  },
+  sortOptions: {
+    width: '100%',
+  },
+  sortOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: '#f5f5f5',
+  },
+  selectedSortOption: {
+    backgroundColor: '#e0f7fa',
+    borderColor: '#2563eb',
+    borderWidth: 1,
+  },
+  sortOptionText: {
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular',
+    color: '#333',
+  },
+  selectedSortOptionText: {
+    color: '#2563eb',
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

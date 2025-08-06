@@ -77,9 +77,9 @@ export default function PersonalInfoSection({ profile }) {
         />
         <InfoField 
           icon="city" 
-          label="City" 
+          label="Award" 
           value={profile?.city} 
-          placeholder="Enter your city"
+          placeholder="Enter your award"
         />
         <InfoField 
           icon="map" 

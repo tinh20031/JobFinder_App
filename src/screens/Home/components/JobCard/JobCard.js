@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { JobService } from '../../../../services/JobService';
 import { JobCardSkeleton } from '../../../../components/SkeletonLoading';
+import { authService } from '../../../../services/authService';
+import * as favoriteJobService from '../../../../services/favoriteJobService';
 
 const JobCard = ({ 
   title = "Recent Jobs", 
@@ -15,6 +17,7 @@ const JobCard = ({
   const [jobs, setJobs] = useState([]);
   const [allJobs, setAllJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [favoriteJobs, setFavoriteJobs] = useState(new Set());
 
   // Fetch jobs data from API
   useEffect(() => {
@@ -67,6 +70,45 @@ const JobCard = ({
     fetchJobs();
   }, [limit]);
 
+  // Check favorite status for jobs when jobs are loaded
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (jobs.length === 0) return;
+      
+      try {
+        const userId = await authService.getUserId();
+        if (!userId) {
+          console.log('No user ID found, skipping favorite check');
+          return;
+        }
+        
+        // Only check for first 10 jobs to avoid too many API calls
+        const jobsToCheck = jobs.slice(0, 10);
+        const newFavoriteJobs = new Set();
+        
+        // Check favorite status for each job
+        for (const job of jobsToCheck) {
+          try {
+            const response = await favoriteJobService.isJobFavorite(userId, job.id);
+            if (response) {
+              newFavoriteJobs.add(job.id);
+            }
+          } catch (error) {
+            console.log(`Error checking favorite status for job ${job.id}:`, error);
+          }
+        }
+        
+        setFavoriteJobs(newFavoriteJobs);
+      } catch (error) {
+        console.log('Error checking favorite status:', error);
+      }
+    };
+
+    if (jobs.length > 0) {
+      checkFavoriteStatus();
+    }
+  }, [jobs]);
+
   // Helper function to format location - use provinceName from API
   const formatLocation = (location, provinceName) => {
     return provinceName || location || 'Unknown Location';
@@ -111,9 +153,64 @@ const JobCard = ({
     return companyName.charAt(0).toUpperCase();
   };
 
-  const handleJobBookmark = (jobId) => {
-    // Handle job bookmark logic
-    console.log('Job bookmarked:', jobId);
+  const handleJobBookmark = async (jobId) => {
+    try {
+      const userId = await authService.getUserId();
+      if (!userId) {
+        Alert.alert('Error', 'Please log in to bookmark jobs.');
+        return;
+      }
+
+      // Update UI immediately for better UX
+      const isCurrentlyFavorite = favoriteJobs.has(jobId);
+      
+      if (isCurrentlyFavorite) {
+        // Optimistically remove from favorites
+        setFavoriteJobs(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(jobId);
+          return newFavorites;
+        });
+        
+        // Call API in background
+        try {
+          await favoriteJobService.removeFavoriteJob(userId, jobId);
+        } catch (error) {
+          // Revert UI if API fails
+          setFavoriteJobs(prev => {
+            const newFavorites = new Set(prev);
+            newFavorites.add(jobId);
+            return newFavorites;
+          });
+          console.error('Error removing favorite job:', error);
+          Alert.alert('Error', 'Failed to remove from favorites. Please try again.');
+        }
+      } else {
+        // Optimistically add to favorites
+        setFavoriteJobs(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.add(jobId);
+          return newFavorites;
+        });
+        
+        // Call API in background
+        try {
+          await favoriteJobService.addFavoriteJob(userId, jobId);
+        } catch (error) {
+          // Revert UI if API fails
+          setFavoriteJobs(prev => {
+            const newFavorites = new Set(prev);
+            newFavorites.delete(jobId);
+            return newFavorites;
+          });
+          console.error('Error adding favorite job:', error);
+          Alert.alert('Error', 'Failed to add to favorites. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite status:', error);
+      Alert.alert('Error', 'Failed to update favorite status. Please try again.');
+    }
   };
 
   const renderJobItem = ({ item }) => (
@@ -147,7 +244,11 @@ const JobCard = ({
             handleJobBookmark(item.id);
           }}
         >
-          <Icon name="bookmark-border" size={28} color="#0070BA" />
+          <Icon 
+            name={favoriteJobs.has(item.id) ? "bookmark" : "bookmark-border"} 
+            size={28} 
+            color={favoriteJobs.has(item.id) ? "#2563eb" : "#0070BA"} 
+          />
         </TouchableOpacity>
       </View>
       
@@ -198,7 +299,7 @@ const JobCard = ({
       ) : (
         <View style={styles.jobsListContainer}>
           {jobs.map((job, index) => (
-            <View key={job.id} style={{ marginBottom: 16 }}>
+            <View key={job.id} style={{ marginBottom: 0 }}>
               {renderJobItem({ item: job })}
             </View>
           ))}
@@ -325,7 +426,7 @@ const styles = StyleSheet.create({
   jobLocation: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 2,
     marginLeft: 68,
   },
   locationText: {
@@ -337,7 +438,7 @@ const styles = StyleSheet.create({
   jobSalary: {
     fontSize: 17,
     color: '#2563eb',
-    marginBottom: 16,
+    marginBottom: 2,
     marginLeft: 68,
     fontFamily: 'Poppins-SemiBold',
   },
@@ -345,7 +446,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginLeft: 68,
-    marginTop: 8,
+    marginTop: 2,
   },
   jobTag: {
     backgroundColor: '#F0F0F0',
