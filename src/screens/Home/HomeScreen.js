@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../../components/HeaderCandidate';
 import SearchBar from './components/SearchBar';
 import Banner from './components/Banner';
+import CategoryIcons from './components/CategoryIcons';
 import CompanyCard from './components/CompanyCard';
 import JobCard from './components/JobCard';
 import { ProfileSkeleton } from '../../components/SkeletonLoading';
@@ -12,6 +13,7 @@ import profileService from '../../services/profileService';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
 
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -59,6 +61,18 @@ const HomeScreen = () => {
     console.log('Read more pressed');
   };
 
+  const handleIndustryPress = (filterData) => {
+    console.log('HomeScreen: Navigating to JobList with industry filter:', filterData);
+    // Navigate to JobListScreen with industry filter
+    navigation.navigate('JobList', { 
+      filters: {
+        industry: filterData.name, // Sử dụng tên industry như trong FilterScreen
+        industryId: filterData.id
+      },
+      fromHome: true 
+    });
+  };
+
   return (
     <View style={styles.container}>
       {/* Fixed Header */}
@@ -97,24 +111,32 @@ const HomeScreen = () => {
           )}
         </View>
 
-        {/* Search Bar */}
-        <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
-
         {/* Banner */}
         <Banner onReadMore={handleReadMore} />
 
-        {/* Recommendation Companies Section */}
-        <CompanyCard 
-          title="List Companies"
-          showSeeAll={true}
-          horizontal={true}
-          limit={5}
+        {/* Search Bar */}
+        <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
+
+        {/* Industry Categories */}
+        <CategoryIcons 
+          onIndustryPress={handleIndustryPress}
+          selectedFilters={route.params?.filters || {}}
+          limit={6} // Hiển thị 6 industry thay vì 4
         />
 
         {/* Trending Jobs Section */}
         <JobCard 
           title="Trending Jobs"
           showSeeAll={false}
+          limit={5}
+          horizontal={false} // Hiển thị dọc thay vì carousel
+        />
+
+        {/* Recommendation Companies Section */}
+        <CompanyCard 
+          title="List Companies"
+          showSeeAll={true}
+          horizontal={true}
           limit={5}
         />
       </ScrollView>
@@ -160,7 +182,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 2,
+    marginBottom: -4,
     fontFamily: 'Poppins-SemiBold',
   },
   userName: {

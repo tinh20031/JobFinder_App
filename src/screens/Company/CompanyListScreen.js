@@ -199,44 +199,58 @@ const CompanyListScreen = () => {
       >
         <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
           <View style={styles.newCompanyCard}>
-            <View style={styles.companyCardHeader}>
-              <View style={styles.companyInfoSection}>
-                {logoUrl ? (
-                  <Image 
-                    source={{ uri: logoUrl }}
-                    style={[styles.companyLogo, { backgroundColor: '#fff' }]}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.companyLogo, { backgroundColor: logoColor }]}>
-                    <Text style={styles.companyLogoText}>{logoText}</Text>
+            <View style={styles.mainContentContainer}>
+              <View style={styles.companyCardHeader}>
+                <View style={styles.companyInfoSection}>
+                  {logoUrl ? (
+                    <Image 
+                      source={{ uri: logoUrl }}
+                      style={[styles.companyLogo, { backgroundColor: '#fff' }]}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.companyLogo, { backgroundColor: logoColor }]}>
+                      <Text style={styles.companyLogoText}>{logoText}</Text>
+                    </View>
+                  )}
+                  <View style={styles.companyTextSection}>
+                    <Text style={styles.companyTitle} numberOfLines={1} ellipsizeMode="tail">
+                      {item.companyName || item.name || 'Unknown Company'}
+                    </Text>
+                    <Text style={styles.companyIndustry}>
+                      {item.industryName || 'Unknown Industry'}
+                    </Text>
                   </View>
-                )}
-                <View style={styles.companyTextSection}>
-                  <Text style={styles.companyTitle} numberOfLines={1} ellipsizeMode="tail">
-                    {item.companyName || item.name || 'Unknown Company'}
-                  </Text>
-                  <Text style={styles.companyIndustry}>
-                    {item.industryName || 'Unknown Industry'}
-                  </Text>
                 </View>
+              </View>
+              
+              <View style={styles.companyTags}>
+                {tags.map((tag, tagIndex) => (
+                  <View 
+                    key={tagIndex} 
+                    style={[
+                      styles.companyTag, 
+                      { 
+                        backgroundColor: '#f0fff4',
+                        borderColor: '#9ae6b4'
+                      }
+                    ]}
+                  >
+                    <Text style={[styles.companyTagText, { color: '#059669' }]}>
+                      {tag}
+                    </Text>
+                  </View>
+                ))}
               </View>
             </View>
             
             <View style={styles.divider} />
             
-            <View style={styles.companyLocation}>
-              <Text style={styles.locationText}>
-                {item.location || 'Unknown Location'}
-              </Text>
-            </View>
-            
-            <View style={styles.companyTags}>
-              {tags.map((tag, tagIndex) => (
-                <View key={tagIndex} style={styles.companyTag}>
-                  <Text style={styles.companyTagText}>{tag}</Text>
-                </View>
-              ))}
+            <View style={styles.companyFooter}>
+              <View style={styles.locationContainer}>
+                <MaterialIcons name="location-on" size={14} color="#666" />
+                <Text style={styles.locationText}>{item.location || 'Unknown Location'}</Text>
+              </View>
             </View>
           </View>
         </Animatable.View>
@@ -544,26 +558,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
 
-  // New Company Card Styles (from HomeScreen)
+  // Company Card Styles (synchronized with JobCard)
   newCompanyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   companyCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   companyInfoSection: {
     flexDirection: 'row',
@@ -575,69 +592,99 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 0,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginTop: 6,
-    marginBottom: 8,
-  },
+
   companyLogo: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f7fafc',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   companyLogoText: {
-    color: '#2563eb',
-    fontSize: 24,
+    color: '#3182ce',
+    fontSize: 14,
     fontFamily: 'Poppins-Bold',
   },
 
   companyTitle: {
-    fontSize: 20,
-    color: '#000',
-    marginBottom: 2,
+    fontSize: 14,
+    color: '#1a202c',
+    marginBottom: -2,
     fontFamily: 'Poppins-Bold',
   },
   companyIndustry: {
-    fontSize: 15,
-    color: '#666',
+    fontSize: 11,
+    color: '#4a5568',
     marginBottom: 0,
     fontFamily: 'Poppins-Regular',
   },
-  companyLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    marginLeft: 68,
-  },
-  locationText: {
-    fontSize: 16, 
-    color: '#666',
-    marginLeft: 0,
-    fontFamily: 'Poppins-Regular',
-  },
+
   companyTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 68,
-    marginTop: 2,
+    marginTop: -4,
   },
   companyTag: {
-    backgroundColor: '#F0F0F0',
     borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 4,
+    paddingVertical: 3,
+    marginRight: 5,
+    marginBottom: 0,
+    borderWidth: 1,
   },
   companyTagText: {
-    fontSize: 12,
-    color: '#000',
+    fontSize: 10,
     fontWeight: '500',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  mainContentContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    marginBottom: 8,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginTop: 1,
+    marginBottom: 1,
+  },
+  companyFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 3,
+  },
+  footerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 11,
+    color: '#000',
+    marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  locationText: {
+    fontSize: 11,
+    color: '#495057',
+    marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   // Old Company Card Styles (keeping for reference)
   companyCard: {

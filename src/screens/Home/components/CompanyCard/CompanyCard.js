@@ -6,18 +6,19 @@ import { BASE_URL } from '../../../../constants/api';
 import companyService from '../../../../services/companyService';
 import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
 
-const CompanyCard = ({ 
-  title = "List Companies", 
-  showSeeAll = true, 
-  horizontal = true, 
-  limit = null,
-  showHeader = true 
-}) => {
-  const navigation = useNavigation();
-  const [companies, setCompanies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef(null);
+  const CompanyCard = ({ 
+    title = "List Companies", 
+    showSeeAll = true, 
+    horizontal = true, 
+    limit = null,
+    showHeader = true 
+  }) => {
+    const navigation = useNavigation();
+    const [companies, setCompanies] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const flatListRef = useRef(null);
+    const autoScrollInterval = useRef(null);
 
   // Fetch companies data from API
   useEffect(() => {
@@ -58,6 +59,30 @@ const CompanyCard = ({
 
     fetchCompanies();
   }, [limit]);
+
+  // Auto-scroll functionality
+  useEffect(() => {
+    if (horizontal && companies.length > 1) {
+      autoScrollInterval.current = setInterval(() => {
+        setCurrentIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % companies.length;
+          if (flatListRef.current) {
+            flatListRef.current.scrollToIndex({
+              index: nextIndex,
+              animated: true,
+            });
+          }
+          return nextIndex;
+        });
+      }, 3000); // Scroll every 3 seconds
+    }
+
+    return () => {
+      if (autoScrollInterval.current) {
+        clearInterval(autoScrollInterval.current);
+      }
+    };
+  }, [horizontal, companies.length]);
 
   // Helper function to generate logo color based on company name
   const getLogoColor = (companyName) => {
@@ -111,7 +136,25 @@ const CompanyCard = ({
     const contentOffset = event.nativeEvent.contentOffset.x;
     const cardWidth = 376; // width + marginRight
     const index = Math.round(contentOffset / cardWidth);
-    setCurrentIndex(Math.max(0, Math.min(index, companies.length - 1)));
+    const newIndex = Math.max(0, Math.min(index, companies.length - 1));
+    setCurrentIndex(newIndex);
+    
+    // Reset auto-scroll timer when user manually scrolls
+    if (autoScrollInterval.current) {
+      clearInterval(autoScrollInterval.current);
+      autoScrollInterval.current = setInterval(() => {
+        setCurrentIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % companies.length;
+          if (flatListRef.current) {
+            flatListRef.current.scrollToIndex({
+              index: nextIndex,
+              animated: true,
+            });
+          }
+          return nextIndex;
+        });
+      }, 3000);
+    }
   };
 
 
@@ -122,34 +165,44 @@ const CompanyCard = ({
       onPress={() => navigation.navigate('CompanyDetail', { companyId: item.id })}
       activeOpacity={0.8}
     >
-      {/* Header với logo, tên công ty, ngành nghề và bookmark */}
-      <View style={styles.jobCardHeader}>
-        <View style={styles.companyInfoSection}>
-          {renderLogo(item)}
-          <View style={styles.companyTextSection}>
-            <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
-            <Text style={styles.jobCompany}>{item.industry}</Text>
+      <View style={styles.mainContentContainer}>
+        <View style={styles.jobCardHeader}>
+          <View style={styles.companyInfoSection}>
+            {renderLogo(item)}
+            <View style={styles.companyTextSection}>
+              <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+              <Text style={styles.jobCompany}>{item.industry}</Text>
+            </View>
           </View>
+        </View>
+        
+        <View style={styles.jobTags}>
+          {getCompanyTags(item).map((tag, index) => (
+            <View 
+              key={index} 
+              style={[
+                styles.jobTag, 
+                { 
+                  backgroundColor: '#f0fff4',
+                  borderColor: '#9ae6b4'
+                }
+              ]}
+            >
+              <Text style={[styles.jobTagText, { color: '#059669' }]}>
+                {tag}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
       
-      {/* Divider */}
       <View style={styles.divider} />
       
-      {/* Địa điểm */}
-      <View style={styles.jobLocation}>
-        <Text style={styles.locationText}>{item.location}</Text>
-      </View>
-      
-
-      
-      {/* Tags */}
-      <View style={styles.jobTags}>
-        {getCompanyTags(item).map((tag, index) => (
-          <View key={index} style={styles.jobTag}>
-            <Text style={styles.jobTagText}>{tag}</Text>
-          </View>
-        ))}
+      <View style={styles.companyFooter}>
+        <View style={styles.locationContainer}>
+          <Icon name="location-on" size={14} color="#666" />
+          <Text style={styles.locationText}>{item.location}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -197,6 +250,11 @@ const CompanyCard = ({
             pagingEnabled={horizontal ? false : undefined}
             onScroll={handleScroll}
             scrollEventThrottle={16}
+            getItemLayout={(data, index) => ({
+              length: 376,
+              offset: 376 * index,
+              index,
+            })}
           />
           
           {/* Simple Scroll Indicator Dots */}
@@ -221,7 +279,7 @@ const CompanyCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -282,28 +340,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
   },
   carouselJobCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
-    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
     width: 360,
     marginRight: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   jobCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   companyInfoSection: {
     flexDirection: 'row',
@@ -318,65 +376,85 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#E0E0E0',
-    marginTop: 6,
-    marginBottom: 8,
+    marginTop: 1,
+    marginBottom: 1,
   },
   companyLogo: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f7fafc',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   companyLogoText: {
-    color: '#2563eb',
-    fontSize: 24,
+    color: '#3182ce',
+    fontSize: 14,
     fontFamily: 'Poppins-Bold',
   },
 
   jobTitle: {
-    fontSize: 20,
-    color: '#000',
-    marginBottom: 2,
+    fontSize: 14,
+    color: '#1a202c',
+    marginBottom: -2,
     fontFamily: 'Poppins-Bold',
   },
   jobCompany: {
-    fontSize: 15,
-    color: '#666',
+    fontSize: 11,
+    color: '#4a5568',
     marginBottom: 0,
     fontFamily: 'Poppins-Regular',
   },
-  jobLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    marginLeft: 68,
-  },
-  locationText: {
-    fontSize: 16, 
-    color: '#666',
-    marginLeft: 0,
-    fontFamily: 'Poppins-Regular',
-  },
+
   jobTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 68,
-    marginTop: 2,
+    marginTop: -4,
   },
   jobTag: {
-    backgroundColor: '#F0F0F0',
     borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginRight: 8,
+    paddingVertical: 3,
+    marginRight: 5,
+    marginBottom: 0,
+    borderWidth: 1,
   },
   jobTagText: {
-    fontSize: 12,
-    color: '#000',
+    fontSize: 10,
     fontWeight: '500',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  mainContentContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    marginBottom: 8,
+  },
+  companyFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 3,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  locationText: {
+    fontSize: 11,
+    color: '#495057',
+    marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

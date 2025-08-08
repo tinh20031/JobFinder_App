@@ -69,24 +69,29 @@ export const CompanyCardSkeleton = () => (
 // Job Card Skeleton
 export const JobCardSkeleton = () => (
   <View style={styles.jobCardSkeleton}>
-    <View style={styles.jobCardHeader}>
-      <View style={styles.companyInfoSection}>
-        <SkeletonLoading width={56} height={56} borderRadius={12} />
-        <View style={styles.companyTextSection}>
-          <SkeletonLoading width={140} height={20} style={styles.skeletonTitle} />
-          <SkeletonLoading width={100} height={15} style={styles.skeletonSubtitle} />
+    <View style={styles.mainContentContainer}>
+      <View style={styles.jobCardHeader}>
+        <View style={styles.companyInfoSection}>
+          <SkeletonLoading width={36} height={36} borderRadius={8} />
+          <View style={styles.companyTextSection}>
+            <SkeletonLoading width={140} height={14} style={styles.skeletonTitle} />
+            <SkeletonLoading width={100} height={11} style={styles.skeletonSubtitle} />
+          </View>
         </View>
       </View>
-      <SkeletonLoading width={28} height={28} borderRadius={4} />
+      
+      <View style={styles.skeletonTags}>
+        <SkeletonLoading width={80} height={24} borderRadius={6} style={styles.skeletonTag} />
+        <SkeletonLoading width={100} height={24} borderRadius={6} style={styles.skeletonTag} />
+        <SkeletonLoading width={60} height={24} borderRadius={6} style={styles.skeletonTag} />
+      </View>
     </View>
     
     <View style={styles.divider} />
     
-    <SkeletonLoading width={120} height={16} style={styles.skeletonLocation} />
-    <SkeletonLoading width={130} height={17} style={styles.skeletonSalary} />
-    <View style={styles.skeletonTags}>
-      <SkeletonLoading width={80} height={24} borderRadius={6} style={styles.skeletonTag} />
-      <SkeletonLoading width={100} height={24} borderRadius={6} style={styles.skeletonTag} />
+    <View style={styles.jobFooter}>
+      <SkeletonLoading width={120} height={12} />
+      <SkeletonLoading width={60} height={24} borderRadius={6} />
     </View>
   </View>
 );
@@ -137,7 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   skeletonTitle: {
-    marginBottom: 2,
+    marginBottom: 1,
   },
   skeletonSubtitle: {
     marginBottom: 0,
@@ -145,8 +150,8 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#E0E0E0',
-    marginTop: 6,
-    marginBottom: 8,
+    marginTop: 1,
+    marginBottom: 1,
   },
   skeletonLocation: {
     marginLeft: 68,
@@ -157,26 +162,26 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   jobCardSkeleton: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
-    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   jobCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   skeletonSalary: {
     marginLeft: 68,
@@ -184,11 +189,24 @@ const styles = StyleSheet.create({
   },
   skeletonTags: {
     flexDirection: 'row',
-    marginLeft: 68,
-    marginTop: 8,
+    marginTop: 2,
   },
   skeletonTag: {
-    marginRight: 8,
+    marginRight: 5,
+  },
+  mainContentContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    marginBottom: 8,
+  },
+  jobFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 3,
   },
   profileSkeleton: {
     flexDirection: 'row',

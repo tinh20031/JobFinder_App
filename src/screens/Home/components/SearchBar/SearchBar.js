@@ -39,7 +39,7 @@ const SearchBar = ({ onSearch, onFilter }) => {
 const styles = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   searchBar: {
     flexDirection: 'row',

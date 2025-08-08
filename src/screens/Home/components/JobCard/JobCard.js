@@ -13,7 +13,8 @@ const JobCard = ({
   title = "Trending Jobs", 
   showSeeAll = true, 
   limit = null,
-  showHeader = true 
+  showHeader = true,
+  horizontal = true
 }) => {
   const navigation = useNavigation();
   const flatListRef = useRef(null);
@@ -117,6 +118,8 @@ const JobCard = ({
             console.log('Original job company data:', job.company);
             console.log('Original job ID:', job.id, 'jobId:', job.jobId);
             console.log('Mapped job ID:', mappedJob.id);
+            console.log('Job industry data:', job.industry);
+            console.log('Job tags:', mappedJob.tags);
           }
           
           return mappedJob;
@@ -236,13 +239,29 @@ const JobCard = ({
   // Helper function to get job tags - only jobType and industry
   const getJobTags = (job) => {
     const tags = [];
+    
+    // Add job type tag
     if (job.jobType?.jobTypeName) {
       tags.push(job.jobType.jobTypeName);
+    } else if (job.workType) {
+      tags.push(job.workType);
     }
+    
+    // Add industry tag
     if (job.industry?.industryName) {
       tags.push(job.industry.industryName);
+    } else if (job.industryName) {
+      tags.push(job.industryName);
     }
-    return tags; // Return empty array if no tags - no hardcode fallback
+    
+    // Add level tag if available
+    if (job.level?.levelName) {
+      tags.push(job.level.levelName);
+    } else if (job.levelName) {
+      tags.push(job.levelName);
+    }
+    
+    return tags;
   };
 
   // Helper function to generate logo color based on company name
@@ -250,6 +269,18 @@ const JobCard = ({
     const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be185d', '#65a30d'];
     const index = companyName.length % colors.length;
     return colors[index];
+  };
+
+  // Helper function to generate tag color based on tag position
+  const getTagColor = (tagText, index) => {
+    // Fixed colors based on tag position (index)
+    const colorSchemes = [
+      { bg: '#fef5e7', border: '#fed7aa', text: '#d97706' }, // Orange/Yellow (Tag 1)
+      { bg: '#f0fff4', border: '#9ae6b4', text: '#059669' }, // Green (Tag 2)
+      { bg: '#fff5f5', border: '#feb2b2', text: '#dc2626' }, // Red (Tag 3)
+    ];
+    const colorIndex = index % colorSchemes.length;
+    return colorSchemes[colorIndex];
   };
 
   // Helper function to generate logo text (first letter of company name)
@@ -317,60 +348,87 @@ const JobCard = ({
     }
   };
 
-  const renderJobItem = ({ item, index }) => (
+    const renderJobItem = ({ item, index }) => (
     <TouchableOpacity 
-      style={styles.jobCard}
+      style={[
+        styles.jobCard,
+        horizontal ? { marginRight: 16 } : { marginRight: 0 }
+      ]}
       onPress={() => {
         console.log('Navigating to JobDetail with jobId:', item.id);
         navigation.navigate('JobDetail', { jobId: item.id });
       }}
       activeOpacity={0.8}
     >
-      <View style={styles.jobCardHeader}>
-        <View style={styles.companyInfoSection}>
-          {item.logoUrl ? (
-            <Image 
-              source={{ uri: item.logoUrl }}
-              style={[styles.companyLogo, { backgroundColor: '#fff' }]}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={[styles.companyLogo, { backgroundColor: item.logoColor }]}>
-              <Text style={styles.companyLogoText}>{item.logoText}</Text>
+      <View style={styles.mainContentContainer}>
+        <View style={styles.jobCardHeader}>
+          <View style={styles.companyInfoSection}>
+            {item.logoUrl ? (
+              <Image 
+                source={{ uri: item.logoUrl }}
+                style={[styles.companyLogo, { backgroundColor: '#fff' }]}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.companyLogo, { backgroundColor: item.logoColor }]}>
+                <Text style={styles.companyLogoText}>{item.logoText}</Text>
+              </View>
+            )}
+            <View style={styles.companyTextSection}>
+              <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
+                {item.title}
+              </Text>
+              <Text style={styles.jobCompany}>
+                {item.company} - {item.location}
+              </Text>
             </View>
-          )}
-          <View style={styles.companyTextSection}>
-            <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
-            <Text style={styles.jobCompany}>{item.company}</Text>
           </View>
+        </View>
+        
+        <View style={styles.jobTags}>
+          {item.tags.map((tag, index) => {
+            const tagColors = getTagColor(tag, index);
+            return (
+              <View 
+                key={index} 
+                style={[
+                  styles.jobTag, 
+                  { 
+                    backgroundColor: tagColors.bg,
+                    borderColor: tagColors.border
+                  }
+                ]}
+              >
+                <Text style={[styles.jobTagText, { color: tagColors.text }]}>
+                  {tag}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+      
+      <View style={styles.divider} />
+      
+      <View style={styles.jobFooter}>
+        <View style={styles.footerItem}>
+          <Icon name="payment" size={16} color="#000" />
+          <Text style={styles.footerText}>{item.salary}</Text>
         </View>
         <TouchableOpacity 
           style={styles.bookmarkButton} 
           onPress={(e) => {
-            e.stopPropagation(); // Prevent card press when bookmark is pressed
+            e.stopPropagation();
             handleJobBookmark(item.id);
           }}
         >
           <Icon 
             name={favoriteJobs.has(item.id) ? "bookmark" : "bookmark-border"} 
-            size={28} 
-            color={favoriteJobs.has(item.id) ? "#2563eb" : "#0070BA"} 
+            size={20} 
+            color={favoriteJobs.has(item.id) ? "#2563eb" : "#666"} 
           />
+          <Text style={styles.footerText}>Save</Text>
         </TouchableOpacity>
-      </View>
-      
-      <View style={styles.divider} />
-      
-      <View style={styles.jobLocation}>
-        <Text style={styles.locationText}>{item.location}</Text>
-      </View>
-      <Text style={styles.jobSalary}>{item.salary}</Text>
-      <View style={styles.jobTags}>
-        {item.tags.map((tag, index) => (
-          <View key={index} style={styles.jobTag}>
-            <Text style={styles.jobTagText}>{tag}</Text>
-          </View>
-        ))}
       </View>
     </TouchableOpacity>
   );
@@ -404,7 +462,8 @@ const JobCard = ({
           <Text style={styles.loadingText}>No jobs available</Text>
         </View>
       ) : (
-        <View style={styles.carouselContainer}>
+        <View style={horizontal ? styles.carouselContainer : styles.listContainer}>
+          {horizontal ? (
           <FlatList
             ref={flatListRef}
             data={jobs}
@@ -413,7 +472,7 @@ const JobCard = ({
             horizontal={true}
             showsHorizontalScrollIndicator={false}
             pagingEnabled={true}
-            snapToInterval={screenWidth - 60} // 60 is total horizontal padding
+              snapToInterval={screenWidth - 60}
             decelerationRate="fast"
             onScroll={handleScroll}
             scrollEventThrottle={16}
@@ -424,9 +483,18 @@ const JobCard = ({
               index,
             })}
           />
+          ) : (
+            <View style={styles.listContent}>
+              {jobs.map((item, index) => (
+                <View key={item.id.toString()}>
+                  {renderJobItem({ item, index })}
+                </View>
+              ))}
+            </View>
+          )}
           
-          {/* Pagination Dots */}
-          {jobs.length > 1 && (
+          {/* Pagination Dots - Only show for horizontal layout */}
+          {horizontal && jobs.length > 1 && (
             <View style={styles.paginationContainer}>
               {jobs.map((_, index) => (
                 <View
@@ -458,7 +526,7 @@ const JobCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -483,6 +551,12 @@ const styles = StyleSheet.create({
   carouselContent: {
     paddingHorizontal: 20,
   },
+  listContainer: {
+    paddingBottom: 20,
+  },
+  listContent: {
+    paddingHorizontal: 20,
+  },
   jobsListContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -502,26 +576,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
   },
   jobCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    marginRight: 20,
-    width: screenWidth - 60, // Full width minus padding
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
+    marginRight: 0,
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   jobCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   companyInfoSection: {
     flexDirection: 'row',
@@ -536,75 +612,107 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#E0E0E0',
-    marginTop: 6,
-    marginBottom: 8,
+    marginTop: 1,
+    marginBottom: 1,
   },
   companyLogo: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f7fafc',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   companyLogoText: {
-    color: '#2563eb',
-    fontSize: 24,
+    color: '#3182ce',
+    fontSize: 14,
     fontFamily: 'Poppins-Bold',
   },
+  salarySection: {
+    alignItems: 'flex-end',
+  },
   bookmarkButton: {
-    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 3,
+    paddingHorizontal: 8,
+    backgroundColor: '#f7fafc',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  jobFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 3,
+  },
+  footerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 11,
+    color: '#000',
+    marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   jobTitle: {
-    fontSize: 20,
-    color: '#000',
-    marginBottom: 2,
+    fontSize: 14,
+    color: '#1a202c',
+    marginBottom: -2,
     fontFamily: 'Poppins-Bold',
   },
   jobCompany: {
-    fontSize: 15,
-    color: '#666',
+    fontSize: 11,
+    color: '#4a5568',
     marginBottom: 0,
     fontFamily: 'Poppins-Regular',
   },
   jobLocation: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
-    marginLeft: 68,
+    marginBottom: -1,
+    marginLeft: 50,
   },
   locationText: {
-    fontSize: 16, 
-    color: '#666',
+    fontSize: 11, 
+    color: '#4a4a4a',
     marginLeft: 0,
     fontFamily: 'Poppins-Regular',
   },
   jobSalary: {
-    fontSize: 17,
-    color: '#2563eb',
-    marginBottom: 2,
-    marginLeft: 68,
+    fontSize: 13,
+    color: '#e53e3e',
     fontFamily: 'Poppins-SemiBold',
+  },
+  mainContentContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    marginBottom: 8,
   },
   jobTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 68,
-    marginTop: 2,
+    marginTop: -4,
   },
   jobTag: {
-    backgroundColor: '#F0F0F0',
     borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 4,
+    paddingVertical: 3,
+    marginRight: 5,
+    marginBottom: 0,
+    borderWidth: 1,
   },
   jobTagText: {
-    fontSize: 12,
-    color: '#000',
+    fontSize: 10,
     fontWeight: '500',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
   },
   loadMoreButton: {
     backgroundColor: '#2563eb',

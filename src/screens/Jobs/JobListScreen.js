@@ -112,6 +112,8 @@ const JobListScreen = ({ route }) => {
       return jobList;
     }
 
+
+
     return jobList.filter(job => {
       // Location filter - compare with provinceName
       if (filters.location && job.provinceName !== filters.location) {
@@ -149,8 +151,25 @@ const JobListScreen = ({ route }) => {
       }
 
       // Work type filter - compare with jobType.jobTypeName
-      if (filters.workType && job.jobType?.jobTypeName !== filters.workType) {
+      if (filters.workType) {
+        // Create a mapping for job type names
+        const jobTypeMapping = {
+          'Remote': ['Remote (Work from Home)', 'Remote'],
+          'Onsite': ['Onsite (Work from Office)', 'Onsite'],
+          'Hybrid': ['Hybrid (Work from Office & Home)', 'Hybrid'],
+          'Part-time': ['Part-time'],
+          'Full-time': ['Full-time'],
+          'Contract': ['Contract'],
+          'Internship': ['Internship'],
+          'Freelance': ['Freelance']
+        };
+        
+        const allowedJobTypes = jobTypeMapping[filters.workType] || [filters.workType];
+        const jobTypeMatches = allowedJobTypes.includes(job.jobType?.jobTypeName);
+        
+        if (!jobTypeMatches) {
         return false;
+        }
       }
 
       // Job level filter - compare with level.levelName
@@ -175,6 +194,12 @@ const JobListScreen = ({ route }) => {
 
       // Job function filter - compare with industry.industryName
       if (filters.jobFunction && job.industry?.industryName !== filters.jobFunction) {
+        return false;
+      }
+
+      // Industry filter - compare with industry.industryName
+      if (filters.industry && job.industry?.industryName !== filters.industry) {
+        console.log('JobListScreen: Filtering out job', job.id, 'industry:', job.industry?.industryName, 'filter:', filters.industry);
         return false;
       }
 
@@ -270,12 +295,28 @@ const JobListScreen = ({ route }) => {
   // Helper function to get job tags
   const getJobTags = (job) => {
     const tags = [];
+    
+    // Add job type tag
     if (job.jobType?.jobTypeName) {
       tags.push(job.jobType.jobTypeName);
+    } else if (job.workType) {
+      tags.push(job.workType);
     }
+    
+    // Add industry tag
     if (job.industry?.industryName) {
       tags.push(job.industry.industryName);
+    } else if (job.industryName) {
+      tags.push(job.industryName);
     }
+    
+    // Add level tag if available
+    if (job.level?.levelName) {
+      tags.push(job.level.levelName);
+    } else if (job.levelName) {
+      tags.push(job.levelName);
+    }
+    
     return tags;
   };
 
@@ -415,27 +456,68 @@ const JobListScreen = ({ route }) => {
       >
         <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
           <View style={styles.newJobCard}>
-            <View style={styles.jobCardHeader}>
-              <View style={styles.companyInfoSection}>
-                {item.logo ? (
-                  <Image 
-                    source={{ uri: item.logo }}
-                    style={[styles.companyLogo, { backgroundColor: '#fff' }]}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.companyLogo, { backgroundColor: logoColor }]}>
-                    <Text style={styles.companyLogoText}>{logoText}</Text>
+            <View style={styles.mainContentContainer}>
+              <View style={styles.jobCardHeader}>
+                <View style={styles.companyInfoSection}>
+                  {item.logo ? (
+                    <Image 
+                      source={{ uri: item.logo }}
+                      style={[styles.companyLogo, { backgroundColor: '#fff' }]}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.companyLogo, { backgroundColor: logoColor }]}>
+                      <Text style={styles.companyLogoText}>{logoText}</Text>
+                    </View>
+                  )}
+                  <View style={styles.companyTextSection}>
+                    <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
+                      {item.jobTitle || 'Unknown Job'}
+                    </Text>
+                    <Text style={styles.jobCompany}>
+                      {item.company?.companyName || 'Unknown Company'} - {item.provinceName || item.location || 'Unknown Location'}
+                    </Text>
                   </View>
-                )}
-                <View style={styles.companyTextSection}>
-                  <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
-                    {item.jobTitle || 'Unknown Job'}
-                  </Text>
-                  <Text style={styles.jobCompany}>
-                    {item.company?.companyName || 'Unknown Company'}
-                  </Text>
                 </View>
+              </View>
+              
+              <View style={styles.jobTags}>
+                {tags.map((tag, tagIndex) => {
+                  // Fixed colors based on tag position (index)
+                  const colorSchemes = [
+                    { bg: '#fef5e7', border: '#fed7aa', text: '#d97706' }, // Orange/Yellow (Tag 1)
+                    { bg: '#f0fff4', border: '#9ae6b4', text: '#059669' }, // Green (Tag 2)
+                    { bg: '#fff5f5', border: '#feb2b2', text: '#dc2626' }, // Red (Tag 3)
+                  ];
+                  const colorIndex = tagIndex % colorSchemes.length;
+                  const tagColors = colorSchemes[colorIndex];
+                  
+                  return (
+                    <View 
+                      key={`${tag}-${tagIndex}`} 
+                      style={[
+                        styles.jobTag, 
+                        { 
+                          backgroundColor: tagColors.bg,
+                          borderColor: tagColors.border
+                        }
+                      ]}
+                    >
+                      <Text style={[styles.jobTagText, { color: tagColors.text }]}>
+                        {tag}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+            
+            <View style={styles.divider} />
+            
+            <View style={styles.jobFooter}>
+              <View style={styles.footerItem}>
+                <MaterialIcons name="payment" size={16} color="#000" />
+                <Text style={styles.footerText}>{salaryText}</Text>
               </View>
               <TouchableOpacity 
                 style={styles.bookmarkButton} 
@@ -446,26 +528,11 @@ const JobListScreen = ({ route }) => {
               >
                 <MaterialIcons 
                   name={favoriteJobs.has(item.id) ? "bookmark" : "bookmark-border"} 
-                  size={28} 
-                  color={favoriteJobs.has(item.id) ? "#2563eb" : "#0070BA"} 
+                  size={20} 
+                  color={favoriteJobs.has(item.id) ? "#2563eb" : "#666"} 
                 />
+                <Text style={styles.footerText}>Save</Text>
               </TouchableOpacity>
-            </View>
-            
-            <View style={styles.divider} />
-            
-            <View style={styles.jobLocation}>
-              <Text style={styles.locationText}>
-                {item.provinceName || item.location || 'Unknown Location'}
-              </Text>
-            </View>
-            <Text style={styles.jobSalary}>{salaryText}</Text>
-            <View style={styles.jobTags}>
-              {tags.map((tag, tagIndex) => (
-                <View key={`${tag}-${tagIndex}`} style={styles.jobTag}>
-                  <Text style={styles.jobTagText}>{tag}</Text>
-                </View>
-              ))}
             </View>
           </View>
         </Animatable.View>
@@ -819,28 +886,29 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
-  // Existing Job Card Styles (keeping as is)
+  // Job Card Styles (synchronized with HomeScreen)
   newJobCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 5,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderColor: '#e1e5e9',
   },
   jobCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   companyInfoSection: {
     flexDirection: 'row',
@@ -855,77 +923,87 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#E0E0E0',
-    marginTop: 6,
-    marginBottom: 8,
+    marginTop: 1,
+    marginBottom: 1,
   },
   companyLogo: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f7fafc',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   companyLogoText: {
-    color: '#fff',
-    fontSize: 24,
+    color: '#3182ce',
+    fontSize: 14,
     fontFamily: 'Poppins-Bold',
   },
   bookmarkButton: {
-    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 3,
+    paddingHorizontal: 8,
+    backgroundColor: '#f7fafc',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   jobTitle: {
-    fontSize: 20,
-    color: '#000',
-    marginBottom: 2,
+    fontSize: 14,
+    color: '#1a202c',
+    marginBottom: -2,
     fontFamily: 'Poppins-Bold',
   },
   jobCompany: {
-    fontSize: 15,
-    color: '#666',
+    fontSize: 11,
+    color: '#4a5568',
     marginBottom: 0,
     fontFamily: 'Poppins-Regular',
-  },
-  jobLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 2,
-    marginLeft: 68,
-  },
-  locationText: {
-    fontSize: 16, 
-    color: '#666',
-    marginLeft: 0,
-    fontFamily: 'Poppins-Regular',
-  },
-  jobSalary: {
-    fontSize: 17,
-    color: '#2563eb',
-    marginBottom: 2,
-    marginLeft: 68,
-    fontFamily: 'Poppins-SemiBold',
   },
   jobTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 68,
-    marginTop: 2,
+    marginTop: -4,
   },
   jobTag: {
-    backgroundColor: '#f8f9fa',
     borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 4,
+    paddingVertical: 3,
+    marginRight: 5,
+    marginBottom: 0,
     borderWidth: 1,
-    borderColor: '#e9ecef',
   },
   jobTagText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 10,
     fontWeight: '500',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  mainContentContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    marginBottom: 8,
+  },
+  jobFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 3,
+  },
+  footerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 11,
+    color: '#000',
+    marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
 
   // Utility Styles
