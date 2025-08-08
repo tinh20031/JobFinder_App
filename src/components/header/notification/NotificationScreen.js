@@ -9,6 +9,7 @@ import {
   StatusBar,
   RefreshControl,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
@@ -21,38 +22,77 @@ const NotificationScreen = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
   const navigation = useNavigation();
 
-  const fetchNotifications = useCallback(async (isRefresh = false) => {
-    const token = await AsyncStorage.getItem('token');
-    if (!token) return;
+  const fetchNotifications = useCallback(
+    async ({ isRefresh = false, pageParam = 1, append = false } = {}) => {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
 
-    try {
-      setLoading(true);
-      const response = await fetch(`${BASE_URL}/api/notification`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      try {
+        if (append) {
+          setLoadingMore(true);
+        } else {
+          setLoading(true);
+        }
 
-      if (response.ok) {
-        const data = await response.json();
-        const notificationsArray = Array.isArray(data) ? data : [];
-        setNotifications(notificationsArray);
-        
-        // Debug notification data
-        debugNotificationData(notificationsArray);
+        const skip = (pageParam - 1) * PAGE_SIZE;
+        const url = `${BASE_URL}/api/notification?page=${pageParam}&pageSize=${PAGE_SIZE}&take=${PAGE_SIZE}&skip=${skip}`;
+
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const items = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.items)
+            ? data.items
+            : [];
+
+          if (append) {
+            setNotifications((prev) => {
+              const merged = [...prev, ...items];
+              const dedupedMap = new Map();
+              merged.forEach((n) => {
+                const key = n.notificationId ?? `${n.createdAt}-${Math.random()}`;
+                if (!dedupedMap.has(key)) dedupedMap.set(key, n);
+              });
+              return Array.from(dedupedMap.values());
+            });
+          } else {
+            setNotifications(items);
+          }
+
+          setHasMore(items.length === PAGE_SIZE);
+          setPage(pageParam);
+
+          // Debug notification data
+          debugNotificationData(items);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        if (append) {
+          setLoadingMore(false);
+        } else {
+          setLoading(false);
+        }
+        if (isRefresh) {
+          setRefreshing(false);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
-      if (isRefresh) {
-        setRefreshing(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   const markAsRead = async (notificationId) => {
     const token = await AsyncStorage.getItem('token');
@@ -107,11 +147,18 @@ const NotificationScreen = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchNotifications(true);
+    setHasMore(true);
+    fetchNotifications({ isRefresh: true, pageParam: 1, append: false });
+  };
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    fetchNotifications({ pageParam: nextPage, append: true });
   };
 
   useEffect(() => {
-    fetchNotifications();
+    fetchNotifications({ pageParam: 1, append: false });
     
     // Auto mark all notifications as read when entering the screen
     const autoMarkAllAsRead = async () => {
@@ -299,6 +346,8 @@ const NotificationScreen = () => {
         keyExtractor={(item, index) => item.notificationId?.toString() || index.toString()}
         renderItem={renderNotification}
         ListEmptyComponent={renderEmptyState}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.2}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -309,6 +358,13 @@ const NotificationScreen = () => {
         }
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.footerLoading}>
+              <ActivityIndicator size="small" color="#2563eb" />
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );
@@ -442,6 +498,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     fontFamily: 'Poppins-Regular',
+  },
+  footerLoading: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
