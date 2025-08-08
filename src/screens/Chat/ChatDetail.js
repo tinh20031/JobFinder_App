@@ -602,63 +602,17 @@ const ChatDetail = (props) => {
 
   const renderMessage = ({ item }) => {
     if (item.file) {
-      // Xác định loại file và icon tương ứng
-      const getFileIcon = (fileName, fileType) => {
-        const extension = fileName?.split('.').pop()?.toLowerCase();
-        const type = fileType?.toLowerCase();
-        
-        // Image files
-        if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension) || 
-            type?.includes('image')) {
-          return { name: 'image', color: item.sender === 'me' ? '#ffffff' : '#475569' };
-        }
-        
-        // PDF files
-        if (extension === 'pdf' || type?.includes('pdf')) {
-          return { name: 'picture-as-pdf', color: item.sender === 'me' ? '#ffffff' : '#e74c3c' };
-        }
-        
-        // Document files
-        if (['doc', 'docx', 'txt', 'rtf'].includes(extension) || 
-            type?.includes('document') || type?.includes('text')) {
-          return { name: 'description', color: item.sender === 'me' ? '#ffffff' : '#2196f3' };
-        }
-        
-        // Video files
-        if (['mp4', 'avi', 'mov', 'wmv', 'flv'].includes(extension) || 
-            type?.includes('video')) {
-          return { name: 'video-library', color: item.sender === 'me' ? '#ffffff' : '#ff9800' };
-        }
-        
-        // Audio files
-        if (['mp3', 'wav', 'aac', 'ogg'].includes(extension) || 
-            type?.includes('audio')) {
-          return { name: 'audiotrack', color: item.sender === 'me' ? '#ffffff' : '#9c27b0' };
-        }
-        
-        // Default file icon
-        return { name: 'insert-drive-file', color: item.sender === 'me' ? '#ffffff' : '#666' };
-      };
-      
-      const fileIcon = getFileIcon(item.file.name, item.file.type);
-      
       return (
         <View style={[styles.messageRow, item.sender === 'me' ? styles.right : styles.left]}>
           <View style={[styles.fileBubble, item.sender === 'me' ? styles.bubbleRight : styles.bubbleLeft]}>
             <View style={styles.fileRow}>
-              <MaterialIcons name={fileIcon.name} size={32} color={fileIcon.color} />
+              <MaterialIcons name="picture-as-pdf" size={32} color="#e74c3c" />
               <View style={{ marginLeft: 10 }}>
-                <Text style={[styles.fileName, { color: item.sender === 'me' ? '#ffffff' : '#475569' }]}>
-                  {item.file.name}
-                </Text>
-                <Text style={[styles.fileSize, { color: item.sender === 'me' ? '#ffffff' : '#64748b' }]}>
-                  {item.file.size}
-                </Text>
+                <Text style={styles.fileName}>{item.file.name}</Text>
+                <Text style={styles.fileSize}>{item.file.size}</Text>
               </View>
             </View>
-            <Text style={[styles.timeInBubble, { color: item.sender === 'me' ? '#ffffff' : '#94a3b8' }]}>
-              {item.time}
-            </Text>
+            <Text style={styles.timeInBubble}>{item.time}</Text>
           </View>
         </View>
       );
@@ -692,9 +646,7 @@ const ChatDetail = (props) => {
         <View style={[styles.bubble, item.sender === 'me' ? styles.bubbleRight : styles.bubbleLeft]}>
           <Text style={item.sender === 'me' ? styles.messageText : styles.messageTextLeft}>{item.text}</Text>
           <View style={styles.bubbleFooter}>
-            <Text style={[styles.timeInBubble, { color: item.sender === 'me' ? '#ffffff' : '#94a3b8' }]}>
-              {item.time}
-            </Text>
+            <Text style={styles.timeInBubble}>{item.time}</Text>
             {item.sender === 'me' && (
               <MaterialIcons 
                 name={item.status === 'sending' ? 'schedule' : 'done-all'} 
@@ -952,12 +904,24 @@ const ChatDetail = (props) => {
         style={styles.keyboardAvoidingView}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <HeaderDetail 
-          title={contact?.name || ''} 
-          avatar={contact?.avatar || 'https://randomuser.me/api/portraits/men/1.jpg'}
-          isOnline={partnerIsOnline}
-          showAvatar={true}
-        />
+        <HeaderDetail />
+        <View style={styles.headerBelow}>
+          <View style={styles.headerLeft}>
+            <Image source={{ uri: contact?.avatar || 'https://randomuser.me/api/portraits/men/1.jpg' }} style={styles.avatar} />
+            <View style={{ marginLeft: 10 }}>
+              <Text style={styles.name}>{contact?.name || ''}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                <View style={[
+                  styles.onlineIndicator, 
+                  { backgroundColor: partnerIsOnline ? '#4caf50' : '#aaa' }
+                ]} />
+                <Text style={[styles.online, { color: partnerIsOnline ? '#4caf50' : '#aaa' }]}>
+                  {partnerIsOnline ? 'Online' : 'Offline'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
         
         <View style={styles.chatContainer}>
           <FlatList
@@ -975,7 +939,7 @@ const ChatDetail = (props) => {
         <View style={styles.inputBarWrapper}>
           <View style={styles.inputBar}>
             <TouchableOpacity style={styles.attachBtn} onPress={handlePickFile}>
-              <MaterialIcons name="attach-file" size={26} color="#2563eb" />
+              <MaterialIcons name="attach-file" size={26} color="#2d357a" />
             </TouchableOpacity>
             <TextInput
               style={styles.input}
@@ -1064,12 +1028,11 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 17,
-    fontFamily: 'Poppins-SemiBold',
+    fontWeight: 'bold',
     color: '#222',
   },
   online: {
     fontSize: 13,
-    fontFamily: 'Poppins-Regular',
     color: '#4caf50',
     marginTop: 2,
   },
@@ -1091,27 +1054,25 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   bubbleLeft: {
-    backgroundColor: '#f1f5f9', // màu xám nhạt
+    backgroundColor: '#f8f5f2', // màu be Figma
     borderTopLeftRadius: 0,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#e3eafc',
   },
   bubbleRight: {
-    backgroundColor: '#2563eb', // màu xanh brand
+    backgroundColor: '#2d357a',
     borderTopRightRadius: 0,
     alignSelf: 'flex-end',
   },
   messageText: {
     color: '#fff',
     fontSize: 15,
-    fontFamily: 'Poppins-Regular',
   },
   // Thêm style cho text đối phương
   messageTextLeft: {
-    color: '#475569', // màu xám đậm
+    color: '#6d4c41', // nâu nhạt Figma
     fontSize: 15,
-    fontFamily: 'Poppins-Regular',
   },
   bubbleFooter: {
     flexDirection: 'row',
@@ -1120,7 +1081,6 @@ const styles = StyleSheet.create({
   },
   timeInBubble: {
     fontSize: 12,
-    fontFamily: 'Poppins-Regular',
     color: '#bbb',
   },
   fileBubble: {
@@ -1129,7 +1089,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginHorizontal: 8,
-    backgroundColor: '#2563eb', // màu xanh brand
+    backgroundColor: '#2d357a',
     alignSelf: 'flex-end',
   },
   fileRow: {
@@ -1139,37 +1099,35 @@ const styles = StyleSheet.create({
   },
   fileName: {
     color: '#fff',
-    fontFamily: 'Poppins-SemiBold',
+    fontWeight: 'bold',
     fontSize: 15,
   },
   fileSize: {
     color: '#fff',
     fontSize: 13,
-    fontFamily: 'Poppins-Regular',
     marginTop: 2,
   },
   inputBarWrapper: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fafbfc',
     paddingBottom: Platform.OS === 'ios' ? 16 : 8,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: '#e3eafc',
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#fff',
     borderRadius: 24,
     marginHorizontal: 16,
     marginVertical: 8,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#e3eafc',
   },
   input: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Poppins-Regular',
     color: '#222',
     paddingVertical: 8,
     paddingHorizontal: 8,
@@ -1177,7 +1135,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   sendBtn: {
-    backgroundColor: '#2563eb', // màu xanh brand
+    backgroundColor: '#2d357a',
     borderRadius: 20,
     padding: 8,
     marginLeft: 8,

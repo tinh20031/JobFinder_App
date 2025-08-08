@@ -25,7 +25,7 @@ const PaymentWebView = ({ route, navigation }) => {
     // Nếu URL chứa success callback
     if (url.includes('success') || url.includes('payment_success')) {
       // Chuyển thẳng đến trang success chi tiết
-      navigation.navigate('PaymentSuccessScreen', { 
+      navigation.navigate('PaymentSuccess', { 
         orderCode: route.params.orderCode,
         type: route.params.type || 'candidate'
       });

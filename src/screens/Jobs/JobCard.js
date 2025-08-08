@@ -91,9 +91,16 @@ const JobCard = ({
               </View>
             )}
             <View style={styles.companyTextSection}>
-              <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
-                {item.jobTitle || 'Unknown Job'}
-              </Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
+                  {item.jobTitle || 'Unknown Job'}
+                </Text>
+                {item?.isTrending && (
+                  <View style={styles.trendingBadgeSmall}>
+                    <Text style={styles.trendingBadgeSmallText}>Trending</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.jobCompany}>
                 {item.company?.companyName || 'Unknown Company'} - {item.provinceName || item.location || 'Unknown Location'}
               </Text>
@@ -139,22 +146,45 @@ const JobCard = ({
           <MaterialIcons name="payment" size={16} color="#000" />
           <Text style={styles.footerText}>{salaryText}</Text>
         </View>
-        {onBookmarkPress && (
-          <TouchableOpacity 
-            style={styles.bookmarkButton} 
-            onPress={(e) => {
-              e.stopPropagation();
-              onBookmarkPress(item.id);
-            }}
-          >
-            <MaterialIcons 
-              name={favoriteJobs?.has(item.id) ? "bookmark" : "bookmark-border"} 
-              size={20} 
-              color={favoriteJobs?.has(item.id) ? "#2563eb" : "#666"} 
-            />
-            <Text style={styles.footerText}>Save</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.footerRight}>
+          {item?.isTrending && (item?.trendingRank || 0) <= 3 && (
+            <Animatable.View
+              animation="pulse"
+              iterationCount="infinite"
+              duration={(item.trendingRank || 0) === 1 ? 900 : 1400}
+              easing="ease-in-out"
+              useNativeDriver
+              style={styles.hotBadgeWrapper}
+            >
+              <View
+                style={[
+                  styles.hotBadge,
+                  { backgroundColor: (item.trendingRank || 0) === 1 ? '#ff4444' : '#ff6b35' },
+                ]}
+              >
+                <Text style={styles.hotBadgeText}>
+                  {(item.trendingRank || 0) === 1 ? '🔥 SUPER HOT' : '🔥 HOT'}
+                </Text>
+              </View>
+            </Animatable.View>
+          )}
+          {onBookmarkPress && (
+            <TouchableOpacity 
+              style={styles.bookmarkButton} 
+              onPress={(e) => {
+                e.stopPropagation();
+                onBookmarkPress(item.id);
+              }}
+            >
+              <MaterialIcons 
+                name={favoriteJobs?.has(item.id) ? "bookmark" : "bookmark-border"} 
+                size={20} 
+                color={favoriteJobs?.has(item.id) ? "#2563eb" : "#666"} 
+              />
+              <Text style={styles.footerText}>Save</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -211,6 +241,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 8,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   companyInfoSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -242,6 +277,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Poppins-Bold',
   },
+  // old ribbon removed from header; badge now sits in footerRight
+  trendingBadgeSmall: {
+    marginLeft: 6,
+    backgroundColor: '#ffedd5',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  trendingBadgeSmallText: {
+    color: '#f97316',
+    fontSize: 9,
+    fontFamily: 'Poppins-SemiBold',
+  },
   bookmarkButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,6 +305,9 @@ const styles = StyleSheet.create({
     color: '#1a202c',
     marginBottom: -2,
     fontFamily: 'Poppins-Bold',
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
   },
   jobCompany: {
     fontSize: 11,
@@ -290,11 +341,32 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 8,
   },
+  mainContentWithRibbon: {
+    marginTop: 12,
+  },
   jobFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 3,
+  },
+  footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  hotBadgeWrapper: {
+    borderRadius: 14,
+  },
+  hotBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  hotBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: 'Poppins-Bold',
   },
   footerItem: {
     flexDirection: 'row',

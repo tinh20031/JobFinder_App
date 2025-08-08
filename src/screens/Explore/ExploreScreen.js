@@ -33,15 +33,29 @@ const ExploreScreen = () => {
   // Jobs state
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
+  const [visibleJobs, setVisibleJobs] = useState([]); // jobs displayed with pagination
   const [jobsLoading, setJobsLoading] = useState(true);
   const [jobsError, setJobsError] = useState('');
+  // Trending jobs integration
+  const [trendingJobs, setTrendingJobs] = useState([]);
+  const [loadingTrending, setLoadingTrending] = useState(false);
+  const [errorTrending, setErrorTrending] = useState('');
+  const [mergedJobs, setMergedJobs] = useState([]);
   const [favoriteJobs, setFavoriteJobs] = useState(new Set());
+  // Pagination state for jobs
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   
   // Companies state
   const [companies, setCompanies] = useState([]);
   const [filteredCompanies, setFilteredCompanies] = useState([]);
+  const [visibleCompanies, setVisibleCompanies] = useState([]);
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [companiesError, setCompaniesError] = useState('');
+  const [companyPage, setCompanyPage] = useState(1);
+  const [companyPageSize] = useState(10);
+  const [isLoadingMoreCompanies, setIsLoadingMoreCompanies] = useState(false);
   
   // Search and filter state
   const [jobSearchText, setJobSearchText] = useState('');
@@ -52,6 +66,7 @@ const ExploreScreen = () => {
   const [companyFilters, setCompanyFilters] = useState({});
   const [savedFilters, setSavedFilters] = useState({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Use refs to track filter state to prevent conflicts
   const jobFiltersRef = useRef({});
@@ -89,6 +104,83 @@ const ExploreScreen = () => {
     fetchCompanies();
   }, []);
 
+  // Fetch trending jobs for Explore (jobs tab)
+  const fetchTrendingJobs = React.useCallback(async () => {
+    try {
+      setLoadingTrending(true);
+      setErrorTrending('');
+      const result = await JobService.getTrendingJobs({ role: 'candidate', page: 1, pageSize: 10 });
+      const trendingArray = Array.isArray(result?.jobs) ? result.jobs : Array.isArray(result) ? result : (result?.data || []);
+      const normalized = (trendingArray || []).map((job, index) => ({
+        id: job.jobId || job.id,
+        jobTitle: job.title || job.jobTitle,
+        description: job.description,
+        companyId: job.companyId,
+        company: job.company
+          ? {
+              id: job.company.userId || job.company.id,
+              fullName: job.company.fullName,
+              email: job.company.email,
+              companyName: job.company.companyName,
+              location: job.company.location,
+              urlCompanyLogo: job.company.urlCompanyLogo,
+            }
+          : null,
+        provinceName: job.provinceName,
+        isSalaryNegotiable: job.isSalaryNegotiable,
+        minSalary: job.minSalary,
+        maxSalary: job.maxSalary,
+        logo: (job.company && job.company.urlCompanyLogo) || '',
+        industryId: job.industryId,
+        industry: job.industry
+          ? { industryId: job.industry.industryId, industryName: job.industry.industryName }
+          : null,
+        jobTypeId: job.jobTypeId,
+        jobType: job.jobType
+          ? { id: job.jobType.jobTypeId || job.jobType.id, jobTypeName: job.jobType.jobTypeName }
+          : null,
+        levelId: job.levelId,
+        level: job.level
+          ? { id: job.level.levelId || job.level.id, levelName: job.level.levelName }
+          : null,
+        quantity: job.quantity ?? 1,
+        expiryDate: job.expiryDate,
+        timeStart: job.timeStart,
+        timeEnd: job.timeEnd,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+        status: job.status,
+        addressDetail: job.addressDetail,
+        skills: job.skills || [],
+        isTrending: true,
+        trendingRank: (job.trendingRank || index + 1),
+      }));
+      setTrendingJobs(normalized);
+    } catch (e) {
+      console.log('ExploreScreen: Failed to fetch trending jobs', e);
+      setTrendingJobs([]);
+      setErrorTrending('Failed to load trending jobs');
+    } finally {
+      setLoadingTrending(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTrendingJobs();
+  }, [fetchTrendingJobs]);
+
+  // Merge trending + jobs (active first) for Jobs tab
+  useEffect(() => {
+    const onlyActive = (list) => list.filter(j => (j.status === undefined) || j.status === 2);
+    const trending = onlyActive(trendingJobs);
+    const all = onlyActive(jobs);
+    const trendingIds = new Set(trending.map(j => j.id));
+    const nonTrending = all.filter(j => !trendingIds.has(j.id));
+    const merged = [...trending, ...nonTrending];
+    setMergedJobs(merged);
+    setPage(1); // reset pagination whenever source changes
+  }, [jobs, trendingJobs]);
+
   // Handle filters from FilterScreen
   useEffect(() => {
     if (route.params?.filters) {
@@ -99,6 +191,7 @@ const ExploreScreen = () => {
         const newCompanyFilters = route.params.filters;
         companyFiltersRef.current = newCompanyFilters;
         setCompanyFilters(newCompanyFilters);
+        setCompanyPage(1);
         
         // Save to AsyncStorage
         AsyncStorage.setItem('explore_company_filters', JSON.stringify(newCompanyFilters));
@@ -108,6 +201,10 @@ const ExploreScreen = () => {
         const newJobFilters = route.params.filters;
         jobFiltersRef.current = newJobFilters;
         setJobFilters(newJobFilters);
+        setPage(1);
+        // Re-apply filters immediately without user needing to refresh
+        const filteredNow = applyJobFilters(mergedJobs, newJobFilters);
+        setFilteredJobs(filteredNow);
         
         // Save to AsyncStorage
         AsyncStorage.setItem('explore_job_filters', JSON.stringify(newJobFilters));
@@ -124,7 +221,7 @@ const ExploreScreen = () => {
       
       setTimeout(() => {
         setFilterLoading(false);
-      }, 500);
+      }, 200);
     }
     if (route.params?.savedFilters) {
       setSavedFilters(route.params.savedFilters);
@@ -143,13 +240,14 @@ const ExploreScreen = () => {
       if (route.params?.fromHome) {
         setActiveTab('jobs');
       }
+      setPage(1);
     }
   }, [route.params?.searchQuery, route.params?.fromHome]);
 
-  // Check favorite status for jobs
+  // Check favorite status for jobs (use merged jobs)
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (jobs.length === 0) return;
+      if (mergedJobs.length === 0) return;
       
       try {
         const userId = await authService.getUserId();
@@ -158,7 +256,7 @@ const ExploreScreen = () => {
           return;
         }
         
-        const jobsToCheck = jobs.slice(0, 10);
+        const jobsToCheck = mergedJobs.slice(0, 10);
         const newFavoriteJobs = new Set();
         
         for (const job of jobsToCheck) {
@@ -178,10 +276,10 @@ const ExploreScreen = () => {
       }
     };
 
-    if (jobs.length > 0) {
+    if (mergedJobs.length > 0) {
       checkFavoriteStatus();
     }
-  }, [jobs]);
+  }, [mergedJobs]);
 
   const fetchJobs = async () => {
     setJobsLoading(true);
@@ -189,7 +287,6 @@ const ExploreScreen = () => {
     try {
       const data = await JobService.getJobs();
       setJobs(data);
-      setFilteredJobs(data);
       setIsInitialLoad(false);
     } catch (err) {
       setJobsError('Failed to load job list.');
@@ -209,6 +306,27 @@ const ExploreScreen = () => {
       setCompaniesError('Unable to load company list.');
     } finally {
       setCompaniesLoading(false);
+    }
+  };
+
+  // Pull-to-refresh handlers
+  const onRefreshJobs = async () => {
+    setIsRefreshing(true);
+    setPage(1);
+    try {
+      await Promise.all([fetchJobs(), fetchTrendingJobs()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const onRefreshCompanies = async () => {
+    setIsRefreshing(true);
+    setCompanyPage(1);
+    try {
+      await fetchCompanies();
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -253,45 +371,74 @@ const ExploreScreen = () => {
         }
       }
 
-      // Work type filter
-      if (filters.workType) {
-        const jobTypeMapping = {
-          'Remote': ['Remote (Work from Home)', 'Remote'],
-          'Onsite': ['Onsite (Work from Office)', 'Onsite'],
-          'Hybrid': ['Hybrid (Work from Office & Home)', 'Hybrid'],
-          'Part-time': ['Part-time'],
-          'Full-time': ['Full-time'],
-          'Contract': ['Contract'],
-          'Internship': ['Internship'],
-          'Freelance': ['Freelance']
-        };
-        
-        const allowedJobTypes = jobTypeMapping[filters.workType] || [filters.workType];
-        const jobTypeMatches = allowedJobTypes.includes(job.jobType?.jobTypeName);
-        
-        if (!jobTypeMatches) {
-          return false;
+      // Industry filter: support both Home (industry, industryId) and FilterScreen (workType as industry name)
+      if (filters.industryId) {
+        if (String(job.industryId) !== String(filters.industryId)) return false;
+      }
+      const industryNameFilter = filters.industry || filters.workType; // Home uses 'industry', FilterScreen maps to 'workType'
+      if (industryNameFilter && job.industry?.industryName !== industryNameFilter) {
+        return false;
+      }
+
+      // Job type filter: FilterScreen sends 'jobLevel' as JobType name
+      if (filters.jobLevel && job.jobType?.jobTypeName !== filters.jobLevel) {
+        return false;
+      }
+
+      // Date posted filter (FilterScreen maps date to employmentType key)
+      if (filters.employmentType && filters.employmentType !== 'all') {
+        const jobDate = new Date(job.createdAt);
+        const now = new Date();
+        const diffInHours = (now - jobDate) / (1000 * 60 * 60);
+        switch (filters.employmentType) {
+          case 'last-hour':
+            if (diffInHours > 1) return false;
+            break;
+          case 'last-24-hour':
+            if (diffInHours > 24) return false;
+            break;
+          case 'last-7-days':
+            if (diffInHours > 24 * 7) return false;
+            break;
+          case 'last-14-days':
+            if (diffInHours > 24 * 14) return false;
+            break;
+          case 'last-30-days':
+            if (diffInHours > 24 * 30) return false;
+            break;
+          default:
+            break;
         }
       }
 
-      // Job level filter
-      if (filters.jobLevel && job.level?.levelName !== filters.jobLevel) {
+      // Level filter: FilterScreen sends 'experience' as Level name
+      if (filters.experience && job.level?.levelName !== filters.experience) {
         return false;
       }
 
-      // Employment type filter
-      if (filters.employmentType && job.jobType?.jobTypeName !== filters.employmentType) {
-        return false;
-      }
-
-      // Experience filter
-      if (filters.experience && job.experienceLevel?.name !== filters.experience) {
-        return false;
-      }
-
-      // Education filter
-      if (filters.education && job.education !== filters.education) {
-        return false;
+      // Salary filter: FilterScreen sends array of salary tokens in 'salary'
+      if (filters.salary && Array.isArray(filters.salary) && filters.salary.length > 0) {
+        const matchesNegotiable = filters.salary.includes('negotiable') && job.isSalaryNegotiable;
+        const matchesRange = filters.salary.some(salaryOption => {
+          if (salaryOption === 'negotiable') return false;
+          if (salaryOption.includes('+')) {
+            const minStr = salaryOption.replace('+', '');
+            const rangeMin = parseInt(minStr);
+            if (job.isSalaryNegotiable) return false;
+            const jobMinSalary = job.minSalary || 0;
+            return jobMinSalary >= rangeMin;
+          }
+          const [minStr, maxStr] = salaryOption.split('-');
+          const rangeMin = parseInt(minStr);
+          const rangeMax = parseInt(maxStr);
+          if (job.isSalaryNegotiable) return false;
+          const jobMinSalary = job.minSalary || 0;
+          const jobMaxSalary = job.maxSalary || 0;
+          return jobMaxSalary >= rangeMin && jobMinSalary <= rangeMax;
+        });
+        if (!matchesNegotiable && !matchesRange) {
+          return false;
+        }
       }
 
       // Job function filter
@@ -381,13 +528,13 @@ const ExploreScreen = () => {
     );
   }, []);
 
-  // Search and filter effect for jobs
+  // Search and filter effect for jobs (use mergedJobs + jobFilters)
   useEffect(() => {
     let timeoutId;
 
     if (jobSearchText.trim() === '') {
       // Apply only filters when search is empty
-      const filtered = applyJobFilters(jobs, jobFiltersRef.current);
+      const filtered = applyJobFilters(mergedJobs, jobFilters);
       setFilteredJobs(filtered);
       setSearchLoading(false);
     } else {
@@ -395,8 +542,8 @@ const ExploreScreen = () => {
       setSearchLoading(true);
       
       timeoutId = setTimeout(() => {
-        const searchFiltered = performJobSearch(jobSearchText, jobs);
-        const finalFiltered = applyJobFilters(searchFiltered, jobFiltersRef.current);
+        const searchFiltered = performJobSearch(jobSearchText, mergedJobs);
+        const finalFiltered = applyJobFilters(searchFiltered, jobFilters);
         setFilteredJobs(finalFiltered);
         setSearchLoading(false);
       }, 300);
@@ -407,7 +554,25 @@ const ExploreScreen = () => {
         clearTimeout(timeoutId);
       }
     };
-  }, [jobSearchText, jobs, applyJobFilters, performJobSearch]);
+  }, [jobSearchText, mergedJobs, jobFilters, applyJobFilters, performJobSearch]);
+
+  // Build visible jobs list based on page
+  useEffect(() => {
+    const end = page * pageSize;
+    setVisibleJobs(filteredJobs.slice(0, end));
+  }, [filteredJobs, page, pageSize]);
+
+  const handleLoadMoreJobs = () => {
+    if (isLoadingMore) return;
+    const hasMore = visibleJobs.length < filteredJobs.length;
+    if (!hasMore) return;
+    setIsLoadingMore(true);
+    // Simulate small delay for smoother UX
+    setTimeout(() => {
+      setPage(prev => prev + 1);
+      setIsLoadingMore(false);
+    }, 250);
+  };
 
   // Search and filter effect for companies
   useEffect(() => {
@@ -418,6 +583,7 @@ const ExploreScreen = () => {
       const filtered = applyCompanyFilters(companies, companyFiltersRef.current);
       setFilteredCompanies(filtered);
       setSearchLoading(false);
+      setCompanyPage(1);
     } else {
       // Show loading and debounce search + filter
       setSearchLoading(true);
@@ -427,6 +593,7 @@ const ExploreScreen = () => {
         const finalFiltered = applyCompanyFilters(searchFiltered, companyFiltersRef.current);
         setFilteredCompanies(finalFiltered);
         setSearchLoading(false);
+        setCompanyPage(1);
       }, 300);
     }
 
@@ -437,30 +604,47 @@ const ExploreScreen = () => {
     };
   }, [companySearchText, companies, applyCompanyFilters, performCompanySearch]);
 
+  // Build visible companies list based on pagination
+  useEffect(() => {
+    const end = companyPage * companyPageSize;
+    setVisibleCompanies(filteredCompanies.slice(0, end));
+  }, [filteredCompanies, companyPage, companyPageSize]);
+
+  const handleLoadMoreCompanies = () => {
+    if (isLoadingMoreCompanies) return;
+    const hasMore = visibleCompanies.length < filteredCompanies.length;
+    if (!hasMore) return;
+    setIsLoadingMoreCompanies(true);
+    setTimeout(() => {
+      setCompanyPage(prev => prev + 1);
+      setIsLoadingMoreCompanies(false);
+    }, 250);
+  };
+
   // Apply search and filters when switching tabs
   useEffect(() => {
     if (activeTab === 'jobs') {
       // Apply job search and filters
       if (jobSearchText.trim() === '') {
-        const filtered = applyJobFilters(jobs, jobFiltersRef.current);
+        const filtered = applyJobFilters(jobs, jobFilters);
         setFilteredJobs(filtered);
       } else {
         const searchFiltered = performJobSearch(jobSearchText, jobs);
-        const finalFiltered = applyJobFilters(searchFiltered, jobFiltersRef.current);
+        const finalFiltered = applyJobFilters(searchFiltered, jobFilters);
         setFilteredJobs(finalFiltered);
       }
     } else {
       // Apply company search and filters
       if (companySearchText.trim() === '') {
-        const filtered = applyCompanyFilters(companies, companyFiltersRef.current);
+        const filtered = applyCompanyFilters(companies, companyFilters);
         setFilteredCompanies(filtered);
       } else {
         const searchFiltered = performCompanySearch(companySearchText, companies);
-        const finalFiltered = applyCompanyFilters(searchFiltered, companyFiltersRef.current);
+        const finalFiltered = applyCompanyFilters(searchFiltered, companyFilters);
         setFilteredCompanies(finalFiltered);
       }
     }
-  }, [activeTab, jobs, companies, jobSearchText, companySearchText, applyJobFilters, applyCompanyFilters, performJobSearch, performCompanySearch]);
+  }, [activeTab, jobs, companies, jobSearchText, companySearchText, jobFilters, companyFilters, applyJobFilters, applyCompanyFilters, performJobSearch, performCompanySearch]);
 
   const handleJobBookmark = async (jobId) => {
     try {
@@ -539,7 +723,7 @@ const ExploreScreen = () => {
   };
 
   const hasActiveFilters = () => {
-    const currentFilters = activeTab === 'jobs' ? jobFiltersRef.current : companyFiltersRef.current;
+    const currentFilters = activeTab === 'jobs' ? jobFilters : companyFilters;
     const currentSearchText = activeTab === 'jobs' ? jobSearchText : companySearchText;
     return currentSearchText.trim() !== '' || Object.keys(currentFilters).some(key => currentFilters[key]);
   };
@@ -582,6 +766,14 @@ const ExploreScreen = () => {
           </View>
         );
       }
+      if (loadingTrending) {
+        return (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#007bff" />
+            <Text style={styles.loadingText}>Loading trending jobs...</Text>
+          </View>
+        );
+      }
 
       if (jobsError) {
         return (
@@ -589,6 +781,10 @@ const ExploreScreen = () => {
             <Text style={styles.error}>{jobsError}</Text>
           </View>
         );
+      }
+      if (errorTrending) {
+        // Vẫn hiển thị jobs nếu trending lỗi
+        console.log('Trending error:', errorTrending);
       }
 
       if (filterLoading) {
@@ -613,11 +809,22 @@ const ExploreScreen = () => {
 
       return (
         <FlatList
-          data={filteredJobs}
+          data={visibleJobs}
           keyExtractor={(item, idx) => item.id?.toString() || idx.toString()}
           renderItem={renderJobCard}
           contentContainerStyle={styles.listWrap}
           showsVerticalScrollIndicator={false}
+          refreshing={isRefreshing}
+          onRefresh={onRefreshJobs}
+          onEndReached={handleLoadMoreJobs}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoadingMore && visibleJobs.length > 0 ? (
+              <View style={{ paddingVertical: 16 }}>
+                <ActivityIndicator size="small" color="#007bff" />
+              </View>
+            ) : null
+          }
         />
       );
     } else {
@@ -659,11 +866,22 @@ const ExploreScreen = () => {
 
       return (
         <FlatList
-          data={filteredCompanies}
+          data={visibleCompanies}
           keyExtractor={(item, idx) => item.userId?.toString() || idx.toString()}
           renderItem={renderCompanyCard}
           contentContainerStyle={styles.listWrap}
           showsVerticalScrollIndicator={false}
+          refreshing={isRefreshing}
+          onRefresh={onRefreshCompanies}
+          onEndReached={handleLoadMoreCompanies}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoadingMoreCompanies && visibleCompanies.length > 0 ? (
+              <View style={{ paddingVertical: 16 }}>
+                <ActivityIndicator size="small" color="#007bff" />
+              </View>
+            ) : null
+          }
         />
       );
     }

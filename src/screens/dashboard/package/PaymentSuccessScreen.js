@@ -44,8 +44,8 @@ const PaymentSuccessScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleReturnToPackage = () => {
-    navigation.navigate('Package');
+  const handleReturnToHome = () => {
+    navigation.navigate('MainTab', { screen: 'Home' });
   };
 
   const formatDate = (dateString) => {
@@ -79,9 +79,9 @@ const PaymentSuccessScreen = ({ navigation, route }) => {
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity 
             style={styles.returnButton} 
-            onPress={handleReturnToPackage}
+            onPress={handleReturnToHome}
           >
-            <Text style={styles.returnButtonText}>Return to Package</Text>
+            <Text style={styles.returnButtonText}>Back to Home</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -97,9 +97,9 @@ const PaymentSuccessScreen = ({ navigation, route }) => {
           <Text style={styles.errorText}>No payment status data available!</Text>
           <TouchableOpacity 
             style={styles.returnButton} 
-            onPress={handleReturnToPackage}
+            onPress={handleReturnToHome}
           >
-            <Text style={styles.returnButtonText}>Return to Package</Text>
+            <Text style={styles.returnButtonText}>Back to Home</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -223,21 +223,11 @@ const PaymentSuccessScreen = ({ navigation, route }) => {
           <View style={styles.actionButtons}>
             <TouchableOpacity 
               style={styles.primaryButton} 
-              onPress={handleReturnToPackage}
+              onPress={handleReturnToHome}
             >
               <Icon name="arrow-left" size={16} color="white" />
               <Text style={styles.primaryButtonText}>
-                Return to My Package
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.secondaryButton} 
-              onPress={() => navigation.navigate('Package')}
-            >
-              <Icon name="shopping-bag" size={16} color={colors.primary} />
-              <Text style={styles.secondaryButtonText}>
-                View My Package
+                Back to Home
               </Text>
             </TouchableOpacity>
           </View>
@@ -491,28 +481,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: 'white',
     fontSize: 16,
-    marginLeft: 8,
-    fontFamily: 'Poppins-SemiBold',
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  secondaryButtonText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
     fontFamily: 'Poppins-SemiBold',
   },

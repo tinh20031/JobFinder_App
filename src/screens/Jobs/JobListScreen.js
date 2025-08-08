@@ -25,6 +25,11 @@ const JobListScreen = ({ route }) => {
   const [showSortModal, setShowSortModal] = useState(false);
   const [favoriteJobs, setFavoriteJobs] = useState(new Set());
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  // Trending jobs integration
+  const [trendingJobs, setTrendingJobs] = useState([]);
+  const [loadingTrending, setLoadingTrending] = useState(false);
+  const [errorTrending, setErrorTrending] = useState('');
+  const [mergedJobs, setMergedJobs] = useState([]);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -34,7 +39,6 @@ const JobListScreen = ({ route }) => {
       try {
         const data = await JobService.getJobs();
         setJobs(data);
-        setFilteredJobs(data);
         setIsInitialLoad(false); // Mark initial load as complete
       } catch (err) {
         setError('Failed to load job list.');
@@ -44,6 +48,96 @@ const JobListScreen = ({ route }) => {
     };
     fetchJobs();
   }, []);
+
+  // Fetch trending jobs (prioritized listing similar to web)
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        setLoadingTrending(true);
+        setErrorTrending('');
+        const result = await JobService.getTrendingJobs({ role: 'candidate', page: 1, pageSize: 10 });
+        const trendingArray = Array.isArray(result?.jobs) ? result.jobs : Array.isArray(result) ? result : (result?.data || []);
+
+        // Normalize trending jobs to match JobService.getJobs structure
+        const normalized = (trendingArray || []).map((job, index) => ({
+          id: job.jobId || job.id,
+          jobTitle: job.title || job.jobTitle,
+          description: job.description,
+          companyId: job.companyId,
+          company: job.company
+            ? {
+                id: job.company.userId || job.company.id,
+                fullName: job.company.fullName,
+                email: job.company.email,
+                companyName: job.company.companyName,
+                location: job.company.location,
+                urlCompanyLogo: job.company.urlCompanyLogo,
+              }
+            : null,
+          provinceName: job.provinceName,
+          isSalaryNegotiable: job.isSalaryNegotiable,
+          minSalary: job.minSalary,
+          maxSalary: job.maxSalary,
+          logo: (job.company && job.company.urlCompanyLogo) || '',
+          industryId: job.industryId,
+          industry: job.industry
+            ? {
+                industryId: job.industry.industryId,
+                industryName: job.industry.industryName,
+              }
+            : null,
+          jobTypeId: job.jobTypeId,
+          jobType: job.jobType
+            ? {
+                id: job.jobType.jobTypeId || job.jobType.id,
+                jobTypeName: job.jobType.jobTypeName,
+              }
+            : null,
+          levelId: job.levelId,
+          level: job.level
+            ? {
+                id: job.level.levelId || job.level.id,
+                levelName: job.level.levelName,
+              }
+            : null,
+          quantity: job.quantity ?? 1,
+          expiryDate: job.expiryDate,
+          timeStart: job.timeStart,
+          timeEnd: job.timeEnd,
+          createdAt: job.createdAt,
+          updatedAt: job.updatedAt,
+          status: job.status,
+          addressDetail: job.addressDetail,
+          skills: job.skills || [],
+          descriptionWeight: job.descriptionWeight ?? null,
+          skillsWeight: job.skillsWeight ?? null,
+          experienceWeight: job.experienceWeight ?? null,
+          educationWeight: job.educationWeight ?? null,
+          isTrending: true,
+          trendingRank: (job.trendingRank || index + 1),
+        }));
+        setTrendingJobs(normalized);
+      } catch (e) {
+        console.log('Failed to fetch trending jobs:', e);
+        setErrorTrending('Failed to load trending jobs');
+        setTrendingJobs([]);
+      } finally {
+        setLoadingTrending(false);
+      }
+    };
+    fetchTrending();
+  }, []);
+
+  // Merge trending and regular jobs (trending first), keep only active (status === 2 if present)
+  useEffect(() => {
+    const onlyActive = (list) => list.filter(j => (j.status === undefined) || j.status === 2);
+    const trending = onlyActive(trendingJobs);
+    const all = onlyActive(jobs);
+    const trendingIds = new Set(trending.map(j => j.id));
+    const nonTrending = all.filter(j => !trendingIds.has(j.id));
+    const merged = [...trending, ...nonTrending];
+    setMergedJobs(merged);
+  }, [jobs, trendingJobs]);
 
   // Check favorite status for all jobs when jobs are loaded
   useEffect(() => {
@@ -266,7 +360,7 @@ const JobListScreen = ({ route }) => {
 
     if (searchText.trim() === '') {
       // Apply only filters when search is empty
-      const filtered = applyFilters(jobs, appliedFilters);
+      const filtered = applyFilters(mergedJobs, appliedFilters);
       const sorted = sortJobs(filtered);
       setFilteredJobs(sorted);
       setSearchLoading(false);
@@ -275,7 +369,7 @@ const JobListScreen = ({ route }) => {
       setSearchLoading(true);
       
       timeoutId = setTimeout(() => {
-        const searchFiltered = performSearch(searchText, jobs);
+        const searchFiltered = performSearch(searchText, mergedJobs);
         const finalFiltered = applyFilters(searchFiltered, appliedFilters);
         const sorted = sortJobs(finalFiltered);
         setFilteredJobs(sorted);
@@ -288,7 +382,7 @@ const JobListScreen = ({ route }) => {
         clearTimeout(timeoutId);
       }
     };
-  }, [searchText, jobs, appliedFilters, sort, applyFilters, performSearch, sortJobs]); // Added back necessary dependencies
+  }, [searchText, mergedJobs, appliedFilters, sort, applyFilters, performSearch, sortJobs]); // Use mergedJobs as source
 
 
 
