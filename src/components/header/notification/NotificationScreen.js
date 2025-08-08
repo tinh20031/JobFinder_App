@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../../constants/api';
@@ -23,7 +23,7 @@ const NotificationScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
-  const fetchNotifications = async (isRefresh = false) => {
+  const fetchNotifications = useCallback(async (isRefresh = false) => {
     const token = await AsyncStorage.getItem('token');
     if (!token) return;
 
@@ -52,7 +52,7 @@ const NotificationScreen = () => {
         setRefreshing(false);
       }
     }
-  };
+  }, []);
 
   const markAsRead = async (notificationId) => {
     const token = await AsyncStorage.getItem('token');
@@ -147,7 +147,7 @@ const NotificationScreen = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [fetchNotifications]);
 
   // Debug function to check notification data
   const debugNotificationData = (notifications) => {
@@ -189,15 +189,15 @@ const NotificationScreen = () => {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'job_application':
-        return 'work';
+        return 'briefcase';
       case 'message':
-        return 'message';
+        return 'message-circle';
       case 'interview':
-        return 'event';
+        return 'calendar';
       case 'cv_match':
-        return 'person-search';
+        return 'user-check';
       default:
-        return 'notifications';
+        return 'bell';
     }
   };
 
@@ -237,7 +237,7 @@ const NotificationScreen = () => {
               styles.iconBackground,
               { backgroundColor: getNotificationColor(item.type) + '20' }
             ]}>
-              <MaterialIcons
+              <Feather
                 name={getNotificationIcon(item.type)}
                 size={20}
                 color={getNotificationColor(item.type)}
@@ -265,7 +265,7 @@ const NotificationScreen = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <MaterialIcons name="notifications-none" size={64} color="#d1d5db" />
+      <Feather name="bell" size={64} color="#d1d5db" />
       <Text style={styles.emptyTitle}>No notifications yet</Text>
       <Text style={styles.emptyMessage}>
         You'll see notifications about your job applications, messages, and updates here
@@ -331,8 +331,8 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#111827',
+    fontFamily: 'Poppins-Bold',
   },
   markAllButton: {
     paddingHorizontal: 12,
@@ -342,6 +342,7 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   listContainer: {
     flexGrow: 1,
@@ -397,17 +398,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
     marginBottom: 4,
+    fontFamily: 'Poppins-SemiBold',
   },
   notificationMessage: {
     fontSize: 14,
     color: '#6b7280',
-    lineHeight: 20,
-    marginBottom: 0,
+    lineHeight: 18,
+    marginBottom: -2,
+    fontFamily: 'Poppins-Regular',
   },
   notificationTime: {
     fontSize: 12,
     color: '#9ca3af',
     marginTop: 0,
+    fontFamily: 'Poppins-Regular',
   },
   unreadDot: {
     width: 8,
@@ -430,12 +434,14 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginTop: 16,
     marginBottom: 8,
+    fontFamily: 'Poppins-SemiBold',
   },
   emptyMessage: {
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 24,
+    fontFamily: 'Poppins-Regular',
   },
 });
 

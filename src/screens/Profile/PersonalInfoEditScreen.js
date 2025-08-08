@@ -333,7 +333,7 @@ export default function PersonalInfoEditScreen({ route }) {
 
           {/* Province */}
           <Text style={styles.label}>
-            Current province/city <Text style={styles.required}>*</Text>
+            Province <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity 
             style={getInputStyle('province')[0]} 
@@ -346,9 +346,9 @@ export default function PersonalInfoEditScreen({ route }) {
           </TouchableOpacity>
           {errors.province && <Text style={styles.errorText}>{errors.province}</Text>}
 
-          {/* City */}
+          {/* Award/Commune */}
           <Text style={styles.label}>
-            Award <Text style={styles.required}>*</Text>
+            Award/Commune <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity 
             style={[getInputStyle('city')[0], !province && styles.disabledInput]} 
@@ -356,7 +356,7 @@ export default function PersonalInfoEditScreen({ route }) {
             disabled={!province}
           >
             <Text style={[styles.inputText, !city && styles.placeholderText]}>
-              {city || 'Select city'}
+              {city || 'Select ward/commune'}
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={24} color="#514a6b" />
           </TouchableOpacity>
@@ -419,30 +419,35 @@ export default function PersonalInfoEditScreen({ route }) {
         style={styles.modal}
         backdropOpacity={0.6}
       >
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>Select Province</Text>
-          <ScrollView style={styles.pickerList}>
+        <View style={styles.modalContent}>
+          {/* Drag Handle */}
+          <View style={styles.dragHandle} />
+          
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Province</Text>
+            <TouchableOpacity
+              onPress={() => setShowProvincePicker(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialIcons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.provinceList}>
             {provinces.map((provinceItem, index) => (
               <TouchableOpacity
                 key={provinceItem.code || provinceItem.id || `province-${index}`}
-                style={styles.pickerItem}
+                style={styles.provinceItem}
                 onPress={() => {
                   setProvince(provinceItem.name);
                   setCity(''); // Reset city when province changes
                   setShowProvincePicker(false);
                 }}
               >
-                <Text style={styles.pickerItemText}>{provinceItem.name}</Text>
+                <Text style={styles.provinceName}>{provinceItem.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
-          <TouchableOpacity 
-            style={styles.sheetBtnUndo} 
-            onPress={() => setShowProvincePicker(false)}
-          >
-            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
-          </TouchableOpacity>
         </View>
       </Modal>
 
@@ -453,29 +458,34 @@ export default function PersonalInfoEditScreen({ route }) {
         style={styles.modal}
         backdropOpacity={0.6}
       >
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>Select City</Text>
-          <ScrollView style={styles.pickerList}>
+        <View style={styles.modalContent}>
+          {/* Drag Handle */}
+          <View style={styles.dragHandle} />
+          
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Award/Commune</Text>
+            <TouchableOpacity
+              onPress={() => setShowCityPicker(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialIcons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.provinceList}>
             {cities.map((cityItem, index) => (
               <TouchableOpacity
                 key={cityItem.code || cityItem.id || `city-${index}`}
-                style={styles.pickerItem}
+                style={styles.provinceItem}
                 onPress={() => {
                   setCity(cityItem.name);
                   setShowCityPicker(false);
                 }}
               >
-                <Text style={styles.pickerItemText}>{cityItem.name}</Text>
+                <Text style={styles.provinceName}>{cityItem.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
-          <TouchableOpacity 
-            style={styles.sheetBtnUndo} 
-            onPress={() => setShowCityPicker(false)}
-          >
-            <Text style={styles.sheetBtnUndoText}>CANCEL</Text>
-          </TouchableOpacity>
         </View>
       </Modal>
 
@@ -656,5 +666,60 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
     fontFamily: 'Poppins-Medium'
+  },
+  // Modal styles đồng bộ với FilterScreen
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    width: '100%',
+    height: '70%',
+    padding: 0,
+    overflow: 'hidden',
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  closeIcon: {
+    padding: 4,
+  },
+  provinceList: {
+    flex: 1,
+  },
+  provinceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#f0f0f0',
+  },
+  provinceName: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Medium',
+    flex: 1,
   },
 }); 

@@ -20,7 +20,7 @@ const SearchBar = ({ onSearch, onFilter }) => {
       <View style={styles.searchBar}>
         <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput 
-          placeholder="Search for a job or company"
+          placeholder="Search for a job..."
           style={styles.searchInput}
           placeholderTextColor="#666"
           value={searchText}
