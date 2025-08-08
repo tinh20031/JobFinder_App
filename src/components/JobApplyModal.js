@@ -11,6 +11,7 @@ import {
   PermissionsAndroid,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
@@ -255,8 +256,13 @@ const JobApplyModal = ({ visible, onClose, jobId, onApplied, cvList = [], isSubm
       transparent
       onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalWrap}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.select({ ios: 24, android: 0 })}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modalWrap}>
           <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
             <Text style={styles.closeBtnText}>×</Text>
           </TouchableOpacity>
@@ -327,8 +333,9 @@ const JobApplyModal = ({ visible, onClose, jobId, onApplied, cvList = [], isSubm
               <Text style={styles.applyBtnText}>Submit Application</Text>
             )}
           </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

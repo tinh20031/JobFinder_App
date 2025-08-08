@@ -9,7 +9,9 @@ import RegisterScreen from '../screens/Auth/RegisterScreen';
 import EmailVerificationScreen from '../screens/Auth/EmailVerificationScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import ForgotPasswordResetScreen from '../screens/Auth/ForgotPasswordResetScreen';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import jwtDecode from 'jwt-decode';
 import Feather from 'react-native-vector-icons/Feather';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HomeScreen from '../screens/Home/HomeScreen';
@@ -374,10 +376,81 @@ export function ProfileCompletionProvider({ children }) {
 
 const Stack = createNativeStackNavigator();
 export default function AppNavigator() {
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [initialRouteName, setInitialRouteName] = useState('Login');
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const [token, role, userStr] = await Promise.all([
+          AsyncStorage.getItem('token'),
+          AsyncStorage.getItem('role'),
+          AsyncStorage.getItem('user'),
+        ]);
+
+        // Xác định role cuối cùng
+        let finalRole = (role || '').toString().toLowerCase();
+        if (!finalRole && userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            finalRole = (user?.role || '').toString().toLowerCase();
+          } catch {}
+        }
+        const isAdmin = finalRole.includes('admin') || finalRole === '3';
+        const isEmployer = finalRole.includes('employer') || finalRole.includes('company') || finalRole === '2';
+        const isCandidate = !(isAdmin || isEmployer);
+
+        // Kiểm tra hạn token (nếu có exp)
+        let isTokenValid = false;
+        if (token) {
+          try {
+            const decoded = jwtDecode(token);
+            if (decoded && decoded.exp) {
+              isTokenValid = decoded.exp * 1000 > Date.now();
+            } else {
+              // Nếu không có exp, coi như hợp lệ (tùy backend)
+              isTokenValid = true;
+            }
+          } catch {
+            // Nếu decode lỗi, vẫn cho phép (tránh kẹt người dùng)
+            isTokenValid = true;
+          }
+        }
+
+        if (isMounted) {
+          if (token && isTokenValid && isCandidate) {
+            setInitialRouteName('MainTab');
+          } else {
+            // Dọn dẹp token hết hạn để tránh trạng thái sai
+            if (token && !isTokenValid) {
+              await AsyncStorage.removeItem('token');
+            }
+            setInitialRouteName('Login');
+          }
+        }
+      } finally {
+        if (isMounted) setIsBootstrapping(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (isBootstrapping) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
   return (
-	<ProfileCompletionProvider>
+    <ProfileCompletionProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login">
+        <Stack.Navigator initialRouteName={initialRouteName}>
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
           <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />

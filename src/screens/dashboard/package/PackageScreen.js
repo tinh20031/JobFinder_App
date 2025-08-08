@@ -211,35 +211,7 @@ const PackageScreen = ({ navigation }) => {
               </View>
 
               {/* CV Downloads */}
-              <View style={styles.statCard}>
-                <View style={styles.statHeader}>
-                  <View style={[styles.statIcon, styles.downloadIcon]}>
-                    <Icon name="download" size={20} color="white" />
-                  </View>
-                  <View style={styles.statInfo}>
-                    <Text style={styles.statTitle}>CV Downloads</Text>
-                    <Text style={styles.statDescription}>Download candidate profiles</Text>
-                  </View>
-                </View>
-                <View style={styles.statContent}>
-                  <View style={styles.statNumbers}>
-                    <Text style={styles.currentNumber}>{downloadRemaining}</Text>
-                    {maxDownloads !== Infinity && (
-                      <>
-                        <Text style={styles.divider}>/</Text>
-                        <Text style={styles.totalNumber}>{maxDownloads}</Text>
-                      </>
-                    )}
-                  </View>
-                  {maxDownloads !== Infinity && (
-                    <View style={styles.progressBar}>
-                      <View 
-                        style={[styles.progressFill, { width: `${getProgressPercentage(downloadCount, maxDownloads)}%` }]} 
-                      />
-                    </View>
-                  )}
-                </View>
-              </View>
+              
             </View>
           </View>
         ) : mySubscription.freePackage ? (
@@ -308,29 +280,7 @@ const PackageScreen = ({ navigation }) => {
               </View>
 
               {/* CV Downloads */}
-              <View style={styles.statCard}>
-                <View style={styles.statHeader}>
-                  <View style={[styles.statIcon, styles.freeDownloadIcon]}>
-                    <Icon name="download" size={20} color="white" />
-                  </View>
-                  <View style={styles.statInfo}>
-                    <Text style={styles.statTitle}>CV Downloads</Text>
-                    <Text style={styles.statDescription}>Basic download access</Text>
-                  </View>
-                </View>
-                <View style={styles.statContent}>
-                  <View style={styles.statNumbers}>
-                    <Text style={styles.currentNumber}>{downloadRemaining}</Text>
-                    <Text style={styles.divider}>/</Text>
-                    <Text style={styles.totalNumber}>{maxDownloads}</Text>
-                  </View>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[styles.progressFill, { width: `${getProgressPercentage(downloadCount, maxDownloads)}%` }]} 
-                    />
-                  </View>
-                </View>
-              </View>
+              
             </View>
           </View>
         ) : (
