@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
-  Animated,
-  Easing,
+  
   ScrollView,
   StatusBar
 } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -38,163 +38,7 @@ import ProfileVideoSection from './ProfileVideoSection';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Skeleton Loading Components
-const SkeletonItem = ({ width, height, style }) => {
-  const animatedValue = useMemo(() => new Animated.Value(0), []);
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.ease,
-          useNativeDriver: false,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 1000,
-          easing: Easing.ease,
-          useNativeDriver: false,
-        }),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [animatedValue]);
-
-  const opacity = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
-  });
-
-  return (
-    <Animated.View
-      style={[
-        {
-          width,
-          height,
-          backgroundColor: '#e1e5e9',
-          borderRadius: 4,
-        },
-        { opacity },
-        style,
-      ]}
-    />
-  );
-};
-
-const ProfileSkeleton = () => {
-  return (
-    <View style={styles.skeletonContainer}>
-      {/* Header Skeleton */}
-      <View style={styles.skeletonHeader}>
-        <SkeletonItem width={80} height={80} style={{ borderRadius: 40 }} />
-        <View style={{ marginLeft: 16, flex: 1 }}>
-          <SkeletonItem width="60%" height={24} style={{ marginBottom: 8 }} />
-          <SkeletonItem width="40%" height={16} style={{ marginBottom: 8 }} />
-          <SkeletonItem width="50%" height={16} />
-        </View>
-      </View>
-
-      {/* Profile Completion Skeleton */}
-      <View style={styles.skeletonCard}>
-        <View style={styles.skeletonCardHeader}>
-          <SkeletonItem width={20} height={20} style={{ marginRight: 8 }} />
-          <SkeletonItem width="40%" height={18} style={{ flex: 1 }} />
-          <SkeletonItem width={40} height={18} />
-        </View>
-        <SkeletonItem width="100%" height={8} style={{ marginVertical: 12, borderRadius: 4 }} />
-        <SkeletonItem width="80%" height={14} />
-      </View>
-
-      {/* Personal Info Skeleton */}
-      <View style={styles.skeletonCard}>
-        <View style={styles.skeletonCardHeader}>
-          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
-          <SkeletonItem width="30%" height={18} />
-        </View>
-        <View style={styles.skeletonSeparator} />
-        <View style={styles.skeletonFields}>
-          <SkeletonItem width="100%" height={20} style={{ marginBottom: 12 }} />
-          <SkeletonItem width="90%" height={20} style={{ marginBottom: 12 }} />
-          <SkeletonItem width="95%" height={20} style={{ marginBottom: 12 }} />
-          <SkeletonItem width="85%" height={20} />
-        </View>
-      </View>
-
-      {/* Video Section Skeleton */}
-      <View style={styles.skeletonCard}>
-        <View style={styles.skeletonCardHeader}>
-          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
-          <SkeletonItem width="40%" height={18} />
-        </View>
-        <View style={styles.skeletonSeparator} />
-        <View style={styles.skeletonVideoContainer}>
-          <SkeletonItem width={48} height={48} style={{ borderRadius: 24 }} />
-          <View style={{ marginLeft: 16, flex: 1 }}>
-            <SkeletonItem width="50%" height={16} style={{ marginBottom: 4 }} />
-            <SkeletonItem width="60%" height={14} />
-          </View>
-        </View>
-        <SkeletonItem width="100%" height={44} style={{ marginTop: 16, borderRadius: 8 }} />
-      </View>
-
-      {/* About Me Skeleton */}
-      <View style={styles.skeletonCard}>
-        <View style={styles.skeletonCardHeader}>
-          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
-          <SkeletonItem width="25%" height={18} />
-        </View>
-        <View style={styles.skeletonSeparator} />
-        <View style={styles.skeletonFields}>
-          <SkeletonItem width="100%" height={16} style={{ marginBottom: 8 }} />
-          <SkeletonItem width="95%" height={16} style={{ marginBottom: 8 }} />
-          <SkeletonItem width="90%" height={16} style={{ marginBottom: 8 }} />
-          <SkeletonItem width="85%" height={16} />
-        </View>
-      </View>
-
-      {/* Education Skeleton */}
-      <View style={styles.skeletonCard}>
-        <View style={styles.skeletonCardHeader}>
-          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
-          <SkeletonItem width="25%" height={18} style={{ flex: 1 }} />
-          <SkeletonItem width={32} height={32} style={{ borderRadius: 16 }} />
-        </View>
-        <View style={styles.skeletonSeparator} />
-        <View style={styles.skeletonItem}>
-          <SkeletonItem width={40} height={40} style={{ borderRadius: 20 }} />
-          <View style={{ marginLeft: 12, flex: 1 }}>
-            <SkeletonItem width="60%" height={16} style={{ marginBottom: 4 }} />
-            <SkeletonItem width="40%" height={14} style={{ marginBottom: 4 }} />
-            <SkeletonItem width="50%" height={14} style={{ marginBottom: 4 }} />
-            <SkeletonItem width="30%" height={14} />
-          </View>
-        </View>
-      </View>
-
-      {/* Work Experience Skeleton */}
-      <View style={styles.skeletonCard}>
-        <View style={styles.skeletonCardHeader}>
-          <SkeletonItem width={22} height={22} style={{ marginRight: 10 }} />
-          <SkeletonItem width="35%" height={18} style={{ flex: 1 }} />
-          <SkeletonItem width={32} height={32} style={{ borderRadius: 16 }} />
-        </View>
-        <View style={styles.skeletonSeparator} />
-        <View style={styles.skeletonItem}>
-          <SkeletonItem width={40} height={40} style={{ borderRadius: 20 }} />
-          <View style={{ marginLeft: 12, flex: 1 }}>
-            <SkeletonItem width="70%" height={16} style={{ marginBottom: 4 }} />
-            <SkeletonItem width="50%" height={14} style={{ marginBottom: 4 }} />
-            <SkeletonItem width="40%" height={14} style={{ marginBottom: 4 }} />
-            <SkeletonItem width="80%" height={14} />
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-};
+// Skeleton loading removed
 
 // SectionCard: card section dùng cho các phần Work Experience, Skills, ...
 function SectionCard({ iconName, title, emptyText }) {
@@ -816,63 +660,64 @@ export default function ProfileScreen() {
   };
 
   const renderHeader = () => (
-    <View style={styles.headerContainer}>
+    <Animatable.View style={styles.headerContainer} animation="fadeInDown" duration={600} delay={0} useNativeDriver>
       <ImageBackground
         source={require('../../images/profile_header_bg.png')}
         style={[styles.headerWrapper, { paddingTop: (insets.top || 0) + 24 }]}
         imageStyle={styles.headerBgImg}
       >
-      {/* Gradient overlay for better text readability */}
-      <LinearGradient
-        colors={['rgba(37, 99, 235, 0.3)', 'rgba(37, 99, 235, 0.7)', 'rgba(37, 99, 235, 0.9)']}
-        style={styles.gradientOverlay}
-      />
-      
-              {/* Avatar with status indicator */}
+        <Animatable.View style={styles.gradientOverlay} animation="fadeIn" duration={600} delay={0} useNativeDriver>
+          <LinearGradient
+            colors={['rgba(37, 99, 235, 0.3)', 'rgba(37, 99, 235, 0.7)', 'rgba(37, 99, 235, 0.9)']}
+            style={styles.gradientOverlay}
+          />
+        </Animatable.View>
+        {/* Avatar with status indicator */}
         <View style={[styles.avatarWrapper, { top: (insets.top || 0) + 24, left: 16 }]}>  
-        <Image
-          source={image ? { uri: image } : require('../../images/banner-hero.jpg')}
-          style={styles.avatar}
-        />
-        <View style={styles.onlineIndicator} />
-      </View>
-      <TouchableOpacity style={[styles.cameraIcon, { top: (insets.top || 0) + 24 + 58, left: 16 + 58 }]} onPress={handlePickImage}>
-        <MaterialIcons name="camera-alt" size={16} color="#fff" />
-      </TouchableOpacity>
-      
-              {/* Name & Location & Change image */}
-        <View style={[styles.nameLocationWrapper, { top: (insets.top || 0) + 110, left: 16 }]}>  
-        <Text style={styles.name}>{fullname}</Text>
-        {locationText && (
-          <View style={styles.locationContainer}>
-            <MaterialIcons name="location-on" size={16} color="rgba(255,255,255,0.8)" />
-            <Text style={styles.location}>{locationText}</Text>
-          </View>
-        )}
-        <TouchableOpacity style={styles.changeImageBtn} onPress={handlePickImage}>
-          <MaterialIcons name="edit" size={14} color="#fff" style={{ marginRight: 6 }} />
-          <Text style={styles.changeImageText}>Change image</Text>
+          <Animatable.Image
+            source={image ? { uri: image } : require('../../images/banner-hero.jpg')}
+            style={styles.avatar}
+            animation="zoomIn"
+            duration={600}
+            delay={100}
+            useNativeDriver
+          />
+          <Animatable.View style={styles.onlineIndicator} animation="fadeIn" duration={400} delay={300} useNativeDriver />
+        </View>
+        <TouchableOpacity style={[styles.cameraIcon, { top: (insets.top || 0) + 24 + 58, left: 16 + 58 }]} onPress={handlePickImage}>
+          <MaterialIcons name="camera-alt" size={16} color="#fff" />
         </TouchableOpacity>
-      </View>
-      
+        {/* Name & Location & Change image */}
+        <View style={[styles.nameLocationWrapper, { top: (insets.top || 0) + 110, left: 16 }]}>  
+          <Animatable.Text style={styles.name} animation="fadeInRight" duration={600} delay={150} useNativeDriver>
+            {fullname}
+          </Animatable.Text>
+          {locationText && (
+            <Animatable.View style={styles.locationContainer} animation="fadeInRight" duration={600} delay={200} useNativeDriver>
+              <MaterialIcons name="location-on" size={16} color="rgba(255,255,255,0.8)" />
+              <Text style={styles.location}>{locationText}</Text>
+            </Animatable.View>
+          )}
+          <Animatable.View animation="fadeInUp" duration={600} delay={250} useNativeDriver>
+            <TouchableOpacity style={styles.changeImageBtn} onPress={handlePickImage}>
+              <MaterialIcons name="edit" size={14} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={styles.changeImageText}>Change image</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        </View>
       </ImageBackground>
-    </View>
+    </Animatable.View>
   );
 
   if (loading) {
     return (
       <>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <ScrollView 
-          style={styles.container}
-          contentContainerStyle={{ 
-            paddingBottom: (insets.bottom || 0) + 64,
-          }}
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled={true}
-        >
-          <ProfileSkeleton />
-        </ScrollView>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8f8f8' }}>
+          <Animatable.View animation="fadeIn" duration={400} useNativeDriver>
+            <ActivityIndicator size="large" color="#2563eb" />
+          </Animatable.View>
+        </View>
       </>
     );
   }
@@ -891,12 +736,19 @@ export default function ProfileScreen() {
       >
         {renderHeader()}
         <View style={styles.contentContainer}>
-          {sections.map((item) => (
-            <View key={item.id} style={styles.sectionContainer}>
+          {sections.map((item, index) => (
+            <Animatable.View
+              key={item.id}
+              style={styles.sectionContainer}
+              animation="fadeInUp"
+              duration={500}
+              delay={100 + index * 60}
+              useNativeDriver
+            >
               {renderSection({ item })}
-            </View>
+            </Animatable.View>
           ))}
-      </View>
+        </View>
     </ScrollView>
 
     {/* Image Preview Modal */}

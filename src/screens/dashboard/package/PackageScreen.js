@@ -343,21 +343,7 @@ const PackageScreen = ({ navigation }) => {
           </View>
         )}
         
-        <View style={styles.packageActions}>
-          <TouchableOpacity 
-            style={styles.primaryButton} 
-            onPress={handleBuyPackageClick}
-          >
-            <Icon 
-              name={mySubscription?.isSubscribed ? "arrow-up" : "shopping-cart"} 
-              size={16} 
-              color="white" 
-            />
-            <Text style={styles.primaryButtonText}>
-              {mySubscription?.isSubscribed ? 'Upgrade Package' : 'Buy Package'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Nút hành động được di chuyển ra thanh nổi cố định bên dưới */}
       </View>
     );
   };
@@ -371,6 +357,17 @@ const PackageScreen = ({ navigation }) => {
           {renderPackageInfo()}
         </View>
       </ScrollView>
+
+      {/* Thanh hành động cố định dưới cùng */}
+      <View style={styles.floatingActionBar}>
+        <TouchableOpacity 
+          style={styles.primaryButton} 
+          onPress={handleBuyPackageClick}
+        >
+          <Icon name="arrow-up" size={16} color="white" />
+          <Text style={styles.primaryButtonText}>Upgrade Package</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Confirmation Modal */}
       <Modal
@@ -440,6 +437,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingBottom: 100, // chừa khoảng trống cho thanh nút cố định
   },
   pageTitle: {
     fontSize: 24,
@@ -653,10 +651,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Poppins-Regular',
   },
-  packageActions: {
-    padding: 30,
-    alignItems: 'center',
-  },
+  // packageActions: {
+  //   padding: 30,
+  //   alignItems: 'center',
+  // },
   primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -675,6 +673,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginLeft: 10,
     fontFamily: 'Poppins-SemiBold',
+  },
+  floatingActionBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 8,
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,

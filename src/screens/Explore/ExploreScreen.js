@@ -626,10 +626,10 @@ const ExploreScreen = () => {
     if (activeTab === 'jobs') {
       // Apply job search and filters
       if (jobSearchText.trim() === '') {
-        const filtered = applyJobFilters(jobs, jobFilters);
+        const filtered = applyJobFilters(mergedJobs, jobFilters);
         setFilteredJobs(filtered);
       } else {
-        const searchFiltered = performJobSearch(jobSearchText, jobs);
+        const searchFiltered = performJobSearch(jobSearchText, mergedJobs);
         const finalFiltered = applyJobFilters(searchFiltered, jobFilters);
         setFilteredJobs(finalFiltered);
       }
@@ -644,7 +644,7 @@ const ExploreScreen = () => {
         setFilteredCompanies(finalFiltered);
       }
     }
-  }, [activeTab, jobs, companies, jobSearchText, companySearchText, jobFilters, companyFilters, applyJobFilters, applyCompanyFilters, performJobSearch, performCompanySearch]);
+  }, [activeTab, mergedJobs, companies, jobSearchText, companySearchText, jobFilters, companyFilters, applyJobFilters, applyCompanyFilters, performJobSearch, performCompanySearch]);
 
   const handleJobBookmark = async (jobId) => {
     try {
@@ -708,6 +708,11 @@ const ExploreScreen = () => {
       setJobFilters({});
       setJobSearchText('');
       AsyncStorage.removeItem('explore_job_filters');
+      // Reset to merged jobs (trending first)
+      const base = mergedJobs;
+      setFilteredJobs(base);
+      setPage(1);
+      setVisibleJobs(base.slice(0, pageSize));
     } else {
       companyFiltersRef.current = {};
       setCompanyFilters({});

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../../components/HeaderCandidate';
 import SearchBar from './components/SearchBar';
@@ -7,7 +8,7 @@ import Banner from './components/Banner';
 import CategoryIcons from './components/CategoryIcons';
 import CompanyCard from './components/CompanyCard';
 import JobCard from './components/JobCard';
-import { ProfileSkeleton } from '../../components/SkeletonLoading';
+// Removed SkeletonLoading effect
 
 import profileService from '../../services/profileService';
 
@@ -92,61 +93,113 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Custom Header with Profile */}
-        <View style={styles.header}>
+        <Animatable.View
+          style={styles.header}
+          animation="fadeInDown"
+          duration={600}
+          delay={0}
+          useNativeDriver
+        >
           {loading ? (
-            <ProfileSkeleton />
-          ) : userProfile ? (
-            <View style={styles.profileSection}>
-              <Image 
-                source={{ uri: userProfile.image }} 
-                style={styles.profileImage} 
+            <Animatable.View style={styles.profileSection} animation="fadeInUp" duration={400} delay={50} useNativeDriver>
+              <Animatable.View
+                style={[styles.profileImage, styles.placeholderImage]}
+                animation="pulse"
+                iterationCount="infinite"
+                duration={1000}
+                useNativeDriver
               />
               <View style={styles.greetingSection}>
-                <Text style={styles.greeting}>Welcome back 👋</Text>
-                <Text style={styles.userName}>
-                  {userProfile.fullName}
-                </Text>
+                <Animatable.View
+                  style={[styles.placeholderLine, styles.placeholderLineLong]}
+                  animation="pulse"
+                  iterationCount="infinite"
+                  duration={1000}
+                  delay={100}
+                  useNativeDriver
+                />
+                <Animatable.View
+                  style={[styles.placeholderLine, styles.placeholderLineShort]}
+                  animation="pulse"
+                  iterationCount="infinite"
+                  duration={1000}
+                  delay={200}
+                  useNativeDriver
+                />
               </View>
-            </View>
+            </Animatable.View>
+          ) : userProfile ? (
+            <Animatable.View style={styles.profileSection} animation="fadeInUp" duration={600} delay={50} useNativeDriver>
+              <Animatable.Image 
+                source={{ uri: userProfile.image }} 
+                style={styles.profileImage}
+                animation="zoomIn"
+                duration={500}
+                delay={100}
+                useNativeDriver
+              />
+              <View style={styles.greetingSection}>
+                <Animatable.Text style={styles.greeting} animation="fadeInRight" duration={500} delay={150} useNativeDriver>
+                  Welcome back 👋
+                </Animatable.Text>
+                <Animatable.Text style={styles.userName} animation="fadeInRight" duration={600} delay={200} useNativeDriver>
+                  {userProfile.fullName}
+                </Animatable.Text>
+              </View>
+            </Animatable.View>
           ) : (
-            <View style={styles.profileSection}>
+            <Animatable.View style={styles.profileSection} animation="fadeInUp" duration={600} delay={50} useNativeDriver>
               <View style={[styles.profileImage, styles.placeholderImage]} />
               <View style={styles.greetingSection}>
-                <Text style={styles.greeting}>Welcome back 👋</Text>
-                <Text style={styles.userName}>Guest User</Text>
+                <Animatable.Text style={styles.greeting} animation="fadeInRight" duration={500} delay={150} useNativeDriver>
+                  Welcome back 👋
+                </Animatable.Text>
+                <Animatable.Text style={styles.userName} animation="fadeInRight" duration={600} delay={200} useNativeDriver>
+                  Guest User
+                </Animatable.Text>
               </View>
-            </View>
+            </Animatable.View>
           )}
-        </View>
+        </Animatable.View>
 
         {/* Banner */}
-        <Banner onReadMore={handleReadMore} />
+        <Animatable.View animation="fadeInUp" duration={600} delay={100} useNativeDriver>
+          <Banner onReadMore={handleReadMore} />
+        </Animatable.View>
 
         {/* Search Bar */}
-        <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
+        <Animatable.View animation="fadeInUp" duration={600} delay={150} useNativeDriver>
+          <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
+        </Animatable.View>
 
         {/* Industry Categories */}
-        <CategoryIcons 
-          onIndustryPress={handleIndustryPress}
-          selectedFilters={route.params?.filters || {}}
-          limit={6} // Hiển thị 6 industry thay vì 4
-        />
+        <Animatable.View animation="fadeInUp" duration={600} delay={200} useNativeDriver>
+          <CategoryIcons 
+            onIndustryPress={handleIndustryPress}
+            selectedFilters={route.params?.filters || {}}
+            limit={6} // Hiển thị 6 industry thay vì 4
+          />
+        </Animatable.View>
 
         {/* Trending Jobs Section */}
-        <JobCard 
-          title="Trending Jobs"
-          showSeeAll={false}
-          limit={5}
-          horizontal={false} // Hiển thị dọc thay vì carousel
-        />
+        <Animatable.View animation="fadeInUp" duration={600} delay={250} useNativeDriver>
+          <JobCard 
+            title="Trending Jobs"
+            showSeeAll={false}
+            limit={5}
+            horizontal={false} // Hiển thị dọc thay vì carousel
+          />
+        </Animatable.View>
 
         {/* Recommendation Companies Section */}
-        <CompanyCard 
-          title="List Companies"
-          showSeeAll={true}
-          horizontal={true}
-          limit={5}
-        />
+        <Animatable.View animation="fadeInUp" duration={600} delay={300} useNativeDriver>
+          <CompanyCard 
+            title="List Companies"
+            showSeeAll={true}
+            horizontal={true}
+            limit={5}
+          />
+        </Animatable.View>
       </ScrollView>
     </View>
   );
@@ -197,6 +250,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#333',
     fontFamily: 'Poppins-Bold',
+  },
+  placeholderLine: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#e5e7eb',
+    marginTop: 6,
+  },
+  placeholderLineLong: {
+    width: '60%',
+  },
+  placeholderLineShort: {
+    width: '40%',
   },
   sectionHeader: {
     flexDirection: 'row',

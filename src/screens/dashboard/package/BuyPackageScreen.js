@@ -110,7 +110,7 @@ const BuyPackageScreen = ({ navigation }) => {
   const handlePackageSelect = (pkg) => {
     // Không cho phép chọn gói free
     if (pkg.name?.toLowerCase().includes('free')) {
-      Alert.alert('Info', 'This is your current free plan. Please select a paid package to upgrade.');
+      // Hiển thị bình thường, không mở Alert để tránh làm mờ nền
       return;
     }
     
@@ -166,6 +166,32 @@ const BuyPackageScreen = ({ navigation }) => {
     const isPopular = pkg.name?.toLowerCase().includes('premium');
     const isFree = pkg.name?.toLowerCase().includes('free');
     
+    // Determine Download CV text per package
+    const downloadCvText = (() => {
+      const packageNameLower = (pkg.name || '').toLowerCase();
+      if (packageNameLower.includes('premium')) return 'Unlimited';
+      if (packageNameLower.includes('basic')) return '3';
+      if (packageNameLower.includes('free')) return '1';
+      const limit = pkg.cvDownloadLimit;
+      return limit !== undefined && limit !== null ? String(limit) : 'N/A';
+    })();
+
+    // Try-match display value per package
+    const tryMatchValue = (() => {
+      const packageNameLower = (pkg.name || '').toLowerCase();
+      if (packageNameLower.includes('premium')) return 10;
+      if (packageNameLower.includes('basic')) return 7;
+      return pkg.tryMatchLimit;
+    })();
+
+    // Subtitle text - ensure Basic/Premium reflect desired try-match limits
+    const subtitleText = (() => {
+      const packageNameLower = (pkg.name || '').toLowerCase();
+      if (packageNameLower.includes('basic')) return `Basic package with 7 try-matches`;
+      if (packageNameLower.includes('premium')) return `Premium package with 10 try-matches`;
+      return pkg.description;
+    })();
+    
     // Get animation values for this card with proper null checks
     const cardAnim = cardAnimations.current && cardAnimations.current[index];
     
@@ -175,23 +201,23 @@ const BuyPackageScreen = ({ navigation }) => {
           style={[
             styles.cardWrapper,
             {
-              opacity: cardAnim?.fade || 1,
+              opacity: isFree ? 1 : (cardAnim?.fade || 1),
               transform: [
-                { translateY: cardAnim?.slide || 0 },
-                { scale: cardAnim?.scale || 1 },
+                { translateY: isFree ? 0 : (cardAnim?.slide || 0) },
+                { scale: isFree ? 1 : (cardAnim?.scale || 1) },
               ],
             }
           ]}
         >
                       <TouchableOpacity
-              style={[
+              style={[ 
                 styles.packageCard,
                 isSelected && styles.selectedPackage,
                 isPopular && styles.popularPackage,
+                isFree && styles.freePackageCard,
               ]}
               onPress={() => handlePackageSelect(pkg)}
-              activeOpacity={isFree ? 1 : 0.9}
-              disabled={isFree}
+              activeOpacity={0.9}
             >
             {isPopular && (
               <Animated.View 
@@ -208,20 +234,7 @@ const BuyPackageScreen = ({ navigation }) => {
               </Animated.View>
             )}
             
-            {isFree && (
-              <Animated.View 
-                style={[
-                  styles.currentPlanBadge,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }],
-                  }
-                ]}
-              >
-                <Icon name="check" size={12} color="white" />
-                <Text style={styles.currentPlanText}>Current Plan</Text>
-              </Animated.View>
-            )}
+            {/* Current plan badge hidden for Free to avoid overlay feeling */}
             
             <View style={styles.packageHeader}>
               <View style={styles.packageIconContainer}>
@@ -232,9 +245,7 @@ const BuyPackageScreen = ({ navigation }) => {
                 />
               </View>
               <Text style={styles.packageName}>{pkg.name}</Text>
-              <Text style={styles.packageSubtitle}>
-                {pkg.description}
-              </Text>
+              <Text style={styles.packageSubtitle}>{subtitleText}</Text>
               <View style={styles.priceContainer}>
                 <Text style={styles.packagePrice}>
                   {pkg.price ? `${pkg.price.toLocaleString()} VND` : 'Free'}
@@ -255,9 +266,7 @@ const BuyPackageScreen = ({ navigation }) => {
                 </View>
                 <View style={styles.featureContent}>
                   <Text style={styles.featureLabel}>Try-match</Text>
-                  <Text style={styles.featureValue}>
-                    {pkg.tryMatchLimit}
-                  </Text>
+                  <Text style={styles.featureValue}>{tryMatchValue}</Text>
                 </View>
               </View>
 
@@ -268,20 +277,18 @@ const BuyPackageScreen = ({ navigation }) => {
                 </View>
                 <View style={styles.featureContent}>
                   <Text style={styles.featureLabel}>Download CV</Text>
-                  <Text style={styles.featureValue}>
-                    {pkg.cvDownloadLimit || 'N/A'}
-                  </Text>
+                  <Text style={styles.featureValue}>{downloadCvText}</Text>
                 </View>
               </View>
 
               {/* Remove Watermark Feature */}
               <View style={styles.featureItem}>
-                <View style={[styles.featureIcon, isFree && styles.disabledIcon]}>
-                  <Icon name="check" size={12} color={isFree ? colors.gray : colors.success} />
+                <View style={styles.featureIcon}>
+                  <Icon name="check" size={12} color={colors.success} />
                 </View>
                 <View style={styles.featureContent}>
                   <Text style={styles.featureLabel}>Remove watermark</Text>
-                  <Text style={[styles.featureValue, isFree && styles.disabledFeature]}>
+                  <Text style={styles.featureValue}>
                     {isFree ? 'No' : 'Yes'}
                   </Text>
                 </View>
@@ -559,6 +566,10 @@ const styles = StyleSheet.create({
     shadowColor: '#f59e0b',
     shadowOpacity: 0.15,
   },
+  freePackageCard: {
+    // Hiển thị bình thường cho gói Free (không mờ)
+    opacity: 1,
+  },
 
   popularBadge: {
     position: 'absolute',
@@ -666,9 +677,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  disabledIcon: {
-    backgroundColor: '#e5e7eb',
-  },
+  // disabledIcon: {
+  //   backgroundColor: '#e5e7eb',
+  // },
   featureContent: {
     flex: 1,
   },
@@ -683,9 +694,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1f2937',
   },
-  disabledFeature: {
-    color: '#9ca3af',
-  },
+  // disabledFeature: {
+  //   color: '#9ca3af',
+  // },
   selectedIndicator: {
     position: 'absolute',
     top: 15,
