@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
     marginBottom: 18,
     textAlign: 'left',
   },
@@ -100,13 +100,14 @@ const styles = StyleSheet.create({
     color: '#217a3c',
     fontSize: 15,
     textAlign: 'left',
+    fontFamily: 'Poppins-Regular',
   },
   label2: {
     fontSize: 15,
     color: '#222',
     marginBottom: 8,
     marginLeft: 2,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   input: {
     borderWidth: 0,
@@ -115,16 +116,19 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     marginBottom: 16,
+    fontFamily: 'Poppins-Regular',
   },
   error: {
     color: 'red',
     marginBottom: 12,
     textAlign: 'left',
+    fontFamily: 'Poppins-Regular',
   },
   success: {
     color: 'green',
     marginBottom: 12,
     textAlign: 'left',
+    fontFamily: 'Poppins-Regular',
   },
   verifyBtn: {
     backgroundColor: '#2563eb',
@@ -137,7 +141,7 @@ const styles = StyleSheet.create({
   verifyBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   resendLink: {
     color: '#2563eb',
@@ -146,15 +150,18 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 15,
     textDecorationLine: 'underline',
+    fontFamily: 'Poppins-Regular',
   },
   loginText: {
     textAlign: 'center',
     marginBottom: 16,
     color: '#444',
     fontSize: 15,
+    fontFamily: 'Poppins-Regular',
   },
   loginLink: {
     color: '#2563eb',
+    fontFamily: 'Poppins-Regular',
   },
 });
 

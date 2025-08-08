@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
     marginBottom: 24,
     textAlign: 'left',
   },
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     color: '#222',
     marginBottom: 6,
     marginLeft: 2,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   input: {
     borderWidth: 0,
@@ -154,16 +154,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 14,
     fontSize: 16,
+    fontFamily: 'Poppins-Regular',
   },
   error: {
     color: 'red',
     marginBottom: 12,
     textAlign: 'left',
+    fontFamily: 'Poppins-Regular',
   },
   success: {
     color: 'green',
     marginBottom: 12,
     textAlign: 'left',
+    fontFamily: 'Poppins-Regular',
   },
   registerBtn: {
     backgroundColor: '#2563eb',
@@ -176,16 +179,18 @@ const styles = StyleSheet.create({
   registerBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   loginText: {
     textAlign: 'center',
     marginBottom: 16,
     color: '#444',
     fontSize: 15,
+    fontFamily: 'Poppins-Regular',
   },
   loginLink: {
     color: '#2563eb',
+    fontFamily: 'Poppins-Regular',
   },
 });
 

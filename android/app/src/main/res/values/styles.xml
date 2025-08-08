@@ -1,7 +1,11 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <!-- Base application theme (lock Light and disable force dark) -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Disable Android force-dark to avoid automatic color inversion -->
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="forceDarkAllowed">false</item>
+        
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>

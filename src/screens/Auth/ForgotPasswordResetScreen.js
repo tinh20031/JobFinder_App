@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
     marginBottom: 12,
     textAlign: 'center',
     color: '#333',
@@ -234,13 +234,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 22,
+    fontFamily: 'Poppins-Regular',
   },
   inputGroup: {
     marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
     marginBottom: 8,
     color: '#333',
   },
@@ -251,18 +252,21 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     backgroundColor: '#fff',
+    fontFamily: 'Poppins-Regular',
   },
   error: {
     color: '#d32f2f',
     fontSize: 14,
     marginBottom: 16,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   success: {
     color: '#2e7d32',
     fontSize: 14,
     marginBottom: 16,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   submitBtn: {
     backgroundColor: '#1976d2',
@@ -277,7 +281,7 @@ const styles = StyleSheet.create({
   submitBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   resendBtn: {
     alignItems: 'center',
@@ -286,7 +290,7 @@ const styles = StyleSheet.create({
   resendBtnText: {
     color: '#1976d2',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   footer: {
     alignItems: 'center',
@@ -294,10 +298,11 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     color: '#666',
+    fontFamily: 'Poppins-Regular',
   },
   footerLink: {
     color: '#1976d2',
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

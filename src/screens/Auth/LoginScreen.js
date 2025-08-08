@@ -20,6 +20,27 @@ const LoginScreen = ({ navigation }) => {
     googleAuthService.configure();
   }, []);
 
+  // Xác định role: chỉ cho Candidate, các role khác bị chặn
+  const resolveRole = async (responseData) => {
+    try {
+      let rawRole = (responseData?.role || responseData?.user?.role || '').toString().toLowerCase();
+      if (!rawRole) {
+        const stored = await AsyncStorage.getItem('role');
+        rawRole = (stored || '').toString().toLowerCase();
+      }
+
+      // Nếu là Admin/Employer (hoặc mã số phổ biến), chặn
+      const isAdmin = rawRole.includes('admin') || rawRole === '3';
+      const isEmployer = rawRole.includes('employer') || rawRole.includes('company') || rawRole === '2';
+      if (isAdmin) return 'admin';
+      if (isEmployer) return 'employer';
+      // Mặc định là candidate
+      return 'candidate';
+    } catch {
+      return 'candidate';
+    }
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
       setError('Please enter both email and password.');
@@ -33,6 +54,15 @@ const LoginScreen = ({ navigation }) => {
 
       if (!token) {
         Alert.alert('Error', 'Token not saved! Please try again.');
+        setLoading(false);
+        return;
+      }
+      // Chỉ cho phép Candidate đăng nhập app
+      const role = await resolveRole(data);
+      if (role !== 'candidate') {
+        setError('This role is not supported on the mobile app. Please log in on the website.');
+        // Dọn dẹp token nếu role không hợp lệ cho mobile
+        await AsyncStorage.multiRemove(['token', 'role', 'user', 'UserId', 'CompanyProfileId']);
         setLoading(false);
         return;
       }
@@ -61,6 +91,15 @@ const LoginScreen = ({ navigation }) => {
 
       if (!token) {
         Alert.alert('Error', 'Token not saved! Please try again.');
+        setGoogleLoading(false);
+        return;
+      }
+
+      // Chỉ cho phép Candidate đăng nhập app
+      const role = await resolveRole(data);
+      if (role !== 'candidate') {
+        setError('This role is not supported on the mobile app. Please log in on the website.');
+        await AsyncStorage.multiRemove(['token', 'role', 'user', 'UserId', 'CompanyProfileId']);
         setGoogleLoading(false);
         return;
       }
@@ -151,7 +190,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
     marginBottom: 32,
     textAlign: 'left',
   },
@@ -163,7 +202,7 @@ const styles = StyleSheet.create({
     color: '#222',
     marginBottom: 6,
     marginLeft: 2,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   input: {
     borderWidth: 0,
@@ -171,6 +210,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 14,
     fontSize: 16,
+    fontFamily: 'Poppins-Regular',
   },
   rowBetween: {
     flexDirection: 'row',
@@ -200,17 +240,19 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     fontSize: 14,
     color: '#222',
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   forgot: {
     color: '#2563eb',
     fontSize: 14,
     // không in đậm
+    fontFamily: 'Poppins-Regular',
   },
   error: {
     color: 'red',
     marginBottom: 12,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   loginBtn: {
     backgroundColor: '#2563eb',
@@ -223,17 +265,19 @@ const styles = StyleSheet.create({
   loginBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   signupText: {
     textAlign: 'center',
     marginBottom: 32,
     color: '#444',
     fontSize: 15,
+    fontFamily: 'Poppins-Regular',
   },
   signupLink: {
     color: '#2563eb',
     // không in đậm
+    fontFamily: 'Poppins-Regular',
   },
   gmailBtn: {
     marginTop: 20,
