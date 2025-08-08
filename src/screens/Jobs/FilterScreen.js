@@ -192,6 +192,18 @@ const FilterScreen = () => {
       setSalaryRanges(salaryRangesData);
     } catch (error) {
       console.error('Error loading salary ranges:', error);
+      // This should not happen now since JobService always returns data
+      // But if it does, provide the same fallback data
+      setSalaryRanges([
+        { id: 1, minSalary: 0, maxSalary: 1000, rangeName: '0 - 1000' },
+        { id: 2, minSalary: 1000, maxSalary: 2000, rangeName: '1000 - 2000' },
+        { id: 3, minSalary: 2000, maxSalary: 3000, rangeName: '2000 - 3000' },
+        { id: 4, minSalary: 3000, maxSalary: 5000, rangeName: '3000 - 5000' },
+        { id: 5, minSalary: 5000, maxSalary: 7000, rangeName: '5000 - 7000' },
+        { id: 6, minSalary: 7000, maxSalary: 10000, rangeName: '7000 - 10000' },
+        { id: 7, minSalary: 10000, maxSalary: 15000, rangeName: '10000 - 15000' },
+        { id: 8, minSalary: 15000, maxSalary: 20000, rangeName: '15000 - 20000' }
+      ]);
     }
   };
 
@@ -546,7 +558,19 @@ const FilterScreen = () => {
     };
 
     const handleSalaryRangeSelect = (range) => {
-      const rangeKey = `${range.minSalary}-${range.maxSalary}`;
+      // Handle special cases for salary ranges
+      let rangeKey;
+      if (range.minSalary === null && range.maxSalary === null) {
+        // Negotiable salary
+        rangeKey = 'negotiable';
+      } else if (range.maxSalary === null) {
+        // Open-ended range (e.g., 100000+)
+        rangeKey = `${range.minSalary}+`;
+      } else {
+        // Normal range
+        rangeKey = `${range.minSalary}-${range.maxSalary}`;
+      }
+      
       setSalaryType(prev => {
         if (prev.includes(rangeKey)) {
           // Remove if already selected
@@ -601,7 +625,7 @@ const FilterScreen = () => {
               {isSelected && <MaterialIcons name="check" size={16} color="#fff" />}
             </View>
             <Text style={styles.radioOptionText}>
-                  {range.name}
+                  {range.rangeName || range.name || `${range.minSalary || 0} - ${range.maxSalary || '∞'}`}
             </Text>
               </TouchableOpacity>
         );
