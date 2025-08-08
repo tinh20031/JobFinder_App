@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import HeaderDetail from '../../components/HeaderDetail';
+import HeaderCandidates from '../../components/HeaderCandidate';
 import chatService from '../../services/chatService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../constants/api';
@@ -155,11 +155,8 @@ const Listchat = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderDetail />
-      <View style={styles.headerBelow}>
-        <Text style={styles.headerTitle}>Messages</Text>
-   
-      </View>
+              <HeaderCandidates />
+
       <View style={styles.searchBox}>
         <MaterialIcons name="search" size={22} color="#bbb" style={{ marginLeft: 8 }} />
         <TextInput
@@ -192,7 +189,7 @@ const Listchat = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafbfc',
+    backgroundColor: '#ffffff',
   },
   headerBelow: {
     flexDirection: 'row',
@@ -205,37 +202,48 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
     color: '#222',
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f2f3f7',
-    borderRadius: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 20,
     marginHorizontal: 20,
-    marginBottom: 10,
-    height: 44,
+    marginTop: 16,
+    marginBottom: 16,
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
+    fontFamily: 'Poppins-Regular',
     marginLeft: 8,
     color: '#222',
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     marginHorizontal: 16,
-    marginVertical: 6,
-    borderRadius: 16,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    marginVertical: 8,
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
   avatarContainer: {
     position: 'relative',
@@ -261,7 +269,7 @@ const styles = StyleSheet.create({
   unreadBadgeText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   info: {
     flex: 1,
@@ -274,18 +282,20 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#222',
+    fontFamily: 'Poppins-SemiBold',
+    color: '#1e293b',
     // maxWidth: 140, // bỏ giới hạn chiều rộng để không bị cắt tên
   },
   message: {
     fontSize: 14,
-    color: '#888',
-    marginTop: 2,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748b',
+    marginTop: -2,
   },
   time: {
     fontSize: 12,
-    color: '#bbb',
+    fontFamily: 'Poppins-Regular',
+    color: '#94a3b8',
     marginLeft: 8,
     minWidth: 60,
     textAlign: 'right',
@@ -296,22 +306,30 @@ const styles = StyleSheet.create({
     height: 48,
   },
   unreadDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#ff9800',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#ef4444',
     alignSelf: 'flex-end',
     marginLeft: 8,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   errorText: {
     color: 'red',
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: 40,
   },
   emptyText: {
-    color: '#888',
+    color: '#64748b',
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: 40,
+    fontSize: 16,
   },
 });
 

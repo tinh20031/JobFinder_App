@@ -4,14 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HeaderDetail from '../components/HeaderDetail';
 import LoginScreen from '../screens/Auth/LoginScreen';
-import JobListScreen from '../screens/Jobs/JobListScreen';
+import ExploreScreen from '../screens/Explore/ExploreScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 import EmailVerificationScreen from '../screens/Auth/EmailVerificationScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import ForgotPasswordResetScreen from '../screens/Auth/ForgotPasswordResetScreen';
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import CompanyListScreen from '../screens/Company/CompanyListScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
 import CompanyDetailScreen from '../screens/Company/CompanyDetailScreen';
 import JobDetailScreen from '../screens/Jobs/JobDetailScreen';
@@ -213,6 +212,8 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
         let iconName;
         if (route.name === 'Home') iconName = 'home';
+        else if (route.name === 'Explore') iconName = 'travel-explore';
+        else if (route.name === 'Chat') iconName = 'message';
         else if (route.name === 'Job') iconName = 'work';
         else if (route.name === 'Company') iconName = 'business';
         else if (route.name === 'Profile') iconName = 'person';
@@ -269,6 +270,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
 }
 
 const Tab = createBottomTabNavigator();
+
 function MainTab() {
   return (
     <Tab.Navigator
@@ -285,10 +287,10 @@ function MainTab() {
         }}
       />
       <Tab.Screen 
-        name="Job" 
-        component={JobListScreen}
+        name="Explore" 
+        component={ExploreScreen}
         options={{
-          tabBarLabel: 'Jobs',
+          tabBarLabel: 'Explore',
         }}
       />
       <Tab.Screen 
@@ -299,10 +301,10 @@ function MainTab() {
         }}
       />
       <Tab.Screen 
-        name="Company" 
-        component={CompanyListScreen}
+        name="Chat" 
+        component={Listchat}
         options={{
-          tabBarLabel: 'Company',
+          tabBarLabel: 'Messages',
         }}
       />
       <Tab.Screen 
@@ -349,8 +351,7 @@ export default function AppNavigator() {
           <Stack.Screen name="ForgotPasswordReset" component={ForgotPasswordResetScreen} options={{ headerShown: false }} />
           <Stack.Screen name="MainTab" component={MainTab} options={{ headerShown: false }} />
           <Stack.Screen name="CompanyDetail" component={CompanyDetailScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="CompanyList" component={CompanyListScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="JobList" component={JobListScreen} options={{ headerShown: false }} />
+
           <Stack.Screen name="JobDetail" component={JobDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Listchat" component={Listchat} options={{ headerShown: false }} />
           <Stack.Screen name="ChatDetail" component={ChatDetail} options={{ headerShown: false }} />

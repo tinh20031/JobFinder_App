@@ -208,9 +208,13 @@ const CompanyFilterScreen = () => {
       companySizeText: companySizeText,
     };
 
-    navigation.navigate('CompanyList', {
-      filters: selectedFilters,
-      savedFilters: savedFilterState,
+    navigation.navigate('MainTab', { 
+      screen: 'Explore',
+      params: {
+        filters: selectedFilters,
+        savedFilters: savedFilterState,
+        filterType: 'company', // Add filter type indicator
+      }
     });
   };
 

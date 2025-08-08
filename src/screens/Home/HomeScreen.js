@@ -42,11 +42,14 @@ const HomeScreen = () => {
   }, []);
 
   const handleSearch = (text) => {
-    // Navigate to JobListScreen with search query
+    // Navigate to ExploreScreen with search query via MainTab
     if (text && text.trim()) {
-      navigation.navigate('JobList', { 
-        searchQuery: text.trim(),
-        fromHome: true 
+      navigation.navigate('MainTab', { 
+        screen: 'Explore',
+        params: {
+          searchQuery: text.trim(),
+          fromHome: true 
+        }
       });
     }
   };
@@ -63,13 +66,18 @@ const HomeScreen = () => {
 
   const handleIndustryPress = (filterData) => {
     console.log('HomeScreen: Navigating to JobList with industry filter:', filterData);
-    // Navigate to JobListScreen with industry filter
-    navigation.navigate('JobList', { 
-      filters: {
-        industry: filterData.name, // Sử dụng tên industry như trong FilterScreen
-        industryId: filterData.id
-      },
-      fromHome: true 
+    // Navigate to ExploreScreen with industry filter via MainTab
+    // Industry filter can be applied to both jobs and companies, so we'll default to jobs tab
+    navigation.navigate('MainTab', { 
+      screen: 'Explore',
+      params: {
+        filters: {
+          industry: filterData.name, // Sử dụng tên industry như trong FilterScreen
+          industryId: filterData.id
+        },
+        filterType: 'job', // Default to jobs tab for industry filter
+        fromHome: true 
+      }
     });
   };
 

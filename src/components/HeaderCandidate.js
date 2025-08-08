@@ -136,9 +136,7 @@ const HeaderCandidates = ({ onDashboard }) => {
     navigation.navigate('NotificationScreen');
   };
 
-  const handleMessagePress = () => {
-    navigation.navigate('Listchat');
-  };
+
 
 
 
@@ -158,9 +156,7 @@ const HeaderCandidates = ({ onDashboard }) => {
             </View>
           )}
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleMessagePress} style={styles.messageWrapper}>
-          <MaterialIcons name="message" size={32} color="#2563eb" />
-        </TouchableOpacity>
+
       </View>
     </SafeAreaView>
   );
@@ -192,11 +188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  messageWrapper: {
-    marginLeft: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+
   badge: {
     position: 'absolute',
     top: -2,

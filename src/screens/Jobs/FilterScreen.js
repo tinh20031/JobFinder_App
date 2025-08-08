@@ -340,10 +340,14 @@ const FilterScreen = () => {
       selectedIndustry,
     };
     
-    // Pass selected filters back to JobListScreen
-    navigation.navigate('JobList', { 
-      filters: finalFilters,
-      savedFilters: savedFilterState 
+    // Pass selected filters back to ExploreScreen via MainTab
+    navigation.navigate('MainTab', { 
+      screen: 'Explore',
+      params: {
+        filters: finalFilters,
+        savedFilters: savedFilterState,
+        filterType: 'job' // Add filter type indicator
+      }
     });
   };
 
