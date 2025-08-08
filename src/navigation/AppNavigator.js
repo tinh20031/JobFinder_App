@@ -10,7 +10,8 @@ import EmailVerificationScreen from '../screens/Auth/EmailVerificationScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import ForgotPasswordResetScreen from '../screens/Auth/ForgotPasswordResetScreen';
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Feather from 'react-native-vector-icons/Feather';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import HomeScreen from '../screens/Home/HomeScreen';
 import CompanyDetailScreen from '../screens/Company/CompanyDetailScreen';
 import JobDetailScreen from '../screens/Jobs/JobDetailScreen';
@@ -179,8 +180,9 @@ function CustomTabBar({ state, descriptors, navigation }) {
         paddingBottom: 12,
         paddingTop: 8,
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 20,
         ...Platform.select({
           android: { elevation: 12 },
           ios: { shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: -2 } }
@@ -210,28 +212,52 @@ function CustomTabBar({ state, descriptors, navigation }) {
           }
         };
 
-        let iconName;
-        if (route.name === 'Home') iconName = 'home';
-        else if (route.name === 'Explore') iconName = 'travel-explore';
-        else if (route.name === 'Chat') iconName = 'message';
-        else if (route.name === 'Job') iconName = 'work';
-        else if (route.name === 'Company') iconName = 'business';
-        else if (route.name === 'Profile') iconName = 'person';
-        else if (route.name === 'Dashboard') iconName = 'dashboard';
+        let iconName, iconType;
+        if (route.name === 'Home') {
+          iconType = 'Ionicons';
+          iconName = isFocused ? 'home' : 'home-outline';
+        } else if (route.name === 'Explore') {
+          iconType = 'Ionicons';
+          iconName = isFocused ? 'search' : 'search-outline';
+        } else if (route.name === 'Chat') {
+          iconType = 'Ionicons';
+          iconName = isFocused ? 'chatbubble' : 'chatbubble-outline';
+        } else if (route.name === 'Job') {
+          iconType = 'Ionicons';
+          iconName = isFocused ? 'briefcase' : 'briefcase-outline';
+        } else if (route.name === 'Company') {
+          iconType = 'Ionicons';
+          iconName = isFocused ? 'business' : 'business-outline';
+        } else if (route.name === 'Profile') {
+          iconType = 'Feather';
+          iconName = 'user';
+        } else if (route.name === 'Menu') {
+          iconType = 'Ionicons';
+          iconName = isFocused ? 'menu' : 'menu-outline';
+        }
 
         if (isProfile) {
           return (
-            <CustomTabBarButton 
-              key={`profile-${profileCompletion}-${Date.now()}`} 
-              onPress={onPress} 
-              profileCompletion={profileCompletion}
-            >
-              <MaterialIcons
-                name={iconName}
-                size={28}
-                color="#fff"
-              />
-            </CustomTabBarButton>
+            <View key={route.key} style={{ flex: 1, alignItems: 'center' }}>
+              <CustomTabBarButton 
+                onPress={onPress} 
+                profileCompletion={profileCompletion}
+              >
+                {iconType === 'Ionicons' ? (
+                  <Ionicons
+                    name={iconName}
+                    size={28}
+                    color="#fff"
+                  />
+                ) : (
+                  <Feather
+                    name={iconName}
+                    size={28}
+                    color="#fff"
+                  />
+                )}
+              </CustomTabBarButton>
+            </View>
           );
         }
 
@@ -247,11 +273,19 @@ function CustomTabBar({ state, descriptors, navigation }) {
             }}
             activeOpacity={0.7}
           >
-            <MaterialIcons
-              name={iconName}
-              size={24}
-              color={isFocused ? '#2563eb' : '#888'}
-            />
+            {iconType === 'Ionicons' ? (
+              <Ionicons
+                name={iconName}
+                size={24}
+                color={isFocused ? '#2563eb' : '#888'}
+              />
+            ) : (
+              <Feather
+                name={iconName}
+                size={24}
+                color={isFocused ? '#2563eb' : '#888'}
+              />
+            )}
             <Text
               style={{
                 fontSize: 10,
@@ -308,10 +342,10 @@ function MainTab() {
         }}
       />
       <Tab.Screen 
-        name="Dashboard" 
+        name="Menu" 
         component={DashboardScreen}
         options={{
-          tabBarLabel: 'Dashboard',
+          tabBarLabel: 'Menu',
         }}
       />
     </Tab.Navigator>

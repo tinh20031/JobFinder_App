@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, useWindowDimensions, TextInput, Alert } from 'react-native';
 import HeaderDetail from '../../components/HeaderDetail';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Feather from 'react-native-vector-icons/Feather';
 import { JobService } from '../../services/JobService';
 import RenderHTML from 'react-native-render-html';
 import { useNavigation } from '@react-navigation/native';
@@ -274,7 +275,7 @@ const JobDetailScreen = ({ route }) => {
           {/* Action Buttons */}
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.followBtn} onPress={() => setShowMessageModal(true)}>
-              <MaterialIcons name="message" size={20} color="#fff" />
+              <Feather name="message-circle" size={20} color="#fff" />
               <Text style={styles.followBtnText}>Message</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cvMatchBtn} onPress={() => setShowCvMatchModal(true)}>

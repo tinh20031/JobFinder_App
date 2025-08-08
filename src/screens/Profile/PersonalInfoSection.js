@@ -70,22 +70,22 @@ export default function PersonalInfoSection({ profile }) {
           placeholder="Enter your phone number"
         />
         <InfoField 
-          icon="map-marker" 
-          label="Address" 
-          value={profile?.address} 
-          placeholder="Enter your address"
-        />
-        <InfoField 
-          icon="city" 
-          label="Award" 
-          value={profile?.city} 
-          placeholder="Enter your award"
-        />
-        <InfoField 
           icon="map" 
           label="Province" 
           value={profile?.province} 
           placeholder="Enter your province"
+        />
+        <InfoField 
+          icon="city" 
+          label="Award/Commune" 
+          value={profile?.city} 
+          placeholder="Enter your award/commune"
+        />
+        <InfoField 
+          icon="map-marker" 
+          label="Address" 
+          value={profile?.address} 
+          placeholder="Enter your address"
         />
         <InfoField 
           icon="link" 

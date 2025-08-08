@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 
 const HeaderDetail = ({ title, avatar, isOnline, showAvatar = false }) => {
@@ -10,7 +10,7 @@ const HeaderDetail = ({ title, avatar, isOnline, showAvatar = false }) => {
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color="#150b3d" />
+          <Feather name="chevron-left" size={24} color="#150b3d" />
         </TouchableOpacity>
         
         {showAvatar && avatar && (

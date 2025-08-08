@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../constants/api';
@@ -149,7 +149,7 @@ const HeaderCandidates = ({ onDashboard }) => {
           resizeMode="contain"
         />
         <TouchableOpacity onPress={handleBellPress} style={styles.bellWrapper}>
-          <MaterialIcons name="notifications" size={36} color="#2563eb" />
+          <Feather name="bell" size={30} color="#2563eb" />
           {unreadCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{unreadCount}</Text>
