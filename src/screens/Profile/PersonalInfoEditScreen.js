@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -33,6 +33,21 @@ export default function PersonalInfoEditScreen({ route }) {
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
+
+  // Tạo unique keys cho provinces và cities để tránh duplicate key error
+  const provincesWithKeys = useMemo(() => {
+    return provinces.map((provinceItem, index) => ({
+      ...provinceItem,
+      uniqueKey: `province-${provinceItem.code || provinceItem.id || provinceItem.name || index}-${index}`
+    }));
+  }, [provinces]);
+
+  const citiesWithKeys = useMemo(() => {
+    return cities.map((cityItem, index) => ({
+      ...cityItem,
+      uniqueKey: `city-${cityItem.code || cityItem.id || cityItem.name || index}-${index}`
+    }));
+  }, [cities]);
 
   useEffect(() => {
     loadProfile();
@@ -434,9 +449,9 @@ export default function PersonalInfoEditScreen({ route }) {
           </View>
           
           <ScrollView style={styles.provinceList}>
-            {provinces.map((provinceItem, index) => (
+            {provincesWithKeys.map((provinceItem) => (
               <TouchableOpacity
-                key={provinceItem.code || provinceItem.id || `province-${index}`}
+                key={provinceItem.uniqueKey}
                 style={styles.provinceItem}
                 onPress={() => {
                   setProvince(provinceItem.name);
@@ -473,9 +488,9 @@ export default function PersonalInfoEditScreen({ route }) {
           </View>
           
           <ScrollView style={styles.provinceList}>
-            {cities.map((cityItem, index) => (
+            {citiesWithKeys.map((cityItem) => (
               <TouchableOpacity
-                key={cityItem.code || cityItem.id || `city-${index}`}
+                key={cityItem.uniqueKey}
                 style={styles.provinceItem}
                 onPress={() => {
                   setCity(cityItem.name);
