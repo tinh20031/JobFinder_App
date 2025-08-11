@@ -105,6 +105,16 @@ const ExploreScreen = () => {
     fetchCompanies();
   }, []);
 
+  // Allow external navigation to specify initial tab (e.g., from Favorites empty state)
+  useEffect(() => {
+    if (route.params?.initialTab) {
+      const tab = route.params.initialTab === 'companies' ? 'companies' : 'jobs';
+      setActiveTab(tab);
+      // clear param to avoid re-trigger on focus back
+      navigation.setParams({ initialTab: undefined });
+    }
+  }, [route.params?.initialTab, navigation]);
+
   // Fetch trending jobs for Explore (jobs tab)
   const fetchTrendingJobs = React.useCallback(async () => {
     try {

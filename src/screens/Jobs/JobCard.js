@@ -14,6 +14,9 @@ const JobCard = ({
 }) => {
   const navigation = useNavigation();
 
+  // Normalize saved state check to support both number and string id sets
+  const isSaved = !!favoriteJobs && (favoriteJobs.has?.(item.id) || favoriteJobs.has?.(String(item.id)));
+
   // Helper function to format salary
   const formatSalary = (minSalary, maxSalary, isNegotiable) => {
     if (isNegotiable) {
@@ -177,9 +180,9 @@ const JobCard = ({
               }}
             >
               <MaterialIcons 
-                name={favoriteJobs?.has(item.id) ? "bookmark" : "bookmark-border"} 
+                name={isSaved ? "bookmark" : "bookmark-border"} 
                 size={20} 
-                color={favoriteJobs?.has(item.id) ? "#2563eb" : "#666"} 
+                color={isSaved ? "#2563eb" : "#666"} 
               />
               <Text style={styles.footerText}>Save</Text>
             </TouchableOpacity>
