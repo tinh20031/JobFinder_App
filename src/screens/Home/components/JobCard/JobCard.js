@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Alert, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import * as Animatable from 'react-native-animatable';
 import { JobService } from '../../../../services/JobService';
 import { JobCardSkeleton } from '../../../../components/SkeletonLoading';
 import { authService } from '../../../../services/authService';
@@ -109,7 +110,9 @@ const JobCard = ({
             tags: getJobTags(job),
             logoColor: getLogoColor(job.company?.companyName || 'Unknown'),
             logoText: getLogoText(job.company?.companyName || 'Unknown'),
-            logoUrl: job.company?.urlCompanyLogo || job.logo || null
+            logoUrl: job.company?.urlCompanyLogo || job.logo || null,
+            isTrending: true,
+            trendingRank: job.trendingRank || index + 1,
           };
           
           // Debug logo URL for first job
@@ -375,9 +378,16 @@ const JobCard = ({
               </View>
             )}
             <View style={styles.companyTextSection}>
-              <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
-                {item.title}
-              </Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">
+                  {item.title}
+                </Text>
+                {item?.isTrending && (
+                  <View style={styles.trendingBadgeSmall}>
+                    <Text style={styles.trendingBadgeSmallText}>Trending</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.jobCompany}>
                 {item.company} - {item.location}
               </Text>
@@ -415,20 +425,43 @@ const JobCard = ({
           <Icon name="payment" size={16} color="#000" />
           <Text style={styles.footerText}>{item.salary}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.bookmarkButton} 
-          onPress={(e) => {
-            e.stopPropagation();
-            handleJobBookmark(item.id);
-          }}
-        >
-          <Icon 
-            name={favoriteJobs.has(item.id) ? "bookmark" : "bookmark-border"} 
-            size={20} 
-            color={favoriteJobs.has(item.id) ? "#2563eb" : "#666"} 
-          />
-          <Text style={styles.footerText}>Save</Text>
-        </TouchableOpacity>
+        <View style={styles.footerRight}>
+          {item?.isTrending && (item?.trendingRank || 0) <= 3 && (
+            <Animatable.View
+              animation="pulse"
+              iterationCount="infinite"
+              duration={(item.trendingRank || 0) === 1 ? 900 : 1400}
+              easing="ease-in-out"
+              useNativeDriver
+              style={styles.hotBadgeWrapper}
+            >
+              <View
+                style={[
+                  styles.hotBadge,
+                  { backgroundColor: (item.trendingRank || 0) === 1 ? '#ff4444' : '#ff6b35' },
+                ]}
+              >
+                <Text style={styles.hotBadgeText}>
+                  {(item.trendingRank || 0) === 1 ? '🔥 SUPER HOT' : '🔥 HOT'}
+                </Text>
+              </View>
+            </Animatable.View>
+          )}
+          <TouchableOpacity 
+            style={styles.bookmarkButton} 
+            onPress={(e) => {
+              e.stopPropagation();
+              handleJobBookmark(item.id);
+            }}
+          >
+            <Icon 
+              name={favoriteJobs.has(item.id) ? "bookmark" : "bookmark-border"} 
+              size={20} 
+              color={favoriteJobs.has(item.id) ? "#2563eb" : "#666"} 
+            />
+            <Text style={styles.footerText}>Save</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -665,6 +698,23 @@ const styles = StyleSheet.create({
     marginBottom: -2,
     fontFamily: 'Poppins-Bold',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  trendingBadgeSmall: {
+    marginLeft: 6,
+    backgroundColor: '#ffedd5',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  trendingBadgeSmallText: {
+    color: '#f97316',
+    fontSize: 9,
+    fontFamily: 'Poppins-SemiBold',
+  },
   jobCompany: {
     fontSize: 11,
     color: '#4a5568',
@@ -700,6 +750,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginTop: -4,
+  },
+  footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  hotBadgeWrapper: {
+    borderRadius: 14,
+  },
+  hotBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  hotBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: 'Poppins-Bold',
   },
   jobTag: {
     borderRadius: 6,

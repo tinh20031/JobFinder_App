@@ -16,6 +16,7 @@ import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
     const navigation = useNavigation();
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [favoriteCompanies, setFavoriteCompanies] = useState(new Set());
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef(null);
     const autoScrollInterval = useRef(null);
@@ -48,6 +49,16 @@ import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
         // Apply limit if specified
         const limitedCompanies = limit ? mappedCompanies.slice(0, limit) : mappedCompanies;
         setCompanies(limitedCompanies);
+
+        // Load favorite companies
+        try {
+          const favList = await companyService.getFavoriteCompanies();
+          const getId = (item) => item?.companyProfileId ?? item?.companyId ?? item?.id ?? item?.idCompany ?? item?.userId;
+          const ids = new Set((Array.isArray(favList) ? favList : []).map((x) => getId(x)).filter((v) => v != null).map((v) => String(v)));
+          setFavoriteCompanies(ids);
+        } catch (e) {
+          // ignore not logged in / errors
+        }
       } catch (error) {
         console.error('Error fetching companies:', error);
         // Set empty array if API fails - no hardcode data
@@ -59,6 +70,29 @@ import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
 
     fetchCompanies();
   }, [limit]);
+  const handleBookmarkPress = async (companyId) => {
+    const idStr = String(companyId);
+    const isSaved = favoriteCompanies.has(idStr);
+    // optimistic toggle
+    setFavoriteCompanies((prev) => {
+      const next = new Set(prev);
+      if (isSaved) next.delete(idStr); else next.add(idStr);
+      return next;
+    });
+    try {
+      if (isSaved) await companyService.unfavoriteCompany(companyId);
+      else await companyService.favoriteCompany(companyId);
+    } catch (e) {
+      // revert on error
+      setFavoriteCompanies((prev) => {
+        const next = new Set(prev);
+        const nowSaved = next.has(idStr);
+        if (nowSaved) next.delete(idStr); else next.add(idStr);
+        return next;
+      });
+    }
+  };
+
 
   // Auto-scroll functionality
   useEffect(() => {
@@ -159,7 +193,10 @@ import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
 
 
 
-  const renderCompanyItem = ({ item }) => (
+  const renderCompanyItem = ({ item }) => {
+    const idStr = String(item.id);
+    const isSaved = favoriteCompanies.has(idStr);
+    return (
     <TouchableOpacity 
       style={styles.carouselJobCard} 
       onPress={() => navigation.navigate('CompanyDetail', { companyId: item.id })}
@@ -203,9 +240,23 @@ import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
           <Icon name="location-on" size={14} color="#666" />
           <Text style={styles.locationText}>{item.location}</Text>
         </View>
+        <TouchableOpacity 
+          style={styles.bookmarkButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleBookmarkPress(item.id);
+          }}
+        >
+          <Icon 
+            name={isSaved ? 'bookmark' : 'bookmark-border'} 
+            size={20} 
+            color={isSaved ? '#2563eb' : '#666'}
+          />
+          <Text style={styles.footerText}>Save</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
-  );
+  ); };
 
   return (
     <View style={styles.container}>
@@ -436,7 +487,7 @@ const styles = StyleSheet.create({
   },
   companyFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 3,
   },
@@ -453,6 +504,22 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 11,
     color: '#495057',
+    marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  bookmarkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 3,
+    paddingHorizontal: 8,
+    backgroundColor: '#f7fafc',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  footerText: {
+    fontSize: 11,
+    color: '#000',
     marginLeft: 4,
     fontFamily: 'Poppins-SemiBold',
   },

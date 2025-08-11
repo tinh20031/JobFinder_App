@@ -169,48 +169,7 @@ const CategoryIcons = ({ onIndustryPress, selectedFilters = {}, limit = null }) 
   };
 
   if (loading) {
-    const skeletonCount = limit || 4;
-    return (
-      <View style={styles.container}>
-        <FlatList
-          data={Array.from({ length: skeletonCount }, (_, i) => ({ id: i }))}
-          renderItem={({ item }) => (
-            <View style={styles.categoryItem}>
-              <View style={styles.categoryBox}>
-                {/* Icon skeleton */}
-                <View style={[styles.iconContainer, { backgroundColor: '#f0f0f0' }]}>
-                  <View style={{ width: 28, height: 28, backgroundColor: '#e0e0e0', borderRadius: 4 }} />
-                </View>
-                
-                {/* Text container skeleton */}
-                <View style={styles.textContainer}>
-                  {/* Industry name skeleton */}
-                  <View style={{ 
-                    width: 80, 
-                    height: 32, 
-                    backgroundColor: '#e0e0e0', 
-                    borderRadius: 6, 
-                    marginBottom: 4 
-                  }} />
-                  
-                  {/* Job count skeleton */}
-                  <View style={{ 
-                    width: 50, 
-                    height: 12, 
-                    backgroundColor: '#e0e0e0', 
-                    borderRadius: 4 
-                  }} />
-                </View>
-              </View>
-            </View>
-          )}
-          keyExtractor={(item) => `skeleton-${item.id}`}
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContent}
-        />
-      </View>
-    );
+    return null;
   }
 
   // Don't render anything if no industries data

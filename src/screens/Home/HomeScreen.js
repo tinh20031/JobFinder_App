@@ -140,7 +140,7 @@ const HomeScreen = () => {
               />
               <View style={styles.greetingSection}>
                 <Animatable.Text style={styles.greeting} animation="fadeInRight" duration={500} delay={150} useNativeDriver>
-                  Welcome back 👋
+                  Welcome 👋
                 </Animatable.Text>
                 <Animatable.Text style={styles.userName} animation="fadeInRight" duration={600} delay={200} useNativeDriver>
                   {userProfile.fullName}
