@@ -108,6 +108,14 @@ const TryMatchDetail = () => {
     return "#888";
   };
 
+  // Keep score color thresholds consistent with CvMatchingHistory
+  const getScoreColor = (score) => {
+    if (score >= 80) return '#28a745';
+    if (score >= 60) return '#ffc107';
+    if (score >= 40) return '#fd7e14';
+    return '#dc3545';
+  };
+
 
 
   const handleViewCV = () => {
@@ -156,7 +164,7 @@ const TryMatchDetail = () => {
     if (!detail || detail.similarityScore === null || detail.similarityScore === undefined) return null;
     
     const score = Math.round(detail.similarityScore);
-    const scoreColor = score >= 50 ? '#28a745' : '#e53935';
+    const scoreColor = getScoreColor(score);
 
     return (
       <View style={styles.scoreSection}>

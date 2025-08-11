@@ -5,34 +5,35 @@ import HeaderCandidate from '../../components/HeaderCandidate';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
 import { authService } from '../../services/authService';
+import LinearGradient from 'react-native-linear-gradient';
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handlePasswordPress = () => {
-    // Xử lý khi nhấn vào Password
+    // Handle when pressing Password
     navigation.navigate('ChangePassword');
   };
 
   const handleLogoutPress = () => {
-    // Hiển thị modal xác nhận logout
+    // Show logout confirmation modal
     setShowLogoutModal(true);
   };
 
   const handleConfirmLogout = async () => {
     try {
       setShowLogoutModal(false);
-      // Gọi authService để logout
+      // Call authService to logout
       await authService.logout();
-      // Chuyển về màn hình login
+      // Reset navigation to Login screen
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
       });
     } catch (error) {
       console.error('Logout error:', error);
-      Alert.alert('Lỗi', 'Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.');
+      Alert.alert('Error', 'An error occurred while logging out. Please try again.');
     }
   };
 
@@ -41,129 +42,126 @@ const DashboardScreen = () => {
   };
 
   const handleAppliedJobsPress = () => {
-    // Xử lý khi nhấn vào Applied Jobs
+    // Navigate to Applied Jobs
     navigation.navigate('ApplyCV');
   };
 
   const handleMyFavoritePress = () => {
-    // Xử lý khi nhấn vào My Favorite
+    // Navigate to My Favorite
     navigation.navigate('FavoriteJobDetail');
   };
 
   const handleCvMatchHistoryPress = () => {
-    // Xử lý khi nhấn vào CV Match History
+    // Navigate to CV Match History
     navigation.navigate('CvMatchingHistory');
   };
 
   const handlePackagesPress = () => {
-    // Xử lý khi nhấn vào Packages
+    // Navigate to Packages
     navigation.navigate('Package');
   };
 
+  const menuItems = [
+    { key: 'applied', label: 'Applied Jobs!', icon: 'work', colors: ['#34d399', '#10b981'], onPress: handleAppliedJobsPress },
+    { key: 'favorite', label: 'My Favorite', icon: 'favorite', colors: ['#fb7185', '#f43f5e'], onPress: handleMyFavoritePress },
+    { key: 'history', label: 'CV Matching History', icon: 'history', colors: ['#f59e0b', '#eab308'], onPress: handleCvMatchHistoryPress },
+    { key: 'package', label: 'Packages', icon: 'card-giftcard', colors: ['#8b5cf6', '#6366f1'], onPress: handlePackagesPress },
+    { key: 'password', label: 'Password', icon: 'lock-outline', colors: ['#60a5fa', '#2563eb'], onPress: handlePasswordPress },
+    { key: 'logout', label: 'Logout', icon: 'logout', colors: ['#f87171', '#ef4444'], onPress: handleLogoutPress },
+  ];
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#f3f7fd' }}>
+    <LinearGradient colors={["#e0f2fe", "#f5f3ff"]} style={styles.root}>
       <HeaderCandidate />
       <ScrollView style={styles.content}>
+        <Animatable.View animation="fadeInDown" duration={600}>
+          <LinearGradient colors={["#6366f1", "#8b5cf6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.heroTitle}>Dashboard</Text>
+              <Text style={styles.heroSubtitle}>Manage your profile and jobs effortlessly</Text>
+            </View>
+            <MaterialIcons name="dashboard" size={40} color="#ffffff90" />
+          </LinearGradient>
+        </Animatable.View>
+
         <View style={styles.menuContainer}>
-          <Animatable.View animation="fadeInUp" duration={600} delay={100}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleAppliedJobsPress}>
-              <View style={styles.menuItemLeft}>
-                <MaterialIcons name="work" size={24} color="#333" />
-                <Text style={styles.menuText}>Applied Jobs!</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color="#333" />
-            </TouchableOpacity>
-          </Animatable.View>
-
-          <Animatable.View animation="fadeInUp" duration={600} delay={200}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleMyFavoritePress}>
-              <View style={styles.menuItemLeft}>
-                <MaterialIcons name="favorite" size={24} color="#333" />
-                <Text style={styles.menuText}>My Favorite</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color="#333" />
-            </TouchableOpacity>
-          </Animatable.View>
-
-          <Animatable.View animation="fadeInUp" duration={600} delay={300}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleCvMatchHistoryPress}>
-              <View style={styles.menuItemLeft}>
-                <MaterialIcons name="history" size={24} color="#333" />
-                <Text style={styles.menuText}>CV Matching History</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color="#333" />
-            </TouchableOpacity>
-          </Animatable.View>
-
-          <Animatable.View animation="fadeInUp" duration={600} delay={400}>
-            <TouchableOpacity style={styles.menuItem} onPress={handlePackagesPress}>
-              <View style={styles.menuItemLeft}>
-                <MaterialIcons name="card-giftcard" size={24} color="#333" />
-                <Text style={styles.menuText}>Packages</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color="#333" />
-            </TouchableOpacity>
-          </Animatable.View>
-
-          <Animatable.View animation="fadeInUp" duration={600} delay={500}>
-            <TouchableOpacity style={styles.menuItem} onPress={handlePasswordPress}>
-              <View style={styles.menuItemLeft}>
-                <MaterialIcons name="lock-outline" size={24} color="#333" />
-                <Text style={styles.menuText}>Password</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color="#333" />
-            </TouchableOpacity>
-          </Animatable.View>
-
-          <Animatable.View animation="fadeInUp" duration={600} delay={600}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogoutPress}>
-              <View style={styles.menuItemLeft}>
-                <MaterialIcons name="logout" size={24} color="#333" />
-                <Text style={styles.menuText}>Logout</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color="#333" />
-            </TouchableOpacity>
-          </Animatable.View>
+          {menuItems.map((item, index) => (
+            <Animatable.View key={item.key} animation="fadeInUp" duration={600} delay={120 + index * 100}>
+              <TouchableOpacity activeOpacity={0.85} style={styles.menuItem} onPress={item.onPress}>
+                <View style={styles.menuItemLeft}>
+                  <LinearGradient colors={item.colors} style={styles.iconBadge}>
+                    <MaterialIcons name={item.icon} size={22} color="#fff" />
+                  </LinearGradient>
+                  <Text style={styles.menuText}>{item.label}</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color="#4b5563" />
+              </TouchableOpacity>
+            </Animatable.View>
+          ))}
         </View>
       </ScrollView>
 
-             <Modal
-         visible={showLogoutModal}
-         animationType="none"
-         transparent={true}
-         onRequestClose={handleCancelLogout}
-       >
-         <View style={styles.modalOverlay}>
-           <View style={styles.modalContainer}>
-             <Animatable.View 
-               animation={showLogoutModal ? "slideInUp" : "slideOutDown"}
-               duration={300}
-               style={styles.modalContent}
-             >
-               <View style={styles.modalHandle} />
-               <Text style={styles.modalTitle}>LOG OUT</Text>
-               <Text style={styles.modalMessage}>Are you sure you want to log out?</Text>
-               <View style={styles.modalButtons}>
-                 <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmLogout}>
-                   <Text style={styles.confirmButtonText}>YES</Text>
-                 </TouchableOpacity>
-                 <TouchableOpacity style={styles.cancelButton} onPress={handleCancelLogout}>
-                   <Text style={styles.cancelButtonText}>CANCEL</Text>
-                 </TouchableOpacity>
-               </View>
-             </Animatable.View>
-           </View>
-         </View>
-       </Modal>
-    </View>
+      <Modal
+        visible={showLogoutModal}
+        animationType="none"
+        transparent={true}
+        onRequestClose={handleCancelLogout}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Animatable.View animation={showLogoutModal ? 'slideInUp' : 'slideOutDown'} duration={300} style={styles.modalContent}>
+              <View style={styles.modalHandle} />
+              <Text style={styles.modalTitle}>LOG OUT</Text>
+              <Text style={styles.modalMessage}>Are you sure you want to log out?</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmLogout} activeOpacity={0.9}>
+                  <Text style={styles.confirmButtonText}>YES</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.cancelButton} onPress={handleCancelLogout}>
+                  <Text style={styles.cancelButtonText}>CANCEL</Text>
+                </TouchableOpacity>
+              </View>
+            </Animatable.View>
+          </View>
+        </View>
+      </Modal>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  heroCard: {
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  heroTitle: {
+    fontSize: 20,
+    color: '#fff',
+    marginBottom: 6,
+    fontFamily: 'Poppins-Bold',
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: '#ffffffcc',
+    fontFamily: 'Poppins-Regular',
   },
   menuContainer: {
     gap: 16,
@@ -194,6 +192,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontFamily: 'Poppins-Medium',
+  },
+  iconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalOverlay: {
     flex: 1,

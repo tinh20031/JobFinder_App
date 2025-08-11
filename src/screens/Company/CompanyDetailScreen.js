@@ -220,7 +220,7 @@ const CompanyDetailScreen = ({ route }) => {
                 ) : (
                   <MaterialIcons name={isFavorite ? 'favorite' : 'favorite-border'} size={20} color="#fff" />
                 )}
-                <Text style={styles.actionText}>{isFavorite ? 'Unfollow' : 'Follow'}</Text>
+                <Text style={styles.actionText}>{isFavorite ? 'Following' : 'Follow'}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.actionBtn} 

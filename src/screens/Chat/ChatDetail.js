@@ -1145,7 +1145,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
   },
   sendBtn: {
-    backgroundColor: '#2d357a',
+    backgroundColor: '#2563eb',
     borderRadius: 20,
     padding: 8,
     marginLeft: 8,
