@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, useWindowDimensions, TextInput, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, useWindowDimensions, TextInput, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import HeaderDetail from '../../components/HeaderDetail';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -481,7 +481,13 @@ const JobDetailScreen = ({ route }) => {
       {/* Message Modal */}
       {showMessageModal && (
         <View style={styles.modalOverlay}>
-          <Animatable.View animation="fadeInUp" duration={300} style={styles.messageModal}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom + 24 : 0}
+            style={styles.kbAvoider}
+          >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <Animatable.View animation="fadeInUp" duration={300} style={styles.messageModal}>
             {/* Header */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderContent}>
@@ -522,7 +528,9 @@ const JobDetailScreen = ({ route }) => {
                 <Text style={styles.sendButtonText}>Send Message</Text>
               </TouchableOpacity>
             </View>
-          </Animatable.View>
+              </Animatable.View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         </View>
       )}
     </View>
@@ -870,6 +878,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   // Message Modal Styles
+  kbAvoider: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalOverlay: {
     position: 'absolute',
     top: 0,

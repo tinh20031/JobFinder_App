@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native';
 import { authService } from '../../services/authService';
 import Header from '../../components/Header';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -41,8 +41,11 @@ const ForgotPasswordScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
+    <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.select({ ios: 24, android: 0 })}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
       <Header />
+      <ScrollView contentContainerStyle={{flexGrow: 1}} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -93,7 +96,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
           </Text>
         </View>
       </View>
-    </View>
+      </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native';
 import { authService } from '../../services/authService';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Header from '../../components/Header';
@@ -123,8 +123,11 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
-      <Header />
+    <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.select({ ios: 24, android: 0 })}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
+          <Header />
+          <ScrollView contentContainerStyle={{flexGrow: 1}} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
         <Text style={styles.title}>Login to JobFinder</Text>
         <View style={styles.inputGroup}>
@@ -177,7 +180,10 @@ const LoginScreen = ({ navigation }) => {
           style={styles.gmailBtn}
         />
       </View>
-    </View>
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

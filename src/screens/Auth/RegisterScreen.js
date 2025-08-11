@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { authService } from '../../services/authService';
 import Header from '../../components/Header';
 
@@ -53,7 +53,9 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={{flex: 1, backgroundColor: '#f8f9fb'}} contentContainerStyle={{flexGrow: 1}}>
+    <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.select({ ios: 24, android: 0 })}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView style={{flex: 1, backgroundColor: '#f8f9fb'}} contentContainerStyle={{flexGrow: 1}} keyboardShouldPersistTaps="handled">
       <Header />
       <View style={styles.container}>
         <Text style={styles.title}>Create a JobFinder Account</Text>
@@ -121,7 +123,9 @@ const RegisterScreen = ({ navigation }) => {
           <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>LogIn</Text>
         </Text>
       </View>
-    </ScrollView>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

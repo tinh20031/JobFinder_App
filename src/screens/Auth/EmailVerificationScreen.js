@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native';
 import { authService } from '../../services/authService';
 import Header from '../../components/Header';
 
@@ -46,8 +46,11 @@ const EmailVerificationScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
+    <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.select({ ios: 24, android: 0 })}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={{flex: 1, backgroundColor: '#f8f9fb'}}>
       <Header />
+      <ScrollView contentContainerStyle={{flexGrow: 1}} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
         <Text style={styles.title}>Create a JobFinder Account</Text>
         <View style={styles.successBox}>
@@ -73,7 +76,10 @@ const EmailVerificationScreen = ({ route, navigation }) => {
           <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>LogIn</Text>
         </Text>
       </View>
-    </View>
+      </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

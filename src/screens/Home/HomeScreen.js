@@ -147,19 +147,7 @@ const HomeScreen = () => {
                 </Animatable.Text>
               </View>
             </Animatable.View>
-          ) : (
-            <Animatable.View style={styles.profileSection} animation="fadeInUp" duration={600} delay={50} useNativeDriver>
-              <View style={[styles.profileImage, styles.placeholderImage]} />
-              <View style={styles.greetingSection}>
-                <Animatable.Text style={styles.greeting} animation="fadeInRight" duration={500} delay={150} useNativeDriver>
-                  Welcome back 👋
-                </Animatable.Text>
-                <Animatable.Text style={styles.userName} animation="fadeInRight" duration={600} delay={200} useNativeDriver>
-                  Guest User
-                </Animatable.Text>
-              </View>
-            </Animatable.View>
-          )}
+          ) : null}
         </Animatable.View>
 
         {/* Banner */}
@@ -168,7 +156,7 @@ const HomeScreen = () => {
         </Animatable.View>
 
         {/* Search Bar */}
-        <Animatable.View animation="fadeInUp" duration={600} delay={150} useNativeDriver>
+        <Animatable.View animation="fadeInUp" duration={600} delay={150} useNativeDriver style={{ marginTop: 12 }}>
           <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
         </Animatable.View>
 

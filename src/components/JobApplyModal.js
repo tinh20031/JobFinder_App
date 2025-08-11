@@ -12,6 +12,9 @@ import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
@@ -261,80 +264,87 @@ const JobApplyModal = ({ visible, onClose, jobId, onApplied, cvList = [], isSubm
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.select({ ios: 24, android: 0 })}
       >
-        <View style={styles.overlay}>
-          <View style={styles.modalWrap}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.overlay}>
+            <View style={styles.modalWrap}>
           <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
             <Text style={styles.closeBtnText}>×</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Apply for Job</Text>
-
-          {/* Existing CV List */}
-          {cvList.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Choose Existing CV</Text>
-              <FlatList
-                data={cvList}
-                renderItem={renderCVItem}
-                keyExtractor={(item) => item.id.toString()}
-                style={styles.cvList}
-              />
-            </View>
-          )}
-
-          {/* Upload New CV */}
-          <View style={[styles.section, styles.uploadSection]}>
-            <TouchableOpacity style={styles.radioRow}>
-              <View style={[styles.radioCircle, { backgroundColor: uploadingCV ? '#1976d2' : '#fff' }]} />
-              <Text style={styles.radioLabel}>Upload a New CV</Text>
-            </TouchableOpacity>
-            <View style={styles.uploadBtnContainer}>
-              <TouchableOpacity style={styles.uploadBtn} onPress={handlePickCV}>
-                <Text style={styles.uploadBtnText}>Choose File</Text>
-                <Text style={styles.uploadFileName}>
-                  {uploadingCV ? uploadingCV.name : 'No file chosen'}
-                </Text>
-              </TouchableOpacity>
-              {uploadingCV && (
-                <TouchableOpacity style={styles.removeBtn} onPress={handleRemoveCV}>
-                  <Text style={styles.removeBtnText}>Remove</Text>
-                </TouchableOpacity>
+            <ScrollView
+              contentContainerStyle={styles.scrollBody}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Existing CV List */}
+              {cvList.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionLabel}>Choose Existing CV</Text>
+                  <FlatList
+                    data={cvList}
+                    renderItem={renderCVItem}
+                    keyExtractor={(item) => item.id.toString()}
+                    style={styles.cvList}
+                  />
+                </View>
               )}
+
+              {/* Upload New CV */}
+              <View style={[styles.section, styles.uploadSection]}>
+                <TouchableOpacity style={styles.radioRow}>
+                  <View style={[styles.radioCircle, { backgroundColor: uploadingCV ? '#1976d2' : '#fff' }]} />
+                  <Text style={styles.radioLabel}>Upload a New CV</Text>
+                </TouchableOpacity>
+                <View style={styles.uploadBtnContainer}>
+                  <TouchableOpacity style={styles.uploadBtn} onPress={handlePickCV}>
+                    <Text style={styles.uploadBtnText}>Choose File</Text>
+                    <Text style={styles.uploadFileName}>
+                      {uploadingCV ? uploadingCV.name : 'No file chosen'}
+                    </Text>
+                  </TouchableOpacity>
+                  {uploadingCV && (
+                    <TouchableOpacity style={styles.removeBtn} onPress={handleRemoveCV}>
+                      <Text style={styles.removeBtnText}>Remove</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <Text style={styles.uploadNote}>Please upload a .pdf file, maximum 5MB.</Text>
+              </View>
+
+              {/* Cover Letter */}
+              <View style={styles.section}>
+                <Text style={styles.coverLabel}>Cover Letter</Text>
+                <TextInput
+                  style={[styles.coverInput, styles.coverInputAutoGrow]}
+                  placeholder="Write your cover letter here..."
+                  value={coverLetter}
+                  onChangeText={(text) => {
+                    setCoverLetter(text);
+                    setHasUnsavedChanges(true);
+                  }}
+                  multiline
+                  textAlignVertical="top"
+                  blurOnSubmit={false}
+                />
+              </View>
+
+              {error && <Text style={styles.errorText}>{error}</Text>}
+
+              <TouchableOpacity
+                style={[styles.applyBtn, loading && styles.applyBtnDisabled]}
+                onPress={handleApply}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.applyBtnText}>Submit Application</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
             </View>
-            <Text style={styles.uploadNote}>Please upload a .pdf file, maximum 5MB.</Text>
           </View>
-
-          {/* Cover Letter */}
-          <View style={styles.section}>
-            <Text style={styles.coverLabel}>Cover Letter</Text>
-            <TextInput
-              style={styles.coverInput}
-              placeholder="Write your cover letter here..."
-              value={coverLetter}
-              onChangeText={(text) => {
-                setCoverLetter(text);
-                setHasUnsavedChanges(true);
-              }}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {error && <Text style={styles.errorText}>{error}</Text>}
-
-          <TouchableOpacity
-            style={[styles.applyBtn, loading && styles.applyBtnDisabled]}
-            onPress={handleApply}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.applyBtnText}>Submit Application</Text>
-            )}
-          </TouchableOpacity>
-          </View>
-        </View>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -358,6 +368,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
+  },
+  scrollBody: {
+    paddingBottom: 10,
   },
   closeBtn: {
     position: 'absolute',
@@ -475,6 +488,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#222',
     fontFamily: 'Poppins-Regular',
+  },
+  coverInputAutoGrow: {
+    maxHeight: 220,
   },
   errorText: {
     color: '#d32f2f',

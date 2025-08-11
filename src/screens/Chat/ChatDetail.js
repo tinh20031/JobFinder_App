@@ -932,7 +932,9 @@ const ChatDetail = (props) => {
             contentContainerStyle={styles.flatListContent}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            ListEmptyComponent={!loading && <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>No messages yet.</Text>}
+            ListEmptyComponent={!loading && (
+              <Text style={styles.emptyText}>No messages yet.</Text>
+            )}
           />
         </View>
 
@@ -1030,11 +1032,13 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: 'bold',
     color: '#222',
+    fontFamily: 'Poppins-Bold',
   },
   online: {
     fontSize: 13,
     color: '#4caf50',
     marginTop: 2,
+    fontFamily: 'Poppins-Regular',
   },
   messageRow: {
     flexDirection: 'row',
@@ -1061,18 +1065,20 @@ const styles = StyleSheet.create({
     borderColor: '#e3eafc',
   },
   bubbleRight: {
-    backgroundColor: '#2d357a',
+    backgroundColor: '#2558F8',
     borderTopRightRadius: 0,
     alignSelf: 'flex-end',
   },
   messageText: {
     color: '#fff',
     fontSize: 15,
+    fontFamily: 'Poppins-Regular',
   },
   // Thêm style cho text đối phương
   messageTextLeft: {
     color: '#6d4c41', // nâu nhạt Figma
     fontSize: 15,
+    fontFamily: 'Poppins-Regular',
   },
   bubbleFooter: {
     flexDirection: 'row',
@@ -1082,6 +1088,7 @@ const styles = StyleSheet.create({
   timeInBubble: {
     fontSize: 12,
     color: '#bbb',
+    fontFamily: 'Poppins-Regular',
   },
   fileBubble: {
     maxWidth: '80%',
@@ -1101,11 +1108,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,
+    fontFamily: 'Poppins-Bold',
   },
   fileSize: {
     color: '#fff',
     fontSize: 13,
     marginTop: 2,
+    fontFamily: 'Poppins-Regular',
   },
   inputBarWrapper: {
     backgroundColor: '#fafbfc',
@@ -1133,6 +1142,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     maxHeight: 100,
     textAlignVertical: 'top',
+    fontFamily: 'Poppins-Regular',
   },
   sendBtn: {
     backgroundColor: '#2d357a',
@@ -1183,6 +1193,12 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 80, // Add padding for the input bar
   },
+  emptyText: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 40,
+    fontFamily: 'Poppins-Regular',
+  },
   selectedFileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1206,6 +1222,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     marginRight: 8,
+    fontFamily: 'Poppins-Regular',
   },
   removeFileBtn: {
     padding: 4,

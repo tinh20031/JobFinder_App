@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#222',
+    fontFamily: 'Poppins-Bold',
   },
   searchBox: {
     flexDirection: 'row',
@@ -222,6 +223,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     color: '#222',
+    fontFamily: 'Poppins-Regular',
   },
   item: {
     flexDirection: 'row',
@@ -262,6 +264,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   info: {
     flex: 1,
@@ -276,12 +279,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#222',
+    fontFamily: 'Poppins-Bold',
     // maxWidth: 140, // bỏ giới hạn chiều rộng để không bị cắt tên
   },
   message: {
     fontSize: 14,
     color: '#888',
     marginTop: 2,
+    fontFamily: 'Poppins-Regular',
   },
   time: {
     fontSize: 12,
@@ -289,6 +294,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     minWidth: 60,
     textAlign: 'right',
+    fontFamily: 'Poppins-Regular',
   },
   right: {
     alignItems: 'flex-end',
@@ -307,11 +313,13 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginTop: 40,
+    fontFamily: 'Poppins-Regular',
   },
   emptyText: {
     color: '#888',
     textAlign: 'center',
     marginTop: 40,
+    fontFamily: 'Poppins-Regular',
   },
 });
 
