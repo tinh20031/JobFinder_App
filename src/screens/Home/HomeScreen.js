@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, RefreshControl } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../../components/HeaderCandidate';
@@ -18,29 +18,39 @@ const HomeScreen = () => {
 
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch user profile data
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 5000)
-        );
-        
-        const profilePromise = profileService.getCandidateProfile();
-        const profile = await Promise.race([profilePromise, timeoutPromise]);
-        
-        setUserProfile(profile);
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-        // Don't set fallback data, let the UI handle empty state
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserProfile();
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      const profilePromise = profileService.getCandidateProfile();
+      const profile = await Promise.race([profilePromise, timeoutPromise]);
+      
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Don't set fallback data, let the UI handle empty state
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setLoading(true);
+    await fetchUserProfile();
+    setRefreshKey((prev) => prev + 1);
+    setRefreshing(false);
+  }, [fetchUserProfile]);
 
   const handleSearch = (text) => {
     // Navigate to ExploreScreen with search query via MainTab
@@ -91,6 +101,14 @@ const HomeScreen = () => {
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#2563eb"]}
+            tintColor="#2563eb"
+          />
+        }
       >
         {/* Custom Header with Profile */}
         <Animatable.View
@@ -152,17 +170,18 @@ const HomeScreen = () => {
 
         {/* Banner */}
         <Animatable.View animation="fadeInUp" duration={600} delay={100} useNativeDriver>
-          <Banner onReadMore={handleReadMore} />
+          <Banner key={`banner-${refreshKey}`} onReadMore={handleReadMore} />
         </Animatable.View>
 
         {/* Search Bar */}
         <Animatable.View animation="fadeInUp" duration={600} delay={150} useNativeDriver style={{ marginTop: 12 }}>
-          <SearchBar onSearch={handleSearch} onFilter={handleFilter} />
+          <SearchBar key={`search-${refreshKey}`} onSearch={handleSearch} onFilter={handleFilter} />
         </Animatable.View>
 
         {/* Industry Categories */}
         <Animatable.View animation="fadeInUp" duration={600} delay={200} useNativeDriver>
           <CategoryIcons 
+            key={`industries-${refreshKey}`}
             onIndustryPress={handleIndustryPress}
             selectedFilters={route.params?.filters || {}}
             limit={6} // Hiển thị 6 industry thay vì 4
@@ -172,9 +191,10 @@ const HomeScreen = () => {
         {/* Trending Jobs Section */}
         <Animatable.View animation="fadeInUp" duration={600} delay={250} useNativeDriver>
           <JobCard 
+            key={`jobs-${refreshKey}`}
             title="Trending Jobs"
             showSeeAll={false}
-            limit={5}
+            limit={3}
             horizontal={false} // Hiển thị dọc thay vì carousel
           />
         </Animatable.View>
@@ -182,6 +202,7 @@ const HomeScreen = () => {
         {/* Recommendation Companies Section */}
         <Animatable.View animation="fadeInUp" duration={600} delay={300} useNativeDriver>
           <CompanyCard 
+            key={`companies-${refreshKey}`}
             title="List Companies"
             showSeeAll={true}
             horizontal={true}

@@ -307,22 +307,24 @@ const FilterScreen = () => {
       ...selectedFilters,
       // Ensure salary is properly set as array
       salary: salaryType.length > 0 ? salaryType : '',
-      // Map job types - try to find the jobType by ID
-      workType: selectedJobTypes.length > 0 ? (() => {
+      // Job type should be mapped to 'jobLevel' (ExploreScreen expects this)
+      jobLevel: selectedJobTypes.length > 0 ? (() => {
         const selectedJobType = jobTypes.find(jt => {
           const jtId = jt.id || jt.jobTypeId || jt.industryId;
           return Number(jtId) === selectedJobTypes[0];
         });
         return selectedJobType?.jobTypeName || '';
       })() : '',
-      // Map levels - try to find the level by ID
-      jobLevel: selectedLevels.length > 0 ? (() => {
+      // Level should be mapped to 'experience' (ExploreScreen expects this)
+      experience: selectedLevels.length > 0 ? (() => {
         const selectedLevel = levels.find(l => {
           const lId = l.id || l.levelId;
           return Number(lId) === selectedLevels[0];
         });
         return selectedLevel?.levelName || '';
       })() : '',
+      // Clear incorrect mapping to avoid conflicting with industry filter logic
+      workType: '',
       // Map date posted
       employmentType: datePosted !== 'all' ? datePosted : '',
     };

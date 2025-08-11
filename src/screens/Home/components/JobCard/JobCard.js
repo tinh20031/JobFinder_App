@@ -82,7 +82,10 @@ const JobCard = ({
                  tags: getJobTags(job),
                  logoColor: getLogoColor(job.company?.companyName || 'Unknown'),
                  logoText: getLogoText(job.company?.companyName || 'Unknown'),
-                 logoUrl: job.company?.urlCompanyLogo || job.logo || null
+                 logoUrl: job.company?.urlCompanyLogo || job.logo || null,
+                 // Ensure badges appear even on fallback
+                 isTrending: true,
+                 trendingRank: index + 1,
                }));
               
               setAllJobs(mappedJobs);
