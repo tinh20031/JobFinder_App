@@ -267,7 +267,12 @@ import { CompanyCardSkeleton } from '../../../../components/SkeletonLoading';
           {showSeeAll && (
             <Text 
               style={styles.seeAllText}
-              onPress={() => navigation.navigate('CompanyList')}
+               onPress={() =>
+                 navigation.navigate('MainTab', {
+                   screen: 'Explore',
+                   params: { initialTab: 'companies' },
+                 })
+               }
             >
               See All
             </Text>
