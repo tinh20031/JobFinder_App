@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HeaderDetail from '../components/HeaderDetail';
@@ -46,6 +46,10 @@ import PaymentWebView from '../screens/dashboard/package/PaymentWebView';
 import PaymentSuccessSimple from '../screens/dashboard/package/PaymentSuccessSimple';
 import FilterScreen from '../screens/Jobs/FilterScreen';
 import CompanyFilterScreen from '../screens/Company/CompanyFilterScreen';
+import ChatToastListener from '../components/ChatToastListener';
+
+// Navigation ref dùng cho listener ngoài ngữ cảnh screen
+export const navigationRef = createNavigationContainerRef();
 
 // Custom tab bar button cho nút giữa (Profile)
 function CustomTabBarButton({ children, onPress, profileCompletion = 0 }) {
@@ -449,7 +453,9 @@ export default function AppNavigator() {
 
   return (
     <ProfileCompletionProvider>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
+        {/* Listener ẩn cho toast tin nhắn mới */}
+        {!isBootstrapping && <ChatToastListener navigationRef={navigationRef} />}
         <Stack.Navigator initialRouteName={initialRouteName}>
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />

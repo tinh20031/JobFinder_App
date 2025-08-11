@@ -9,6 +9,7 @@ import { authService } from '../services/authService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { startNotificationHub, stopNotificationHub } from '../services/notificationHub';
 import notificationService from '../services/notificationService';
+import { useToast } from 'react-native-toast-notifications';
 
 // Debug: Check if notificationService is properly imported
 console.log('NotificationService imported:', !!notificationService);
@@ -18,6 +19,7 @@ const HeaderCandidates = ({ onDashboard }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const navigation = useNavigation();
   const { profile } = useResumeData();
+  const toast = useToast();
 
   // Subscribe to notification service
   useEffect(() => {
@@ -70,6 +72,22 @@ const HeaderCandidates = ({ onDashboard }) => {
             console.error('Error updating notification count:', serviceError);
             // Fallback: fetch from server
             fetchUnreadCountDirectly();
+          }
+
+          // Hiển thị banner in-app ở trên cùng
+          try {
+            toast.show('', {
+              type: 'custom_notification',
+              data: {
+                title: notification?.title || 'Thông báo mới',
+                message: notification?.message || notification?.content || '',
+                onPress: () => {
+                  navigation.navigate('NotificationScreen');
+                },
+              },
+            });
+          } catch (e) {
+            console.log('Toast error', e);
           }
         });
         console.log('SignalR connected successfully');
