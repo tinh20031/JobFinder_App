@@ -8,6 +8,8 @@ import { BASE_URL } from '../../constants/api';
 const CompanyCard = ({ 
   item, 
   index, 
+  favoriteCompanies, // optional: Set of saved company ids
+  onBookmarkPress,    // optional: handler(id)
   showAnimation = true,
   animationDelay = 100 
 }) => {
@@ -41,7 +43,13 @@ const CompanyCard = ({
   const logoColor = getLogoColor(item.companyName || item.name || 'Unknown');
   const logoText = getLogoText(item.companyName || item.name || 'Unknown');
 
-  const CompanyCardContent = () => (
+  const getCompanyId = (company) => company?.userId ?? company?.companyId ?? company?.id;
+
+  const CompanyCardContent = () => {
+    const id = getCompanyId(item);
+    const idStr = id != null ? String(id) : undefined;
+    const isSaved = idStr ? favoriteCompanies?.has(idStr) : false;
+    return (
     <View style={styles.newCompanyCard}>
       <View style={styles.mainContentContainer}>
         <View style={styles.companyCardHeader}>
@@ -95,9 +103,26 @@ const CompanyCard = ({
           <MaterialIcons name="location-on" size={14} color="#666" />
           <Text style={styles.locationText}>{item.location || 'Unknown Location'}</Text>
         </View>
+        {onBookmarkPress && (
+          <TouchableOpacity 
+            style={styles.bookmarkButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              if (id != null) onBookmarkPress(id);
+            }}
+          >
+            <MaterialIcons 
+              name={isSaved ? 'bookmark' : 'bookmark-border'}
+              size={20}
+              color={isSaved ? '#2563eb' : '#666'}
+            />
+            <Text style={styles.footerText}>Save</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
-  );
+    );
+  };
 
   const handlePress = () => {
     navigation.navigate('CompanyDetail', { companyId: item.userId });
@@ -222,7 +247,7 @@ const styles = StyleSheet.create({
   },
   companyFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 3,
   },
@@ -239,6 +264,22 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 11,
     color: '#495057',
+    marginLeft: 4,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  bookmarkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 3,
+    paddingHorizontal: 8,
+    backgroundColor: '#f7fafc',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  footerText: {
+    fontSize: 11,
+    color: '#000',
     marginLeft: 4,
     fontFamily: 'Poppins-SemiBold',
   },

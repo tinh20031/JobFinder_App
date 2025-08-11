@@ -27,7 +27,11 @@ const companyService = {
         if (res.status === 401) throw new Error('Unauthorized');
         throw new Error('Network response was not ok');
       }
-      return await res.json();
+      const data = await res.json();
+      // Normalize to array
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data?.data)) return data.data;
+      return [];
     } catch (error) {
       throw error;
     }
@@ -46,7 +50,42 @@ const companyService = {
         headers,
       });
       if (!res.ok) throw new Error('Network response was not ok');
-      return await res.json();
+      if (res.status === 204) return { success: true };
+      // Một số backend trả về chuỗi hoặc rỗng thay vì JSON
+      const text = await res.text();
+      if (!text) return { success: true };
+      try {
+        return JSON.parse(text);
+      } catch (_e) {
+        return { success: true, raw: text };
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  favoriteCompany: async (companyProfileId) => {
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('No authentication token found');
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetch(`${API_URL}/Application/favorite-company/${companyProfileId}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      if (res.status === 204) return { success: true };
+      const text = await res.text();
+      if (!text) return { success: true };
+      try {
+        return JSON.parse(text);
+      } catch (_e) {
+        return { success: true, raw: text };
+      }
     } catch (error) {
       throw error;
     }
@@ -85,7 +124,13 @@ const companyService = {
   getCompanyDetail: async (companyId) => {
     try {
       const url = `${BASE_URL}/api/CompanyProfile/${companyId}`;
-      const res = await fetch(url);
+      const token = await getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(url, { headers });
       if (!res.ok) throw new Error('Network response was not ok');
       return await res.json();
     } catch (error) {

@@ -56,6 +56,7 @@ const ExploreScreen = () => {
   const [companyPage, setCompanyPage] = useState(1);
   const [companyPageSize] = useState(10);
   const [isLoadingMoreCompanies, setIsLoadingMoreCompanies] = useState(false);
+  const [favoriteCompanies, setFavoriteCompanies] = useState(new Set());
   
   // Search and filter state
   const [jobSearchText, setJobSearchText] = useState('');
@@ -302,6 +303,15 @@ const ExploreScreen = () => {
       const companies = await companyService.filterCompanies();
       setCompanies(Array.isArray(companies) ? companies : []);
       setFilteredCompanies(Array.isArray(companies) ? companies : []);
+      // Load favorite companies list after list is available
+      try {
+        const favList = await companyService.getFavoriteCompanies();
+        const getId = (item) => item?.companyProfileId ?? item?.companyId ?? item?.id ?? item?.idCompany ?? item?.userId;
+        const setIds = new Set((Array.isArray(favList) ? favList : []).map((x) => getId(x)).filter((v) => v != null).map((v) => String(v)));
+        setFavoriteCompanies(setIds);
+      } catch (e) {
+        // ignore if not logged in or error
+      }
     } catch (err) {
       setCompaniesError('Unable to load company list.');
     } finally {
@@ -621,6 +631,34 @@ const ExploreScreen = () => {
     }, 250);
   };
 
+  const getCompanyId = React.useCallback((company) => company?.userId ?? company?.companyId ?? company?.id, []);
+
+  const handleCompanyBookmark = React.useCallback(async (companyId) => {
+    try {
+      const idStr = String(companyId);
+      const isFavorite = favoriteCompanies.has(idStr);
+      // optimistic update
+      setFavoriteCompanies((prev) => {
+        const next = new Set(prev);
+        if (isFavorite) next.delete(idStr); else next.add(idStr);
+        return next;
+      });
+      if (isFavorite) {
+        await companyService.unfavoriteCompany(companyId);
+      } else {
+        await companyService.favoriteCompany(companyId);
+      }
+    } catch (e) {
+      // revert on error
+      setFavoriteCompanies((prev) => {
+        const next = new Set(prev);
+        const isNowFavorite = next.has(String(companyId));
+        if (isNowFavorite) next.delete(String(companyId)); else next.add(String(companyId));
+        return next;
+      });
+    }
+  }, [favoriteCompanies]);
+
   // Apply search and filters when switching tabs
   useEffect(() => {
     if (activeTab === 'jobs') {
@@ -756,6 +794,8 @@ const ExploreScreen = () => {
     <CompanyCard
       item={item}
       index={index}
+      favoriteCompanies={favoriteCompanies}
+      onBookmarkPress={(id) => handleCompanyBookmark(id)}
       showAnimation={true}
       animationDelay={100}
     />

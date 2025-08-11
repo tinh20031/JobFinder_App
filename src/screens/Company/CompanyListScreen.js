@@ -165,11 +165,51 @@ const CompanyListScreen = () => {
 
 
 
+  const [favoriteCompanies, setFavoriteCompanies] = useState(new Set());
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const favList = await companyService.getFavoriteCompanies();
+        const getId = (item) => item?.companyProfileId ?? item?.companyId ?? item?.id ?? item?.idCompany ?? item?.userId;
+        const ids = new Set((Array.isArray(favList) ? favList : []).map((x) => getId(x)).filter((v) => v != null).map((v) => String(v)));
+        setFavoriteCompanies(ids);
+      } catch (e) {
+        // ignore if not logged in or error
+      }
+    };
+    loadFavorites();
+  }, []);
+
+  const handleBookmark = async (companyId) => {
+    const idStr = String(companyId);
+    const isFavorite = favoriteCompanies.has(idStr);
+    setFavoriteCompanies((prev) => {
+      const next = new Set(prev);
+      if (isFavorite) next.delete(idStr); else next.add(idStr);
+      return next;
+    });
+    try {
+      if (isFavorite) await companyService.unfavoriteCompany(companyId);
+      else await companyService.favoriteCompany(companyId);
+    } catch (e) {
+      // revert on error
+      setFavoriteCompanies((prev) => {
+        const next = new Set(prev);
+        const currently = next.has(idStr);
+        if (currently) next.delete(idStr); else next.add(idStr);
+        return next;
+      });
+    }
+  };
+
   const renderCompanyCard = ({ item, index }) => {
     return (
       <CompanyCard
         item={item}
         index={index}
+        favoriteCompanies={favoriteCompanies}
+        onBookmarkPress={handleBookmark}
         showAnimation={true}
         animationDelay={100}
       />
