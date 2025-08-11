@@ -22,12 +22,60 @@ import profileService from '../../services/profileService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Helper functions for video format handling
+const isVideoFormatSupported = (file) => {
+  const supportedFormats = [
+    'video/mp4',
+    'video/avi', 
+    'video/mov',
+    'video/wmv',
+    'video/flv',
+    'video/webm',
+    'video/mkv'
+  ];
+  
+  const supportedExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
+  
+  const fileType = file.type || file.mimeType || '';
+  const fileName = file.name || file.fileName || '';
+  const fileExtension = fileName.split('.').pop()?.toLowerCase();
+  
+  // Kiểm tra cả MIME type và file extension
+  return supportedFormats.includes(fileType) || supportedExtensions.includes(fileExtension);
+};
+
+const isMP4Format = (file) => {
+  const fileType = file.type || file.mimeType || '';
+  const fileName = file.name || file.fileName || '';
+  const fileExtension = fileName.split('.').pop()?.toLowerCase();
+  
+  return fileType.includes('mp4') || fileExtension === 'mp4';
+};
+
+const getVideoFormatInfo = (file) => {
+  const fileType = file.type || file.mimeType || '';
+  const fileName = file.name || file.fileName || '';
+  const fileExtension = fileName.split('.').pop()?.toLowerCase();
+  
+  return {
+    mimeType: fileType,
+    extension: fileExtension,
+    isMP4: isMP4Format(file),
+    isSupported: isVideoFormatSupported(file)
+  };
+};
+
 const ProfileVideoSection = ({ navigation }) => {
   const [videoUrl, setVideoUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [estimatedTimeLeft, setEstimatedTimeLeft] = useState('');
+  const [uploadStartTime, setUploadStartTime] = useState(null);
+  const [uploadStage, setUploadStage] = useState('idle'); // 'idle', 'uploading', 'processing', 'completed'
+  const [processingMessage, setProcessingMessage] = useState('');
   const [showOptions, setShowOptions] = useState(false);
+  const [abortController, setAbortController] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [candidateProfileId, setCandidateProfileId] = useState(null);
@@ -53,7 +101,6 @@ const ProfileVideoSection = ({ navigation }) => {
       
       setVideoUrl(video);
     } catch (error) {
-      console.error('Error fetching video data:', error);
     } finally {
       setLoading(false);
     }
@@ -67,17 +114,14 @@ const ProfileVideoSection = ({ navigation }) => {
       });
 
       if (result && result[0]) {
-        // Kiểm tra định dạng file trước khi upload
+        // Sử dụng helper function để kiểm tra format
         const file = result[0];
-        const fileName = file.name || '';
-        const fileExtension = fileName.split('.').pop()?.toLowerCase();
+        const formatInfo = getVideoFormatInfo(file);
         
-        // Kiểm tra extension
-        const supportedExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
-        if (!supportedExtensions.includes(fileExtension)) {
+        if (!formatInfo.isSupported) {
           Alert.alert(
             'Unsupported Video Format',
-            `The file "${fileName}" has an unsupported format.\n\nSupported formats: MP4, AVI, MOV, WMV, FLV, WEBM, MKV\n\nPlease select a video with a supported format.`,
+            `The file "${file.name}" has an unsupported format (${formatInfo.extension?.toUpperCase()}).\n\nSupported formats: MP4, AVI, MOV, WMV, FLV, WEBM, MKV\n\nPlease select a video with a supported format.`,
             [
               { text: 'Cancel', style: 'cancel' },
               { 
@@ -89,6 +133,19 @@ const ProfileVideoSection = ({ navigation }) => {
                   );
                 }
               }
+            ]
+          );
+          return;
+        }
+
+        // Cảnh báo nếu không phải MP4 format
+        if (!formatInfo.isMP4) {
+          Alert.alert(
+            'Format Warning',
+            `Your selected video is in ${formatInfo.extension?.toUpperCase()} format. While this is supported, MP4 (H.264) is recommended for best compatibility and smaller file sizes.\n\nWould you like to continue or select an MP4 video instead?`,
+            [
+              { text: 'Select MP4 Video', style: 'cancel' },
+              { text: 'Continue Anyway', onPress: () => uploadVideo(file) }
             ]
           );
           return;
@@ -118,7 +175,6 @@ const ProfileVideoSection = ({ navigation }) => {
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
-        console.error('Permission request error:', err);
         return false;
       }
     }
@@ -134,13 +190,48 @@ const ProfileVideoSection = ({ navigation }) => {
         return;
       }
       
-      const result = await launchCamera({
+      // Device-specific camera options
+      const cameraOptions = {
         mediaType: 'video',
-        videoQuality: 'medium',
+        videoQuality: 'high',
         saveToPhotos: false,
         includeBase64: false,
         presentationStyle: 'fullScreen',
-      });
+      };
+
+      // Platform-specific optimizations
+      if (Platform.OS === 'android') {
+        // Android specific options - tối ưu cho Redmi K20 Pro và các thiết bị Android khác
+        Object.assign(cameraOptions, {
+          android: {
+            videoQuality: 'high',
+            videoCodec: 'h264',
+            format: 'mp4',
+            maxDuration: 300, // 5 phút max
+            maxFileSize: 50 * 1024 * 1024, // 50MB max
+            // Thêm các options để đảm bảo format MP4 trên Android
+            recordingHint: 'Recording in MP4 format...',
+            // Tối ưu cho Redmi K20 Pro
+            cameraType: 'back',
+            // Đảm bảo sử dụng H.264 codec
+            videoBitrate: 2000000, // 2Mbps
+            videoFrameRate: 30,
+          }
+        });
+      } else {
+        // iOS specific options
+        Object.assign(cameraOptions, {
+          ios: {
+            videoQuality: 'high',
+            videoCodec: 'h264',
+            format: 'mp4',
+            maxDuration: 300,
+            maxFileSize: 50 * 1024 * 1024,
+          }
+        });
+      }
+      
+      const result = await launchCamera(cameraOptions);
 
       if (result.didCancel) {
         return;
@@ -158,6 +249,23 @@ const ProfileVideoSection = ({ navigation }) => {
           name: result.assets[0].fileName || 'recorded-video.mp4',
           size: result.assets[0].fileSize,
         };
+        
+        // Kiểm tra format ngay sau khi record
+        const formatInfo = getVideoFormatInfo(videoFile);
+        
+        if (!formatInfo.isMP4) {
+          // Nếu không phải MP4, hiển thị cảnh báo và gợi ý
+          Alert.alert(
+            'Video Format Warning',
+            `Your device recorded video in ${formatInfo.extension?.toUpperCase()} format instead of MP4.\n\nThis commonly happens on some Android devices (like Redmi, Xiaomi, etc.) that default to other formats.\n\nFor best compatibility, we recommend:\n• MP4 (H.264 codec)\n• Maximum file size: 50MB\n• Resolution: 720p or lower\n\nWould you like to continue with the current format or try recording again?`,
+            [
+              { text: 'Try Again', style: 'cancel' },
+              { text: 'Continue Anyway', onPress: () => uploadVideo(videoFile) }
+            ]
+          );
+          return;
+        }
+        
         await uploadVideo(videoFile);
       } else {
         Alert.alert('Error', 'No video was recorded');
@@ -180,35 +288,31 @@ const ProfileVideoSection = ({ navigation }) => {
     }
   };
 
+  const cancelUpload = () => {
+    if (abortController) {
+      abortController.abort();
+      setUploading(false);
+      setUploadProgress(0);
+      setEstimatedTimeLeft('');
+      setUploadStage('idle');
+      setProcessingMessage('');
+      setAbortController(null);
+    }
+  };
+
   const uploadVideo = async (file) => {
     if (!candidateProfileId) {
       Alert.alert('Error', 'Profile not loaded. Please try again.');
       return;
     }
 
-    // Kiểm tra định dạng video được hỗ trợ
-    const supportedFormats = [
-      'video/mp4',
-      'video/avi', 
-      'video/mov',
-      'video/wmv',
-      'video/flv',
-      'video/webm',
-      'video/mkv'
-    ];
+    // Sử dụng helper function để kiểm tra format
+    const formatInfo = getVideoFormatInfo(file);
     
-    const fileType = file.type || file.mimeType || '';
-    const fileName = file.name || file.fileName || '';
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    
-    // Kiểm tra cả MIME type và file extension
-    const isSupportedFormat = supportedFormats.includes(fileType) || 
-                             ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(fileExtension);
-    
-    if (!isSupportedFormat) {
+    if (!formatInfo.isSupported) {
       Alert.alert(
         'Unsupported Video Format',
-        `The video format "${fileType || fileExtension}" is not supported.\n\nSupported formats: MP4, AVI, MOV, WMV, FLV, WEBM, MKV\n\nPlease convert your video to a supported format before uploading.`,
+        `The video format "${formatInfo.mimeType || formatInfo.extension}" is not supported.\n\nSupported formats: MP4, AVI, MOV, WMV, FLV, WEBM, MKV\n\nPlease convert your video to a supported format before uploading.`,
         [
           { text: 'Cancel', style: 'cancel' },
           { 
@@ -216,7 +320,7 @@ const ProfileVideoSection = ({ navigation }) => {
             onPress: () => {
               Alert.alert(
                 'Video Format Requirements',
-                'For best compatibility, we recommend:\n\n• MP4 (H.264 codec)\n• Maximum file size: 50MB\n• Resolution: 720p or lower\n• Duration: 1-5 minutes\n\nYou can use free online converters like:\n• Online Video Converter\n• CloudConvert\n• Convertio'
+                'For best compatibility, we recommend:\n\n• MP4 (H.264 codec)\n\nYou can use free online converters like:\n• Online Video Converter\n• CloudConvert\n• Convertio'
               );
             }
           }
@@ -225,77 +329,124 @@ const ProfileVideoSection = ({ navigation }) => {
       return;
     }
 
-    // Kiểm tra kích thước file (giới hạn 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size && file.size > maxSize) {
+    // Cảnh báo nếu không phải MP4 format
+    if (!formatInfo.isMP4) {
       Alert.alert(
-        'File Too Large',
-        'Video file is too large. Please choose a video smaller than 50MB.',
+        'Format Warning',
+        `Your video is in ${formatInfo.extension?.toUpperCase()} format. While this is supported, MP4 (H.264) is recommended for best compatibility and smaller file sizes.\n\nWould you like to continue or try recording again in MP4 format?`,
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Compress Video', onPress: () => {
-            Alert.alert('Info', 'Please compress your video before uploading.');
-          }}
+          { text: 'Try Again', style: 'cancel' },
+          { text: 'Continue Anyway', onPress: () => uploadVideo(file) }
         ]
       );
       return;
     }
 
+    
+
     setUploading(true);
     setUploadProgress(0);
+    setUploadStartTime(Date.now());
+    setUploadStage('uploading');
+    setProcessingMessage('');
+    
+    // Tạo AbortController để có thể hủy upload
+    const controller = new AbortController();
+    setAbortController(controller);
     
     try {
-      // Simulate progress (vì fetch API không hỗ trợ progress tracking)
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
+      // Progress callback function để nhận progress thật từ XMLHttpRequest
+      const handleProgress = (progress, estimatedTimeLeft) => {
+        // Validation: Đảm bảo progress hợp lệ
+        if (typeof progress !== 'number' || isNaN(progress)) {
+          return;
+        }
+        
+        // Đảm bảo progress không vượt quá 100% và không âm
+        const safeProgress = Math.max(0, Math.min(progress, 100));
+        
+        // Chỉ update nếu progress hợp lệ
+        if (safeProgress >= 0 && safeProgress <= 100) {
+          setUploadProgress(safeProgress);
+          setEstimatedTimeLeft(estimatedTimeLeft || '');
+          
+          // Đảm bảo stage đúng với progress
+          if (safeProgress < 100) {
+            setUploadStage('uploading');
+            setProcessingMessage('');
+          } else if (safeProgress === 100) {
+            setUploadStage('processing');
+            setProcessingMessage('Server is processing video...');
           }
-          return prev + 10;
-        });
-      }, 500);
+          
 
-      const url = await videoService.uploadProfileVideo(file, candidateProfileId);
+        }
+      };
+
+      // Chuyển sang stage processing trước khi gọi API
+      setUploadStage('processing');
+      setProcessingMessage('Processing video on server...');
       
-      clearInterval(progressInterval);
+      const url = await videoService.uploadProfileVideo(
+        file, 
+        candidateProfileId, 
+        controller.signal,
+        handleProgress
+      );
+      
+      // Upload và processing hoàn thành
       setUploadProgress(100);
+      setEstimatedTimeLeft('Completed!');
+      setUploadStage('completed');
+      setProcessingMessage('Video has been processed successfully!');
       
       setTimeout(() => {
         setVideoUrl(url);
         setUploading(false);
         setUploadProgress(0);
+        setEstimatedTimeLeft('');
+        setUploadStage('idle');
+        setProcessingMessage('');
+        setAbortController(null);
         Alert.alert('Success', 'Video uploaded successfully!');
         setShowOptions(false);
-      }, 500);
+      }, 1000);
       
     } catch (error) {
-      setUploading(false);
-      setUploadProgress(0);
-      
-      // Xử lý lỗi cụ thể
-      let errorMessage = 'Failed to upload video';
-      if (error.message) {
-        if (error.message.includes('unsupported video format')) {
-          errorMessage = 'Unsupported video format. Please use MP4, AVI, MOV, WMV, FLV, WEBM, or MKV format.';
-        } else if (error.message.includes('file too large')) {
-          errorMessage = 'Video file is too large. Please choose a file smaller than 50MB.';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your internet connection and try again.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      Alert.alert('Upload Failed', errorMessage, [
-        { text: 'OK', style: 'default' },
-        { 
-          text: 'Try Again', 
-          onPress: () => {
-            // Có thể thêm logic retry ở đây
+      if (error.message && error.message.includes('cancelled')) {
+        Alert.alert('Upload Cancelled', 'Video upload has been cancelled.');
+      } else {
+        // Xử lý lỗi cụ thể
+        let errorMessage = 'Failed to upload video';
+        if (error.message) {
+          if (error.message.includes('unsupported video format')) {
+            errorMessage = 'Video format is not supported. Please use MP4, AVI, MOV, WMV, FLV, WEBM, or MKV format.';
+          } else if (error.message.includes('network')) {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+          } else if (error.message.includes('timeout')) {
+            errorMessage = 'Upload timeout. Please check your internet connection and try again.';
+          } else {
+            errorMessage = error.message;
           }
         }
-      ]);
+        
+        Alert.alert('Upload Failed', errorMessage, [
+          { text: 'OK', style: 'default' },
+          { 
+            text: 'Try Again', 
+            onPress: () => {
+              // Có thể thêm logic retry ở đây
+            }
+          }
+        ]);
+      }
+      
+      setUploading(false);
+      setUploadProgress(0);
+      setEstimatedTimeLeft('');
+      setUploadStage('idle');
+      setProcessingMessage('');
+      setAbortController(null);
     }
   };
 
@@ -388,11 +539,47 @@ const ProfileVideoSection = ({ navigation }) => {
         renderEmptyState()
       )}
       
-      {uploading && (
-        <Text style={styles.uploadTip}>
-          💡 Tip: Upload may take a few minutes for large videos. Please ensure you have a stable internet connection.
-        </Text>
-      )}
+              {uploading && (
+          <View style={styles.uploadTipContainer}>
+            <Text style={styles.uploadTip}>
+              Upload may take a few minutes for large videos. Please ensure you have a stable internet connection.
+            </Text>
+            <Text style={styles.uploadFormatInfo}>
+              Recording in MP4 (H.264) format for best compatibility
+            </Text>
+            
+            {/* Progress Bar với thời gian dự kiến */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${uploadProgress}%` }
+                  ]} 
+                />
+              </View>
+              <View style={styles.progressInfo}>
+                <Text style={styles.progressText}>
+                  {Math.min(uploadProgress, 100)}%
+                </Text>
+                <Text style={styles.timeLeftText}>
+                  {estimatedTimeLeft}
+                </Text>
+              </View>
+              
+
+            </View>
+            
+            {/* Nút Hủy Upload */}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={cancelUpload}
+            >
+              <MaterialIcons name="close" size={16} color="#dc2626" />
+              <Text style={styles.cancelButtonText}>Cancel Upload</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       
       <TouchableOpacity
         style={styles.addButton}
@@ -402,9 +589,9 @@ const ProfileVideoSection = ({ navigation }) => {
         {uploading ? (
           <View style={styles.uploadingContainer}>
             <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.addButtonText}>
-              Uploading... {uploadProgress}%
-            </Text>
+                          <Text style={styles.addButtonText}>
+                {uploadProgress < 100 ? `Uploading... ${Math.min(uploadProgress, 100)}%` : 'Processing...'}
+              </Text>
           </View>
         ) : (
           <>
@@ -643,12 +830,79 @@ const styles = StyleSheet.create({
   },
   uploadTip: {
     fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 16,
-    fontStyle: 'italic',
+    color: '#0c4a6e',
     fontFamily: 'Poppins-Regular',
+    marginBottom: 4,
+  },
+  uploadFormatInfo: {
+    fontSize: 11,
+    color: '#0369a1',
+    fontFamily: 'Poppins-Medium',
+    fontStyle: 'italic',
+  },
+  uploadTipContainer: {
+    marginTop: 16,
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0ea5e9',
+  },
+  progressContainer: {
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 4,
+    // Thêm transition effect
+    transition: 'width 0.3s ease-out',
+  },
+  progressInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#059669',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  timeLeftText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontFamily: 'Poppins-Regular',
+    fontStyle: 'italic',
+  },
+
+
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  cancelButtonText: {
+    fontSize: 12,
+    color: '#dc2626',
+    fontFamily: 'Poppins-Medium',
+    marginLeft: 4,
   },
   loadingContainer: {
     alignItems: 'center',
