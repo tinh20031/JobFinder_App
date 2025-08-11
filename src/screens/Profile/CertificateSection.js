@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Modal from 'react-native-modal';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 export default function CertificateSection({ certificates = [], onAdd, onEdit, onDelete }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -77,7 +78,7 @@ export default function CertificateSection({ certificates = [], onAdd, onEdit, o
         {item.certificateDescription && (
           <View style={styles.certificateSection}>
             <Text style={styles.certificateDesc} numberOfLines={3} ellipsizeMode="tail">
-              {item.certificateDescription}
+              {stripHtmlTags(item.certificateDescription)}
             </Text>
           </View>
         )}

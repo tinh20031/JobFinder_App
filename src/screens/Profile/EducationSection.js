@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Modal from 'react-native-modal';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 export default function EducationSection({ educations, onAdd, onEdit, onDelete }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -82,7 +83,7 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
           {(item.detail || item.description) && (
             <View style={styles.descriptionSection}>
               <Text style={styles.descriptionText} numberOfLines={2} ellipsizeMode="tail">
-                {item.detail || item.description}
+                {stripHtmlTags(item.detail || item.description)}
               </Text>
             </View>
           )}
@@ -91,7 +92,7 @@ export default function EducationSection({ educations, onAdd, onEdit, onDelete }
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>GPA:</Text>
               <Text style={styles.fieldContent} numberOfLines={1} ellipsizeMode="tail">
-                {item.gpa}
+                {stripHtmlTags(item.gpa)}
               </Text>
             </View>
           )}

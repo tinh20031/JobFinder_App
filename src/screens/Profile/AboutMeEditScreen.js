@@ -4,12 +4,13 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import profileService from '../../services/profileService';
 import Modal from 'react-native-modal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function AboutMeEditScreen({ route, navigation }) {
   const { aboutMe } = route.params;
-  const [value, setValue] = useState(aboutMe?.aboutMeDescription || '');
+  const [value, setValue] = useState(stripHtmlTags(aboutMe?.aboutMeDescription || ''));
   const [saving, setSaving] = useState(false);
   const [modalType, setModalType] = useState(null); // 'back' | 'save' | null
   const [touched, setTouched] = useState(false);

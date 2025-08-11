@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Modal from 'react-native-modal';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -57,7 +58,7 @@ export default function AwardsSection({ awards = [], onAdd, onEdit, onDelete }) 
         )}
         {item.awardDescription && (
           <Text style={styles.awardDesc} numberOfLines={3} ellipsizeMode="tail">
-            {item.awardDescription}
+            {stripHtmlTags(item.awardDescription)}
           </Text>
         )}
       </View>

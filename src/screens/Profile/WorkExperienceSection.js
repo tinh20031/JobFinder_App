@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Modal from 'react-native-modal';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDelete }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -74,7 +75,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>Description:</Text>
               <Text style={styles.fieldContent} numberOfLines={2} ellipsizeMode="tail">
-                {item.workDescription}
+                {stripHtmlTags(item.workDescription)}
               </Text>
             </View>
           )}
@@ -83,7 +84,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>Responsibilities:</Text>
               <Text style={styles.fieldContent} numberOfLines={2} ellipsizeMode="tail">
-                {item.responsibilities}
+                {stripHtmlTags(item.responsibilities)}
               </Text>
             </View>
           )}
@@ -92,7 +93,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>Achievements:</Text>
               <Text style={styles.fieldContent} numberOfLines={2} ellipsizeMode="tail">
-                {item.achievements}
+                {stripHtmlTags(item.achievements)}
               </Text>
             </View>
           )}
@@ -101,7 +102,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>Technologies Used:</Text>
               <Text style={styles.fieldContent} numberOfLines={1} ellipsizeMode="tail">
-                {item.technologies}
+                {stripHtmlTags(item.technologies)}
               </Text>
             </View>
           )}
@@ -110,7 +111,7 @@ export default function WorkExperienceSection({ works = [], onAdd, onEdit, onDel
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>Project Name:</Text>
               <Text style={styles.fieldContent} numberOfLines={1} ellipsizeMode="tail">
-                {item.projectName}
+                {stripHtmlTags(item.projectName)}
               </Text>
             </View>
           )}

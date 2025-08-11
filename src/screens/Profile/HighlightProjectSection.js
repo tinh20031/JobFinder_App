@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Modal from 'react-native-modal';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 export default function HighlightProjectSection({ projects = [], onAdd, onEdit, onDelete }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -83,7 +84,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Description:</Text>
             <Text style={styles.projectDesc} numberOfLines={2} ellipsizeMode="tail">
-              {item.projectDescription}
+              {stripHtmlTags(item.projectDescription)}
             </Text>
           </View>
         )}
@@ -92,7 +93,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Technologies Used:</Text>
             <Text style={styles.projectDesc} numberOfLines={1} ellipsizeMode="tail">
-              {item.technologies}
+              {stripHtmlTags(item.technologies)}
             </Text>
           </View>
         )}
@@ -101,7 +102,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Key Responsibilities:</Text>
             <Text style={styles.projectDesc} numberOfLines={2} ellipsizeMode="tail">
-              {item.responsibilities}
+              {stripHtmlTags(item.responsibilities)}
             </Text>
           </View>
         )}
@@ -110,7 +111,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Team Size:</Text>
             <Text style={styles.projectDesc} numberOfLines={1} ellipsizeMode="tail">
-              {item.teamSize}
+              {stripHtmlTags(item.teamSize)}
             </Text>
           </View>
         )}
@@ -119,7 +120,7 @@ export default function HighlightProjectSection({ projects = [], onAdd, onEdit, 
           <View style={styles.projectSection}>
             <Text style={styles.projectSectionTitle}>Achievements/Results:</Text>
             <Text style={styles.projectDesc} numberOfLines={2} ellipsizeMode="tail">
-              {item.achievements}
+              {stripHtmlTags(item.achievements)}
             </Text>
           </View>
         )}

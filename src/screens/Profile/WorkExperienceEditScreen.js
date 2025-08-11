@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import Modal from 'react-native-modal';
 import profileService from '../../services/profileService';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -29,11 +30,11 @@ export default function WorkExperienceEditScreen({ route, navigation }) {
   const [monthEnd, setMonthEnd] = useState(getMonth(work?.monthEnd));
   const [yearEnd, setYearEnd] = useState(getYear(work?.monthEnd));
   const [isWorking, setIsWorking] = useState(work?.isWorking || false);
-  const [workDescription, setWorkDescription] = useState(work?.workDescription || '');
-  const [responsibilities, setResponsibilities] = useState(work?.responsibilities || '');
-  const [achievements, setAchievements] = useState(work?.achievements || '');
-  const [technologies, setTechnologies] = useState(work?.technologies || '');
-  const [projectName, setProjectName] = useState(work?.projectName || '');
+  const [workDescription, setWorkDescription] = useState(stripHtmlTags(work?.workDescription || ''));
+  const [responsibilities, setResponsibilities] = useState(stripHtmlTags(work?.responsibilities || ''));
+  const [achievements, setAchievements] = useState(stripHtmlTags(work?.achievements || ''));
+  const [technologies, setTechnologies] = useState(stripHtmlTags(work?.technologies || ''));
+  const [projectName, setProjectName] = useState(stripHtmlTags(work?.projectName || ''));
   const [saving, setSaving] = useState(false);
   const [modalType, setModalType] = useState(null); // 'back' | 'save' | 'remove' | null
   const [removing, setRemoving] = useState(false);

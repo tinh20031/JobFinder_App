@@ -67,7 +67,34 @@ const ProfileVideoSection = ({ navigation }) => {
       });
 
       if (result && result[0]) {
-        await uploadVideo(result[0]);
+        // Kiểm tra định dạng file trước khi upload
+        const file = result[0];
+        const fileName = file.name || '';
+        const fileExtension = fileName.split('.').pop()?.toLowerCase();
+        
+        // Kiểm tra extension
+        const supportedExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
+        if (!supportedExtensions.includes(fileExtension)) {
+          Alert.alert(
+            'Unsupported Video Format',
+            `The file "${fileName}" has an unsupported format.\n\nSupported formats: MP4, AVI, MOV, WMV, FLV, WEBM, MKV\n\nPlease select a video with a supported format.`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Learn More', 
+                onPress: () => {
+                  Alert.alert(
+                    'Video Format Requirements',
+                    'For best compatibility, we recommend:\n\n• MP4 (H.264 codec)\n• Maximum file size: 50MB\n• Resolution: 720p or lower\n• Duration: 1-5 minutes\n\nYou can use free online converters like:\n• Online Video Converter\n• CloudConvert\n• Convertio'
+                  );
+                }
+              }
+            ]
+          );
+          return;
+        }
+        
+        await uploadVideo(file);
       }
     } catch (err) {
       if (!DocumentPicker.isCancel(err)) {
@@ -159,6 +186,45 @@ const ProfileVideoSection = ({ navigation }) => {
       return;
     }
 
+    // Kiểm tra định dạng video được hỗ trợ
+    const supportedFormats = [
+      'video/mp4',
+      'video/avi', 
+      'video/mov',
+      'video/wmv',
+      'video/flv',
+      'video/webm',
+      'video/mkv'
+    ];
+    
+    const fileType = file.type || file.mimeType || '';
+    const fileName = file.name || file.fileName || '';
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    
+    // Kiểm tra cả MIME type và file extension
+    const isSupportedFormat = supportedFormats.includes(fileType) || 
+                             ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(fileExtension);
+    
+    if (!isSupportedFormat) {
+      Alert.alert(
+        'Unsupported Video Format',
+        `The video format "${fileType || fileExtension}" is not supported.\n\nSupported formats: MP4, AVI, MOV, WMV, FLV, WEBM, MKV\n\nPlease convert your video to a supported format before uploading.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Learn More', 
+            onPress: () => {
+              Alert.alert(
+                'Video Format Requirements',
+                'For best compatibility, we recommend:\n\n• MP4 (H.264 codec)\n• Maximum file size: 50MB\n• Resolution: 720p or lower\n• Duration: 1-5 minutes\n\nYou can use free online converters like:\n• Online Video Converter\n• CloudConvert\n• Convertio'
+              );
+            }
+          }
+        ]
+      );
+      return;
+    }
+
     // Kiểm tra kích thước file (giới hạn 50MB)
     const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size && file.size > maxSize) {
@@ -206,7 +272,30 @@ const ProfileVideoSection = ({ navigation }) => {
     } catch (error) {
       setUploading(false);
       setUploadProgress(0);
-      Alert.alert('Upload Failed', error.message || 'Failed to upload video');
+      
+      // Xử lý lỗi cụ thể
+      let errorMessage = 'Failed to upload video';
+      if (error.message) {
+        if (error.message.includes('unsupported video format')) {
+          errorMessage = 'Unsupported video format. Please use MP4, AVI, MOV, WMV, FLV, WEBM, or MKV format.';
+        } else if (error.message.includes('file too large')) {
+          errorMessage = 'Video file is too large. Please choose a file smaller than 50MB.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      Alert.alert('Upload Failed', errorMessage, [
+        { text: 'OK', style: 'default' },
+        { 
+          text: 'Try Again', 
+          onPress: () => {
+            // Có thể thêm logic retry ở đây
+          }
+        }
+      ]);
     }
   };
 
@@ -256,7 +345,10 @@ const ProfileVideoSection = ({ navigation }) => {
       <Icon name="video-outline" size={48} color="#cbd5e1" />
       <Text style={styles.emptyTitle}>No Profile Video</Text>
       <Text style={styles.emptySubtitle}>
-        Add a video introduction to make your profile stand out
+        Add a video introduction to make your profile stand out{'\n'}
+        <Text style={styles.formatHint}>
+          Supported formats: MP4, AVI, MOV, WMV, FLV, WEBM, MKV
+        </Text>
       </Text>
     </View>
   );
@@ -845,6 +937,11 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontSize: 16,
     fontWeight: '600',
+  },
+  formatHint: {
+    fontSize: 14,
+    color: '#64748b',
+    fontFamily: 'Poppins-Regular',
   },
 });
 

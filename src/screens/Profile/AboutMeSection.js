@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import profileService from '../../services/profileService';
 import LinearGradient from 'react-native-linear-gradient';
+import { stripHtmlTags } from '../../utils/formatDate';
 
 export default function AboutMeSection({ aboutMe, loading, onAdd }) {
   const navigation = useNavigation();
@@ -53,7 +54,7 @@ export default function AboutMeSection({ aboutMe, loading, onAdd }) {
         
         {aboutMe?.aboutMeDescription ? (
           <View style={styles.contentContainer}>
-            <Text style={styles.content}>{aboutMe.aboutMeDescription}</Text>
+            <Text style={styles.content}>{stripHtmlTags(aboutMe.aboutMeDescription)}</Text>
           </View>
         ) : (
           <TouchableOpacity style={styles.emptyContainer} onPress={onAdd}>
