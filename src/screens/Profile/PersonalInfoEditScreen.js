@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -8,6 +8,9 @@ import { useNavigation } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Sử dụng chiều cao thực của màn hình để đảm bảo modal hiển thị đồng nhất trên mọi thiết bị
+const { height: DEVICE_HEIGHT } = Dimensions.get('screen');
+const MODAL_SHEET_HEIGHT = Math.round(DEVICE_HEIGHT * 0.75);
 
 export default function PersonalInfoEditScreen({ route }) {
   const navigation = useNavigation();
@@ -33,6 +36,21 @@ export default function PersonalInfoEditScreen({ route }) {
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
+
+  // Tạo unique keys cho provinces và cities để tránh duplicate key error
+  const provincesWithKeys = useMemo(() => {
+    return provinces.map((provinceItem, index) => ({
+      ...provinceItem,
+      uniqueKey: `province-${provinceItem.code || provinceItem.id || provinceItem.name || index}-${index}`
+    }));
+  }, [provinces]);
+
+  const citiesWithKeys = useMemo(() => {
+    return cities.map((cityItem, index) => ({
+      ...cityItem,
+      uniqueKey: `city-${cityItem.code || cityItem.id || cityItem.name || index}-${index}`
+    }));
+  }, [cities]);
 
   useEffect(() => {
     loadProfile();
@@ -418,6 +436,12 @@ export default function PersonalInfoEditScreen({ route }) {
         onBackdropPress={() => setShowProvincePicker(false)}
         style={styles.modal}
         backdropOpacity={0.6}
+        deviceHeight={DEVICE_HEIGHT}
+        coverScreen
+        statusBarTranslucent
+        useNativeDriver
+        useNativeDriverForBackdrop
+        propagateSwipe
       >
         <View style={styles.modalContent}>
           {/* Drag Handle */}
@@ -434,9 +458,9 @@ export default function PersonalInfoEditScreen({ route }) {
           </View>
           
           <ScrollView style={styles.provinceList}>
-            {provinces.map((provinceItem, index) => (
+            {provincesWithKeys.map((provinceItem) => (
               <TouchableOpacity
-                key={provinceItem.code || provinceItem.id || `province-${index}`}
+                key={provinceItem.uniqueKey}
                 style={styles.provinceItem}
                 onPress={() => {
                   setProvince(provinceItem.name);
@@ -457,6 +481,12 @@ export default function PersonalInfoEditScreen({ route }) {
         onBackdropPress={() => setShowCityPicker(false)}
         style={styles.modal}
         backdropOpacity={0.6}
+        deviceHeight={DEVICE_HEIGHT}
+        coverScreen
+        statusBarTranslucent
+        useNativeDriver
+        useNativeDriverForBackdrop
+        propagateSwipe
       >
         <View style={styles.modalContent}>
           {/* Drag Handle */}
@@ -473,9 +503,9 @@ export default function PersonalInfoEditScreen({ route }) {
           </View>
           
           <ScrollView style={styles.provinceList}>
-            {cities.map((cityItem, index) => (
+            {citiesWithKeys.map((cityItem) => (
               <TouchableOpacity
-                key={cityItem.code || cityItem.id || `city-${index}`}
+                key={cityItem.uniqueKey}
                 style={styles.provinceItem}
                 onPress={() => {
                   setCity(cityItem.name);
@@ -673,7 +703,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     width: '100%',
-    height: '70%',
+    // Dùng số tuyệt đối theo chiều cao màn hình để tránh lỗi hiển thị theo phần trăm trên một số máy
+    height: MODAL_SHEET_HEIGHT,
     padding: 0,
     overflow: 'hidden',
   },

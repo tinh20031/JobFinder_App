@@ -9,7 +9,7 @@ import RegisterScreen from '../screens/Auth/RegisterScreen';
 import EmailVerificationScreen from '../screens/Auth/EmailVerificationScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import ForgotPasswordResetScreen from '../screens/Auth/ForgotPasswordResetScreen';
-import { View, Text, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, ActivityIndicator, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import jwtDecode from 'jwt-decode';
 import Feather from 'react-native-vector-icons/Feather';
@@ -163,9 +163,20 @@ function CustomTabBarButton({ children, onPress, profileCompletion = 0 }) {
 // Custom Tab Bar Component
 function CustomTabBar({ state, descriptors, navigation }) {
   const { profileCompletion } = useProfileCompletion();
-  
+  const [isKeyboardVisible, setIsKeyboardVisible] = React.useState(false);
 
-  
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setIsKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardVisible(false));
+    return () => {
+      showSub?.remove?.();
+      hideSub?.remove?.();
+    };
+  }, []);
+
+  if (isKeyboardVisible) {
+    return null;
+  }
 
   return (
     <View

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const SearchBar = ({ onSearch, onFilter }) => {
@@ -13,6 +13,7 @@ const SearchBar = ({ onSearch, onFilter }) => {
     if (searchText.trim()) {
       onSearch(searchText);
     }
+    Keyboard.dismiss();
   };
 
   return (
@@ -27,6 +28,7 @@ const SearchBar = ({ onSearch, onFilter }) => {
           onChangeText={handleSearch}
           onSubmitEditing={handleSubmit}
           returnKeyType="search"
+          blurOnSubmit
         />
         <TouchableOpacity onPress={onFilter}>
           <Icon name="tune" size={20} color="#666" />

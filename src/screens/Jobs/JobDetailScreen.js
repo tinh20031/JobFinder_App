@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, useWindowDimensions, TextInput, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, useWindowDimensions, TextInput, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, InteractionManager } from 'react-native';
 import HeaderDetail from '../../components/HeaderDetail';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -200,18 +200,25 @@ const JobDetailScreen = ({ route }) => {
       // Gửi tin nhắn
       await chatService.sendMessage(payload);
       
-      // Đóng modal và chuyển qua trang ChatDetail
+      // Đóng bàn phím, đóng modal rồi điều hướng sau một nhịp để tránh flicker bàn phím
+      Keyboard.dismiss();
       setMessage('');
       setShowMessageModal(false);
-      
-      // Chuyển qua trang ChatDetail với thông tin contact
-      navigation.navigate('ChatDetail', {
-        contact: {
-          id: job.company?.id || job.companyId,
-          name: job.company?.companyName || 'Employer',
-          avatar: job.company?.urlCompanyLogo || require('../../images/jobfinder-logo.png'),
-        },
-        partnerOnline: false, // Mặc định offline
+
+      const contactPayload = {
+        id: job.company?.id || job.companyId,
+        name: job.company?.companyName || 'Employer',
+        // Đảm bảo avatar luôn là URL string để tránh lỗi Image source
+        avatar: job.company?.urlCompanyLogo || 'https://randomuser.me/api/portraits/men/1.jpg',
+      };
+
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          navigation.navigate('ChatDetail', {
+            contact: contactPayload,
+            partnerOnline: false,
+          });
+        }, Platform.OS === 'ios' ? 80 : 150);
       });
     } catch (err) {
       console.error('Failed to send message:', err);
@@ -482,8 +489,9 @@ const JobDetailScreen = ({ route }) => {
       {showMessageModal && (
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom + 24 : 0}
+            enabled={Platform.OS === 'ios'}
+            behavior={'padding'}
+            keyboardVerticalOffset={insets.bottom + 24}
             style={styles.kbAvoider}
           >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

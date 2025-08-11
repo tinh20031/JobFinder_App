@@ -5,8 +5,8 @@
  * @format
  */
 
-import React, { useState } from 'react';
-import { StatusBar, View, Text, TouchableOpacity, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StatusBar, View, Text, TouchableOpacity, Platform, PermissionsAndroid } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ToastProvider } from 'react-native-toast-notifications';
 import { GenericModalProvider } from './src/components/JobApplyModal';
@@ -17,6 +17,24 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 function ProvidersWithSafeArea() {
   const insets = useSafeAreaInsets();
   const topOffset = (insets?.top || 0) + 8;
+
+  // Yêu cầu quyền thông báo trên Android 13+
+  useEffect(() => {
+    async function requestNotificationPermission() {
+      try {
+        if (Platform.OS !== 'android') return;
+        // Android 13+ (API 33)
+        // @ts-ignore - RN exposes this permission constant at runtime
+        const perm = PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS as any;
+        if (!perm) return; // Older Android versions không có hằng này
+        const has = await PermissionsAndroid.check(perm);
+        if (!has) {
+          await PermissionsAndroid.request(perm);
+        }
+      } catch {}
+    }
+    requestNotificationPermission();
+  }, []);
 
   return (
     <GenericModalProvider>

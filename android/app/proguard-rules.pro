@@ -8,3 +8,14 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+
+# Keep SignalR classes and methods (avoid obfuscation breaking reflection)
+-keep class com.microsoft.signalr.** { *; }
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn okhttp3.**
+-keep class okio.** { *; }
+-dontwarn okio.**
+
+# React Native Toast Notifications may use reflection
+-keep class com.github.calintamas.react.notification.** { *; }

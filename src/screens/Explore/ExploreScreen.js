@@ -10,7 +10,8 @@ import {
   TextInput,
   SafeAreaView,
   StatusBar,
-  Alert
+  Alert,
+  Keyboard
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -982,6 +983,9 @@ const ExploreScreen = () => {
             placeholderTextColor="#666"
             value={activeTab === 'jobs' ? jobSearchText : companySearchText}
             onChangeText={activeTab === 'jobs' ? setJobSearchText : setCompanySearchText}
+            returnKeyType="search"
+            blurOnSubmit
+            onSubmitEditing={() => Keyboard.dismiss()}
           />
           {searchLoading ? (
             <ActivityIndicator size="small" color="#666" style={styles.searchLoading} />
