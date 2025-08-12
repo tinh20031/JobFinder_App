@@ -6,10 +6,12 @@ import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
 import { authService } from '../../services/authService';
 import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handlePasswordPress = () => {
     // Handle when pressing Password
@@ -73,7 +75,11 @@ const DashboardScreen = () => {
   return (
     <LinearGradient colors={["#e0f2fe", "#f5f3ff"]} style={styles.root}>
       <HeaderCandidate />
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{ paddingBottom: Math.max(120, insets.bottom + 40) }}
+        showsVerticalScrollIndicator={false}
+      >
         <Animatable.View animation="fadeInDown" duration={600}>
           <LinearGradient colors={["#6366f1", "#8b5cf6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroCard}>
             <View style={{ flex: 1 }}>

@@ -11,6 +11,8 @@ import {
   PanResponder,
   Modal,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -69,7 +71,10 @@ const FilterScreen = () => {
 
   // Salary states
   const [salaryRanges, setSalaryRanges] = useState([]);
-  const [selectedSalaryRange, setSelectedSalaryRange] = useState(null);
+  const [customMinSalary, setCustomMinSalary] = useState(savedFilters.customMinSalary ?? '');
+  const [customMaxSalary, setCustomMaxSalary] = useState(savedFilters.customMaxSalary ?? '');
+  const [useCustomSalary, setUseCustomSalary] = useState(Boolean(savedFilters.customMinSalary || savedFilters.customMaxSalary));
+  const [salaryError, setSalaryError] = useState('');
 
   // Load provinces, industries, job types, levels and salary ranges on component mount
   useEffect(() => {
@@ -103,6 +108,69 @@ const FilterScreen = () => {
       salary: salaryType.length > 0 ? salaryType : '' // Nếu có selection thì gửi array, không thì empty string
     }));
   }, [salaryType]);
+
+  // Helper: chuẩn hóa key từ khoảng lương
+  const getSalaryKeyFromRange = (range) => {
+    if (range?.minSalary === null && range?.maxSalary === null) return 'negotiable';
+    if (range?.maxSalary === null) return `${range?.minSalary}+`;
+    return `${range?.minSalary}-${range?.maxSalary}`;
+  };
+
+  // Helper: tổng hợp min/max khi chọn nhiều range (bỏ qua 'negotiable')
+  const computeAggregatedBounds = (keys) => {
+    if (!Array.isArray(keys) || keys.length === 0) return { minSalary: null, maxSalary: null };
+    let aggregatedMin = Infinity;
+    let aggregatedMax = -Infinity;
+    let hasOpenEnded = false;
+    keys.forEach((key) => {
+      if (key === 'negotiable') return;
+      if (typeof key !== 'string') return;
+      if (key.endsWith('+')) {
+        const min = Number(key.replace('+', ''));
+        if (!Number.isNaN(min)) {
+          aggregatedMin = Math.min(aggregatedMin, min);
+          hasOpenEnded = true;
+        }
+        return;
+      }
+      const [minStr, maxStr] = key.split('-');
+      const min = Number(minStr);
+      const max = Number(maxStr);
+      if (!Number.isNaN(min)) aggregatedMin = Math.min(aggregatedMin, min);
+      if (!Number.isNaN(max)) aggregatedMax = Math.max(aggregatedMax, max);
+    });
+    if (aggregatedMin === Infinity) aggregatedMin = null;
+    if (hasOpenEnded) return { minSalary: aggregatedMin, maxSalary: null };
+    if (aggregatedMax === -Infinity) aggregatedMax = null;
+    return { minSalary: aggregatedMin, maxSalary: aggregatedMax };
+  };
+
+  // Nếu không dùng custom, tự tính min/max dựa trên các range đã chọn
+  useEffect(() => {
+    if (!useCustomSalary) {
+      const { minSalary, maxSalary } = computeAggregatedBounds(salaryType);
+      setSelectedFilters(prev => ({ ...prev, minSalary, maxSalary }));
+    }
+  }, [salaryType, useCustomSalary]);
+
+  // Nếu dùng custom, validate và set vào selectedFilters
+  useEffect(() => {
+    if (!useCustomSalary) { setSalaryError(''); return; }
+    const parsedMin = customMinSalary === '' ? null : Number(customMinSalary);
+    const parsedMax = customMaxSalary === '' ? null : Number(customMaxSalary);
+    if ((parsedMin !== null && Number.isNaN(parsedMin)) || (parsedMax !== null && Number.isNaN(parsedMax))) {
+      setSalaryError('Salary values must be numbers');
+    } else if (parsedMin !== null && parsedMax !== null && parsedMin > parsedMax) {
+      setSalaryError('Minimum salary must be less than or equal to maximum');
+    } else {
+      setSalaryError('');
+    }
+    setSelectedFilters(prev => ({
+      ...prev,
+      minSalary: Number.isNaN(parsedMin) ? null : parsedMin,
+      maxSalary: Number.isNaN(parsedMax) ? null : parsedMax,
+    }));
+  }, [customMinSalary, customMaxSalary, useCustomSalary]);
 
   const loadProvinces = useCallback(async () => {
     try {
@@ -340,6 +408,9 @@ const FilterScreen = () => {
       salaryType,
       selectedProvince,
       selectedIndustry,
+      customMinSalary,
+      customMaxSalary,
+      useCustomSalary,
     };
     
     // Pass selected filters back to ExploreScreen via MainTab
@@ -420,7 +491,10 @@ const FilterScreen = () => {
     setDatePosted('all');
     setSelectedLevels([]);
     setSalaryType([]); // Reset về empty array
-    setSelectedSalaryRange(null);
+    setCustomMinSalary('');
+    setCustomMaxSalary('');
+    setUseCustomSalary(false);
+    setSalaryError('');
   };
 
 
@@ -552,92 +626,83 @@ const FilterScreen = () => {
 
   const renderSalaryContent = () => {
     const handleSalaryTypeChange = (type) => {
-      setSalaryType(prev => {
-        if (prev.includes(type)) {
-          // Remove if already selected
-          return prev.filter(t => t !== type);
-      } else {
-          // Add if not selected
-          return [...prev, type];
-      }
-      });
+      setSalaryType(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
     };
 
-    const handleSalaryRangeSelect = (range) => {
-      // Handle special cases for salary ranges
-      let rangeKey;
-      if (range.minSalary === null && range.maxSalary === null) {
-        // Negotiable salary
-        rangeKey = 'negotiable';
-      } else if (range.maxSalary === null) {
-        // Open-ended range (e.g., 100000+)
-        rangeKey = `${range.minSalary}+`;
-      } else {
-        // Normal range
-        rangeKey = `${range.minSalary}-${range.maxSalary}`;
-      }
-      
-      setSalaryType(prev => {
-        if (prev.includes(rangeKey)) {
-          // Remove if already selected
-          return prev.filter(t => t !== rangeKey);
-        } else {
-          // Add if not selected
-          return [...prev, rangeKey];
-        }
-      });
-      
-      // Update min/max salary in selectedFilters
-      setSelectedFilters(prev => ({
-        ...prev,
-        minSalary: range.minSalary,
-        maxSalary: range.maxSalary,
-      }));
-    };
+    const sanitizeNumber = (text) => text.replace(/[^\d]/g, '');
 
 
 
     return (
-    <View style={styles.locationSalaryContent}>
-      {/* Negotiable Salary Option */}
-      <TouchableOpacity 
-        style={styles.radioOption} 
-          onPress={() => handleSalaryTypeChange('negotiable')}
-      >
-        <View style={[
-          styles.checkboxButton,
-          salaryType.includes('negotiable') && styles.checkboxButtonSelected
-        ]}>
-          {salaryType.includes('negotiable') && <MaterialIcons name="check" size={16} color="#fff" />}
-        </View>
-        <Text style={styles.radioOptionText}>Negotiable Salary</Text>
-      </TouchableOpacity>
+      <View style={styles.locationSalaryContent}>
+        {/* Negotiable Salary Option */}
+        <TouchableOpacity style={styles.radioOption} onPress={() => handleSalaryTypeChange('negotiable')}>
+          <View style={[styles.checkboxButton, salaryType.includes('negotiable') && styles.checkboxButtonSelected]}>
+            {salaryType.includes('negotiable') && <MaterialIcons name="check" size={16} color="#fff" />}
+          </View>
+          <Text style={styles.radioOptionText}>Negotiable Salary</Text>
+        </TouchableOpacity>
 
-      {/* Salary Range Options - all at same level */}
-      {salaryRanges.map((range) => {
-        const rangeKey = `${range.minSalary}-${range.maxSalary}`;
-        const isSelected = salaryType.includes(rangeKey);
-        
-        return (
-              <TouchableOpacity 
-                key={range.id}
-            style={styles.radioOption}
-                onPress={() => handleSalaryRangeSelect(range)}
+        {/* Custom salary inputs */}
+        <View style={{ marginTop: 12, marginBottom: 6 }}>
+          <Text style={styles.sectionHintText}>Or enter a custom salary range</Text>
+        </View>
+        <View style={styles.customSalaryRow}>
+          <TextInput
+            style={styles.customSalaryInput}
+            placeholder="Minimum"
+            placeholderTextColor="#999"
+            keyboardType="numeric"
+            value={String(customMinSalary)}
+            onChangeText={(t) => setCustomMinSalary(sanitizeNumber(t))}
+          />
+          <Text style={styles.customSalarySeparator}>-</Text>
+          <TextInput
+            style={styles.customSalaryInput}
+            placeholder="Maximum"
+            placeholderTextColor="#999"
+            keyboardType="numeric"
+            value={String(customMaxSalary)}
+            onChangeText={(t) => setCustomMaxSalary(sanitizeNumber(t))}
+          />
+          <TouchableOpacity
+            style={[styles.chipButton, useCustomSalary && styles.chipButtonActive]}
+            onPress={() => setUseCustomSalary(prev => !prev)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.chipButtonText, useCustomSalary && styles.chipButtonTextActive]}>Apply</Text>
+          </TouchableOpacity>
+        </View>
+        {!!salaryError && <Text style={styles.errorText}>{salaryError}</Text>}
+
+        {/* Selected chips */}
+        {(salaryType.length > 0 || (useCustomSalary && (customMinSalary !== '' || customMaxSalary !== ''))) && (
+          <View style={styles.chipsContainer}>
+            {salaryType.map((key) => (
+              <TouchableOpacity
+                key={`chip-${key}`}
+                style={styles.chip}
+                onPress={() => setSalaryType(prev => prev.filter(k => k !== key))}
+                activeOpacity={0.7}
               >
-            <View style={[
-              styles.checkboxButton,
-              isSelected && styles.checkboxButtonSelected
-            ]}>
-              {isSelected && <MaterialIcons name="check" size={16} color="#fff" />}
-            </View>
-            <Text style={styles.radioOptionText}>
-                  {range.rangeName || range.name || `${range.minSalary || 0} - ${range.maxSalary || '∞'}`}
-            </Text>
+                <Text style={styles.chipText}>{key === 'negotiable' ? 'Negotiable' : key}</Text>
+                <MaterialIcons name="close" size={14} color="#333" />
               </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
+            ))}
+            {useCustomSalary && (customMinSalary !== '' || customMaxSalary !== '') && (
+              <TouchableOpacity
+                style={styles.chip}
+                onPress={() => { setCustomMinSalary(''); setCustomMaxSalary(''); setUseCustomSalary(false); }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.chipText}>Custom: {customMinSalary || 0} - {customMaxSalary || '∞'}</Text>
+                <MaterialIcons name="close" size={14} color="#333" />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </View>
+    );
   };
 
   const renderFilterCategory = (category) => {
@@ -713,24 +778,31 @@ const FilterScreen = () => {
         <Text style={styles.headerTitle}>Filter Options</Text>
       </View>
 
-      {/* Filter Categories */}
-      <ScrollView 
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
       >
-        {filterCategories.map((category) => renderFilterCategory(category))}
-      </ScrollView>
+        {/* Filter Categories */}
+        <ScrollView 
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[styles.contentContainer, styles.keyboardContentPadding]}
+        >
+          {filterCategories.map((category) => renderFilterCategory(category))}
+        </ScrollView>
 
-      {/* Bottom Buttons */}
-      <View style={styles.bottomButtons}>
-        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Text style={styles.resetButtonText}>Reset</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-          <Text style={styles.applyButtonText}>Apply</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Bottom Buttons */}
+        <View style={styles.bottomButtons}>
+          <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+            <Text style={styles.applyButtonText}>Apply</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
 
              {/* Location Picker Modal */}
        <Modal
@@ -750,7 +822,7 @@ const FilterScreen = () => {
              <View style={styles.dragHandle} />
              
              <View style={styles.modalHeader}>
-               <Text style={styles.modalTitle}>Select Location</Text>
+          <Text style={styles.modalTitle}>Select Location</Text>
                <TouchableOpacity
                  onPress={() => setShowLocationModal(false)}
                  style={styles.closeIcon}
@@ -764,7 +836,7 @@ const FilterScreen = () => {
                <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
                <TextInput
                  style={styles.searchInput}
-                 placeholder="Search provinces..."
+                  placeholder="Search provinces..."
                  value={searchText}
                  onChangeText={handleSearchLocation}
                  placeholderTextColor="#999"
@@ -804,8 +876,8 @@ const FilterScreen = () => {
              ) : (
                <View style={styles.noResultsContainer}>
                  <MaterialIcons name="search-off" size={48} color="#ccc" />
-                 <Text style={styles.noResultsText}>No provinces found</Text>
-                 <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+                  <Text style={styles.noResultsText}>No provinces found</Text>
+                  <Text style={styles.noResultsSubtext}>Try a different search term</Text>
                </View>
              )}
                       </View>
@@ -830,7 +902,7 @@ const FilterScreen = () => {
              <View style={styles.dragHandle} />
              
              <View style={styles.modalHeader}>
-               <Text style={styles.modalTitle}>Select Industry</Text>
+          <Text style={styles.modalTitle}>Select Industry</Text>
                <TouchableOpacity
                  onPress={() => setShowIndustryModal(false)}
                  style={styles.closeIcon}
@@ -844,7 +916,7 @@ const FilterScreen = () => {
                <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
                <TextInput
                  style={styles.searchInput}
-                 placeholder="Search industries..."
+                  placeholder="Search industries..."
                  value={industrySearchText}
                  onChangeText={handleSearchIndustry}
                  placeholderTextColor="#999"
@@ -884,8 +956,8 @@ const FilterScreen = () => {
              ) : (
                <View style={styles.noResultsContainer}>
                  <MaterialIcons name="search-off" size={48} color="#ccc" />
-                 <Text style={styles.noResultsText}>No industries found</Text>
-                 <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+                  <Text style={styles.noResultsText}>No industries found</Text>
+                  <Text style={styles.noResultsSubtext}>Try a different search term</Text>
                </View>
              )}
            </View>
@@ -923,6 +995,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
+  },
+  keyboardContentPadding: {
+    paddingBottom: 24,
   },
   filterCategory: {
     marginBottom: 8,
@@ -1021,6 +1096,82 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontFamily: 'Poppins-Medium',
+  },
+
+  // Salary custom input & chips
+  sectionHintText: {
+    fontSize: 13,
+    color: '#666',
+    fontFamily: 'Poppins-Regular',
+  },
+  customSalaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  customSalaryInput: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 0.5,
+    borderColor: '#e0e0e0',
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Poppins-Regular',
+  },
+  customSalarySeparator: {
+    marginHorizontal: 4,
+    color: '#666',
+    fontSize: 18,
+    fontFamily: 'Poppins-Medium',
+  },
+  chipButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2563eb',
+    backgroundColor: '#f8f9ff',
+  },
+  chipButtonActive: {
+    backgroundColor: '#2563eb',
+  },
+  chipButtonText: {
+    color: '#2563eb',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  chipButtonTextActive: {
+    color: '#fff',
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#eef2ff',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  chipText: {
+    color: '#1f2937',
+    fontSize: 13,
+    fontFamily: 'Poppins-Medium',
+  },
+  errorText: {
+    marginTop: 6,
+    color: '#dc2626',
+    fontSize: 13,
+    fontFamily: 'Poppins-Regular',
   },
 
   // Range display box styles

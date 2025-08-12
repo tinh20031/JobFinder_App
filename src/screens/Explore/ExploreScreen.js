@@ -363,13 +363,25 @@ const ExploreScreen = () => {
         return false;
       }
 
-      // Salary filter
-      if (filters.salary && Array.isArray(filters.salary) && filters.salary.length > 0) {
+      // Salary filter (custom min/max or token-based)
+      const hasCustomMin = filters.minSalary !== undefined && filters.minSalary !== null && filters.minSalary !== '';
+      const hasCustomMax = filters.maxSalary !== undefined && filters.maxSalary !== null && filters.maxSalary !== '';
+      if (hasCustomMin || hasCustomMax) {
+        // Exclude negotiable when a numeric range is specified
+        if (job.isSalaryNegotiable) return false;
+        const jobMinSalary = Number(job.minSalary ?? 0);
+        const jobMaxSalary = Number(job.maxSalary ?? 0);
+        const rangeMin = hasCustomMin ? Number(filters.minSalary) : -Infinity;
+        const rangeMax = hasCustomMax ? Number(filters.maxSalary) : Infinity;
+        if (Number.isNaN(rangeMin) || Number.isNaN(rangeMax)) return false;
+        if (rangeMin === -Infinity && rangeMax === Infinity) {
+          return true;
+        }
+        return jobMaxSalary >= rangeMin && jobMinSalary <= rangeMax;
+      } else if (filters.salary && Array.isArray(filters.salary) && filters.salary.length > 0) {
         const matchesNegotiable = filters.salary.includes('negotiable') && job.isSalaryNegotiable;
-        
         const matchesRange = filters.salary.some(salaryOption => {
           if (salaryOption === 'negotiable') return false;
-          
           if (salaryOption.includes('+')) {
             const minStr = salaryOption.replace('+', '');
             const rangeMin = parseInt(minStr);
@@ -377,7 +389,6 @@ const ExploreScreen = () => {
             const jobMinSalary = job.minSalary || 0;
             return jobMinSalary >= rangeMin;
           }
-          
           const [minStr, maxStr] = salaryOption.split('-');
           const rangeMin = parseInt(minStr);
           const rangeMax = parseInt(maxStr);
@@ -386,7 +397,6 @@ const ExploreScreen = () => {
           const jobMaxSalary = job.maxSalary || 0;
           return jobMaxSalary >= rangeMin && jobMinSalary <= rangeMax;
         });
-        
         if (!matchesNegotiable && !matchesRange) {
           return false;
         }
@@ -437,30 +447,7 @@ const ExploreScreen = () => {
         return false;
       }
 
-      // Salary filter: FilterScreen sends array of salary tokens in 'salary'
-      if (filters.salary && Array.isArray(filters.salary) && filters.salary.length > 0) {
-        const matchesNegotiable = filters.salary.includes('negotiable') && job.isSalaryNegotiable;
-        const matchesRange = filters.salary.some(salaryOption => {
-          if (salaryOption === 'negotiable') return false;
-          if (salaryOption.includes('+')) {
-            const minStr = salaryOption.replace('+', '');
-            const rangeMin = parseInt(minStr);
-            if (job.isSalaryNegotiable) return false;
-            const jobMinSalary = job.minSalary || 0;
-            return jobMinSalary >= rangeMin;
-          }
-          const [minStr, maxStr] = salaryOption.split('-');
-          const rangeMin = parseInt(minStr);
-          const rangeMax = parseInt(maxStr);
-          if (job.isSalaryNegotiable) return false;
-          const jobMinSalary = job.minSalary || 0;
-          const jobMaxSalary = job.maxSalary || 0;
-          return jobMaxSalary >= rangeMin && jobMinSalary <= rangeMax;
-        });
-        if (!matchesNegotiable && !matchesRange) {
-          return false;
-        }
-      }
+      // Note: token-based salary filter handled above; avoid duplicate logic
 
       // Job function filter
       if (filters.jobFunction && job.industry?.industryName !== filters.jobFunction) {
