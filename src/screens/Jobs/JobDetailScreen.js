@@ -152,7 +152,7 @@ const JobDetailScreen = ({ route }) => {
   const companyLogo = job.company?.urlCompanyLogo || job.logo;
   const companyName = job.company?.companyName || 'Unknown Company';
   const location = job.location || job.company?.location || '';
-  const postedAgo = job.createdAt ? '1 day ago' : '';
+  const postedAgo = job.createdAt ? '' : '';
 
   // Thêm hàm formatDate
   function formatDate(dateStr) {
@@ -271,11 +271,6 @@ const JobDetailScreen = ({ route }) => {
               <Image source={companyLogo ? { uri: companyLogo } : require('../../images/jobfinder-logo.png')} style={styles.logo} />
             </View>
             <Text style={styles.jobTitle}>{job.jobTitle}</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoText}>{location}</Text>
-              <Text style={styles.dot}> • </Text>
-              <Text style={styles.infoText}>{postedAgo}</Text>
-            </View>
           </View>
         </Animatable.View>
         <Animatable.View animation="fadeInUp" duration={600} delay={150}>

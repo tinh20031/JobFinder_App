@@ -50,8 +50,7 @@ const chatService = {
     
     this.connection = new HubConnectionBuilder()
       .withUrl(this.hubUrl, {
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets,
+        // Cho phép server tự negotiate (WS/SSE/LongPolling)
         accessTokenFactory: () => token,
       })
       .configureLogging(LogLevel.Information)

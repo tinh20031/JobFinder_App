@@ -28,8 +28,7 @@ export async function startNotificationHub(onReceiveNotification) {
   connection = new HubConnectionBuilder()
     .withUrl(SIGNALR_HUB_URL, {
       accessTokenFactory: () => token,
-      skipNegotiation: true,
-      transport: 1, // WebSockets
+      // Cho phép negotiate để chọn transport phù hợp (giống web)
     })
     .configureLogging(LogLevel.Information)
     .withAutomaticReconnect()

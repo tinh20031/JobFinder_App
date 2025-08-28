@@ -700,6 +700,9 @@ const styles = StyleSheet.create({
     color: '#1a202c',
     marginBottom: -2,
     fontFamily: 'Poppins-Bold',
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
   },
   titleRow: {
     flexDirection: 'row',

@@ -95,3 +95,36 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+## Installation Guide
+
+### 2.1 System Requirements
+
+#### 2.1.2 Mobile Application (Android & iOS)
+
+##### Android
+
+| **Category** | **Minimum** | **Recommended** |
+| --- | --- | --- |
+| Internet connection | Wi‑Fi/3G/4G/5G, stable | Wi‑Fi (≥16 Mbps) |
+| Operating system | Android 7.0 (API 24) | Android 12+ (API 31+) |
+| Target API level | API 35 | Latest API |
+| Processor | ARMv7/ARM64; x86 for emulator | Modern ARM64 |
+| Memory (RAM) | 2 GB | 4 GB+ |
+| Storage | 300 MB free | 1 GB free |
+| Notes | Requires Google Play services for Google Sign‑In; supports `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` |  |
+
+Source: `android/build.gradle` (minSdkVersion 24, targetSdkVersion 35), `gradle.properties` (CPU architectures).
+
+##### iOS
+
+| **Category** | **Minimum** | **Recommended** |
+| --- | --- | --- |
+| Operating system | iOS 15.1 | iOS 16+ |
+| Internet connection | Wi‑Fi/4G/5G | Wi‑Fi (≥16 Mbps) |
+| Processor | Device compatible with iOS 15.1 | Newer iPhone/iPad |
+| Memory (RAM) | 2 GB | 3 GB+ |
+| Storage | 300 MB free | 1 GB free |
+| Permissions | Camera, Photos, Microphone, Files (select photos/videos, upload CV) |  |
+
+Source: `ios/JobFinderApp.xcodeproj/project.pbxproj` (IPHONEOS_DEPLOYMENT_TARGET 15.1). The app uses: `react-native-image-picker`, `react-native-video`, `react-native-document-picker`, `react-native-permissions`, `@react-native-google-signin/google-signin`.
